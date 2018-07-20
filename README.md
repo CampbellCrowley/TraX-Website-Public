@@ -74,6 +74,10 @@ or
   - Friend beats your time
   - Friend is currently at a track
   - Friend is recording a track session
+  
+===
+
+© Copyright 2018, Campbell Crowley
 
 [home]: https://trax.campbellcrowley.com
 [live]: https://trax.campbellcrowley.com/live/
