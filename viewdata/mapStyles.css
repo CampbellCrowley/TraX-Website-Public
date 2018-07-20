@@ -1,0 +1,79 @@
+// Copyright 2018 Campbell Crowley. All rights reserved.
+// Author: Campbell Crowley (web@campbellcrowley.com) {}
+#mymap {
+  height: 100%;
+  width: 98%;
+  position: absolute;
+}
+#mymapOverlay {
+  display: none;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  pointer-events: none;
+}
+#mapOverlayTextInput input {
+  float: right;
+}
+#mapOverlayConfirmNames {
+  float: left;
+}
+#mapOverlayTextInput p {
+  margin: 4px;
+}
+#mapOverlayTextInput {
+  display: none;
+  position: relative;
+  text-align: left;
+  background: #07f;
+  margin: 4px;
+  padding: 4px;
+  pointer-events: auto;
+}
+#mapOverlayButtons span, #mapTrackButtons span, #mapColorButtons span,
+#mapColorButtons, #mapSliderOverlay span {
+  pointer-events: none;
+}
+#mapOverlayButtons, #mapTrackButtons, #mapColorButtons, #mapSliderOverlay {
+  display: none;
+  position: absolute;
+  width: 98%;
+  bottom: 0;
+  font-size: 0.8em;
+  margin-bottom: 15px;
+}
+.overlayButton, #togglePlaybackButton, #openPlaybackOverlay, #closePlaybackOverlay {
+  pointer-events: auto;
+  width: 100px;
+  height: auto;
+}
+#togglePlaybackButton {
+  width: 35px;
+  height: 35px;
+}
+#playbackSlider {
+  -webkit-appearance: none;
+  width: 90%;
+  height: 15px;
+  border-radius: 5px;
+  background: #07F;
+  outline: none;
+  opacity: 0.7;
+}
+#playbackSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #0AF;
+  cursor: pointer;
+}
+#playbackSlider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #0AF;
+  cursor: pointer;
+}

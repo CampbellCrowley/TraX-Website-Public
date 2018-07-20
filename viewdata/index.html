@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<!-- Copyright 2018 Campbell Crowley. All rights reserved. -->
+<!-- Author: Campbell Crowley (web@campbellcrowley.com) -->
+<html lang="en">
+<head>
+  <title>TraX: Racing Data Viewer</title>
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+  <style></style>
+  <link rel="stylesheet" href="https://dev.campbellcrowley.com/trax/styles.css" type="text/css"/>
+  <link rel="stylesheet" href="https://dev.campbellcrowley.com/trax/viewdata/dataViewStyles.css" type="text/css"/>
+  <link rel="stylesheet" href="https://dev.campbellcrowley.com/trax/viewdata/paneStyles.css" type="text/css"/>
+  <link rel="stylesheet" href="https://dev.campbellcrowley.com/trax/viewdata/mapStyles.css" type="text/css"/>
+  <script src="https://dev.campbellcrowley.com/trax/viewdata/scriptloader.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="mainheader"></div>
+<div id ="maincontent">
+  <div id="content">
+    <!-- Data Viewer Overlay -->
+    <div id="viewDataOverlay">
+      <div id="viewDataHeader">
+      </div>
+      <!-- Panes -->
+      <div id="paneContainer">
+        <!-- ONE -->
+        <div id="dataViewFolderList" class="dataViewPane visiblePane">
+          <h3>Session Folders</h3>
+          <input type="button" class="links smaller" onclick="TraX.DataView.requestList();" value="Refresh">
+          <ul id="folderList"><li>Loading...</li></ul>
+        </div>
+        <!-- TWO -->
+        <div id="dataViewList" class="dataViewPane">
+          <h3>Sessions</h3>
+          <input type="button" class="links smaller" onclick="TraX.DataView.requestList();" value="Refresh">
+          <ul id="sessionsList"><li>If you see this, something broke...</li></ul>
+          <div id="sessionsListOverlay">
+            <p id="sessionsListConfirmMessage">Are you sure?</p>
+            <input type="text" id="sessionsListRenameInput" value="Rename me">
+            <input type="button" id="sessionsListConfirmButton" class="links small nohover" value="Confirm">
+            <input type="button" id="sessionsListCancelButton" class="links small nohover" value="Cancel" onclick="TraX.DataView.cancelSessionEdit();">
+          </div>
+        </div>
+        <!-- THREE -->
+        <div id="dataViewInfo" class="dataViewPane">
+          <h3 id="dataTitle">Choose a session from the previous pane to show data here.</h3>
+          <div id="dataLoading">
+            <progress id="loadBar" value="0" max="0"></progress>
+            <img src="https://dev.campbellcrowley.com/loading.gif">
+          </div>
+          <div id="dataViewChart" class="dataViewSection">
+            <div id="dataViewTrackSummary">
+              <p>
+                <a class="trackTitle">Track: </a>
+                <a id="dataViewTrackName" href="#" onclick="TraX.DataView.toggleDataViewOverlay(true, -1);"></a>
+              </p>
+              <p>
+                <a class="trackTitle">Configuration: </a>
+                <a id="dataViewTrackConfig" href="#" onclick="TraX.DataView.toggleDataViewOverlay();"></a>
+              </p>
+              <button id="autoPickButton" onclick="TraX.DataView.autoPickTrack(true);" class="links small nohover">Auto-Pick Track</button>
+              <button id="openDownloadsButton" onclick="TraX.DataView.toggleDownloadOverlay();" class="links small nohover">Export Session</button>
+              <div class="line"></div>
+              <div id="primarySession">
+                <button id="trackSummaryMapButton" class="links smaller nohover" onclick="TraX.DataView.MyMap.showMap();">Map</button>
+                <p><a class="trackSummaryTitle">Time: </a><a id="dataViewTime"></a></p>
+                <p><a class="trackSummaryTitle">Laps: </a><a id="dataViewNumLaps"></a><br></p>
+                <p>
+                  <div>
+                    <a class="listBodyRowTitle">Fastest: </a><a id="dataViewFastLap"></a><br>
+                  </div><div>
+                    <a class="listBodyRowTitle">Slowest: </a><a id="dataViewSlowLap"></a><br>
+                  </div><div>
+                    <a class="listBodyRowTitle">Average: </a><a id="dataViewAvgLap"></a>
+                  </div>
+                </p>
+                <p>
+                  <a class="trackSummaryTitle">Speeds: </a><br>
+                  <div>
+                    <a class="listBodyRowTitle">Top: </a><a id="dataViewTopSpeed"></a><br>
+                  </div><div>
+                    <a class="listBodyRowTitle">Lowest: </a><a id="dataViewLowestSpeed"></a><br>
+                  </div><div>
+                    <a class="listBodyRowTitle">Average: </a><a id="dataViewAvgSpeed"></a>
+                  </div>
+                </p>
+                <p><a class="trackSummaryTitle">Max G-Force: </a><a id="dataViewMaxGForce"></a></p>
+              </div>
+            </div>
+            <div class="line"></div>
+          </div>
+          <div id="dataViewLapsList" class="dataViewSection">
+            <h3>Laps</h3>
+            <a class="tip">Tap a row for more info.</a>
+            <ul id="lapList"><li>There should be laps here...</li></ul>
+          </div>
+          <div class="dataViewOverlay" id="dataViewTrackListOverlay">
+            <button type="button" class="links tiny nohover" onclick="TraX.DataView.toggleDataViewOverlay(false);"><span>Back</span></button>
+            <div id="dataViewOverlayList">
+              <div id="trackTitles"></div>
+              <div id="trackList" class="trackListOverlay">
+                <div class="trackListHeader">
+                  <button>
+                    <strong>Tracks</strong>
+                  </button>
+                  <button id="addTrack" class="nohover" onclick="TraX.DataView.MyMap.handleClickAddTrack();"><span>Add</span></button>
+                </div>
+              </div>
+              <div id="configList" class="trackListOverlay hidden">
+                <div class="trackListHeader" >
+                  <button onclick="TraX.DataView.dataOverlayBack();">&lt; | <strong>Configs</strong></button>
+                  <button id="addConfig" class="nohover" onclick="TraX.DataView.MyMap.handleClickAddConfig();"><span>Add</span></button>
+                </div>
+              </div>
+              <div id="carList" class="trackListOverlay hidden">
+                <div class="trackListHeader">
+                  <button onclick="TraX.DataView.dataOverlayBack();">
+                    &lt; | <strong>Cars</strong>
+                    <a>Coming soon(er or later)</a>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="dataViewOverlay" id="dataViewDownloadOverlay">
+            <button type="button" class="links tiny nohover" onclick="TraX.DataView.toggleDownloadOverlay();"><span>Back</span></button>
+            <h2>Download Session</h2>
+            <p>
+              <h3>Common formats:</h3>
+              <button id="downloadButton" onclick="TraX.DataView.handleDownloadClick();" class="links small wide nohover"><span>GPX</span></button>
+              <button id="downloadButton4" onclick="TraX.DataView.handleDownload4Click();" class="links small wide nohover"><span>CSV</span></button>
+              <div class="whiteline"></div>
+              <h3>Raw data:</h3>
+              <button id="downloadButton2" onclick="TraX.DataView.handleDownload2Click();" class="links small wide nohover"><span>JSON (Raw data)</span></button>
+              <button id="downloadButton3" onclick="TraX.DataView.handleDownload3Click();" class="links small wide nohover"><span>CSV (Raw Data)</span></button>
+            </p>
+          </div>
+        </div>
+        <!-- FOUR -->
+        <div id="dataViewMap" class="dataViewPane">
+          <div id="mymap"></div>
+          <div id="mapColorButtons">
+            <button id="openPlaybackOverlay" class="links smaller nohover" onclick="TraX.DataView.MyMap.togglePlaybackOverlay(true);"><span>Playback</span></button><br>
+            <h4 style="margin: 4px;">Coloring</h4>
+            <button id="colorLapButton" class="links overlayButton nohover selected" onclick="TraX.DataView.MyMap.changeLineColorMode('laps');"><span>Laps</span></button>
+            <button id="colorGForceButton" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.changeLineColorMode('gforce');"><span>G-Force</span></button>
+            <button id="colorAltitudeButton" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.changeLineColorMode('altitude');"><span>Altitude</span></button>
+            <button id="colorSpeedButton" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.changeLineColorMode('speed');"><span>Speed</span></button>
+          </div>
+          <div id="mapSliderOverlay">
+            <button id="closePlaybackOverlay" class="links smaller nohover" onclick="TraX.DataView.MyMap.togglePlaybackOverlay(false);"><span>Coloring</span></button><br>
+            <button id="togglePlaybackButton" class="links square nohover" onclick="TraX.DataView.MyMap.togglePlayback();"><span>&#9658;</span></button>
+            <input type="range" min='0' max='100' value='50' id="playbackSlider">
+          </div>
+          <input id="mapSearchOverlay" type="text" placeholder="Search">
+          </input>
+          <div id="mymapOverlay">
+            <div id="mapOverlayTextInput">
+              <p><strong>Track Name: </strong><input type="text" id="mapOverlayTrackName"></p>
+              <p><strong>Config Name: </strong><input type="text" id="mapOverlayConfigName"></p>
+              <p>
+                <input type="button" id="mapOverlayBackNames" class="links small nohover" value="Back" onclick="TraX.DataView.MyMap.handleClickBackMapNames();">
+                <input type="button" id="mapOverlayConfirmNames" class="links small nohover" value="Confirm" onclick="TraX.DataView.MyMap.handleClickSubmitMapNames();">
+              </p>
+            </div>
+            <div id="mapOverlayButtons">
+              <button id="cancelPlace" class="links overlayButton nohover selected" onclick="TraX.DataView.MyMap.handleClickEndPlace();"><span>X</span></button>
+              <button id="placeStart" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickPlaceStart();"><span>Start Line</span></button>
+              <button id="placeFinish" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickPlaceFinish();"><span>Finish Line</span></button>
+              <button id="donePlacing" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickDonePlacing();"><span>Done</span></button>
+              <button id="cancelPlacing" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickCancelPlacing();"><span>Cancel</span></button>
+            </div>
+            <div id="mapTrackButtons">
+              <button id="cancelPlaceTrack" class="links overlayButton nohover selected" onclick="TraX.DataView.MyMap.handleClickEndPlace();"><span>X</span></button>
+              <button id="placeTrackCenter" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickPlaceTrackCenter();"><span>Track Center</span></button>
+              <button id="donePlacingTrack" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickDonePlacing();"><span>Done</span></button>
+              <button id="cancelPlacingTrack" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickCancelPlacing();"><span>Cancel</span></button>
+            </div>
+          </div>
+        </div>
+        <button class="paneButton" onclick="Panes.previousPane()">&#8249;</button>
+        <button class="paneButton" onclick="Panes.nextPane()" style="left: 96%;">&#8250;</button>
+        <!-- FIVE -->
+        <!-- <div id="dataViewMap" class="dataViewPane">
+          <h1>Nothing to see here... Not even this text.</h1>
+        </div> -->
+      </div>
+      <!-- End Panes -->
+    </div>
+    <!-- End Overlay -->
+    <!-- Message Box -->
+    <div id="messageBoxWrapper" class="messageBoxHidden">
+      <div id="messageBoxParent">
+        <button id="messageBoxCloseButton" onclick="TraX.hideMessageBox()"><span>X</span></button>
+        <button onclick="TraX.hideMessageBox()">
+          <span id="messageBox"></span>
+        </button>
+      </div>
+    </div>
+    <!-- End Message Box -->
+  </div>
+</div>
+<script>
+var mymap;
+function initMap() {
+  mymap = new google.maps.Map(document.getElementById('mymap'), {
+    zoom: 1,
+    center: {lat: 0.0, lng: 0.0},
+    gestureHandling: 'auto',
+    clickableIcons: false,
+    fullscreenControlOption: false,
+    streetViewControl: false
+  });
+  var input = document.getElementById('mapSearchOverlay');
+  var searchBox = new google.maps.places.SearchBox(input);
+  mymap.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+  mymap.addListener('bounds_changed', function() {
+    searchBox.setBounds(mymap.getBounds());
+  });
+  searchBox.addListener('places_changed', function() {
+    var places = searchBox.getPlaces();
+    if (places.length === 0) return;
+    var bounds = new google.maps.LatLngBounds();
+    places.forEach(function(place) {
+      if (!place.geometry) return;
+      if (place.geometry.viewport) {
+        bounds.union(place.geometry.viewport);
+      } else {
+        bounds.extend(place.geometry.location);
+      }
+    });
+    mymap.fitBounds(bounds);
+  });
+}
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI4_A7hSN7upiKouUwuwSp4CjIbTjhVA4&libraries=places&callback=initMap"></script>
+<div id="mainfooter"></div>
+</body>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-89923351-1', 'auto');
+  ga('send', 'pageview');
+</script>
+</html>

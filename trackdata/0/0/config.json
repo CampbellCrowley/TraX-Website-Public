@@ -1,0 +1,15 @@
+{
+  "track": "I-280 to SJC",
+  "config": "From SJC",
+  "start": {
+    "coord": {"lat": 37.34790839866461, "lng": -121.91972798917828},
+    "bearing": 0,
+    "radius": 0.0002
+  },
+  "finish": {
+    "coord": {"lat": 37.334090585893726, "lng": -122.06459431564565},
+    "bearing": 0,
+    "radius": 0.0002
+  },
+  "sectors": []
+}

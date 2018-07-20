@@ -1,0 +1,16 @@
+{
+  "trackId": "0",
+  "name": "---",
+  "start": {
+    "coord": {"lat": 0, "lng": 0},
+    "bearing": 0,
+    "radius": 0.0
+  },
+  "finish": {
+    "coord": {"lat": 0, "lng": 0},
+    "bearing": 0,
+    "radius": 0.0
+  },
+  "sectors": [],
+  "id":0
+}

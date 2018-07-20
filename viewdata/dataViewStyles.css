@@ -1,0 +1,354 @@
+// Copyright 2018 Campbell Crowley. All rights reserved.
+// Author: Campbell Crowley (web@campbellcrowley.com) {}
+#viewDataHeader {
+  // padding-top: 10px;
+  // display: block;
+  // width: 100%;
+  display: none;
+}
+#viewDataOverlay {
+  padding-top: 40px;
+  position: fixed;
+  background: rgba(255, 255, 255, 0.8);
+  height: 100%;
+  width: 100%;
+  top: 0;
+  right: 0;
+  z-index: 2000;
+  transition: right 0.5s ease-in;
+}
+h1#viewDataTitle {
+  display: inline-block;
+  margin: 0;
+}
+#closeDataView {
+  display: inline-block;
+  float: right;
+}
+button#closeDataView {
+  height: 34px;
+  margin-top: 0;
+}
+#dataViewChart {
+  display: none;
+}
+#dataViewList, #dataViewFolderList {
+  text-align: left;
+}
+#dataViewList h3, #dataViewFolderList h3 {
+  margin: 4px;
+}
+#dataViewList ul, #dataViewFolderList ul {
+  margin: 0;
+  list-style: none;
+  padding: 0;
+}
+#dataViewList li, #dataViewFolderList li {
+  border-top: 1px solid black;
+  height: 44px;
+  position: relative;
+}
+#dataViewTrackName, #dataViewTrackConfig {
+  font-size: 1.2em;
+  overflow: auto;
+}
+#dataViewLapsList {
+  display: none;
+  text-align: center;
+}
+#sessionsList input, #folderList input {
+  width: 80%;
+  width: calc(100% - 80px);
+  border: 2px solid #0af;
+  border-radius: 2px;
+  background: #07f;
+  color: black;
+  font-size: 1.0em;
+  height: 40px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  display: inline-block;
+  top: 0;
+  position: absolute;
+}
+#folderList input {
+  width: 100%;
+}
+#dataViewList button {
+  top: 0;
+  float: right;
+  width: 40px;
+  border: 2px solid #0af;
+  border-radius: 2px;
+  background: #07f;
+  height: 40px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  padding: 0;
+  position: relative;
+}
+#dataViewList img {
+  width: 100%;
+  max-height: 40px;
+  max-width: 40px;
+}
+#dataViewList input:active, #dataViewFolderList input:active {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 2px 7px 20px rgba(0, 0, 0, 0.2), -2px 7px 20px rgba(0, 0, 0, 0.2);
+}
+#dataViewList button[disabled],
+#dataViewList button:disabled {
+  background-color: #b9b9b9;
+  border: 2px solid #656565;
+  color: #909090;
+}
+#sessionsListOverlay {
+  padding: 4px;
+  display: none;
+  position: fixed;
+  // width: 200px;
+  top: 90px;
+  border: 2px solid red;
+  border-radius: 4px;
+  background: #bdf;
+}
+#sessionsListRenameInput {
+  display: none;
+  font-size: 1em;
+  width: 99%;
+  position: relative;
+}
+progress {
+  width: 100%;
+}
+#dataViewInfo h3 {
+  margin: 0;
+}
+#dataLoading {
+  display: none;
+}
+#dataLoading img {
+  -webkit-transform: matrix(1, 0, 0, -1, 0, 0);
+}
+.dataViewSection {
+  vertical-align: top;
+  position: relative;
+  text-align: left;
+  width: 100%;
+  max-width: 600px;
+  display: inline-block;
+  height: auto;
+}
+#dataViewTrackSummary {
+  font-size: 1em;
+  overflow-y: auto;
+}
+#dataViewTrackSummary p {
+  margin: 4px;
+}
+#addTrack, #addConfig {
+  width: 40px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding-right: 5%;
+  border-left: 1px dotted white;
+}
+#trackSummaryMapButton {
+  display: inline-block;
+  float: right;
+  width: 5em;
+  margin-top: 0;
+}
+.trackSummaryTitle {
+  font-weight: bold;
+}
+.tip {
+  color: #888;
+  font-style: italic;
+}
+.trackTitle {
+  font-size: 1.4em;
+  font-weight: bold;
+}
+#lapList {
+  padding-left: 0;
+  margin-top: 0;
+  list-style: none;
+  text-align: left;
+}
+#lapList li {
+  border-top: 1px solid black;
+  position: relative;
+  margin-bottom: -5px;
+}
+.lapNum {
+  position: absolute;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 0;
+  overflow: visible;
+  transition: all 0.2s;
+  pointer-events: none;
+  width: 100%;
+  top: 0;
+  font-size: 18.6666px;
+}
+.lapNum.expanded {
+  width: 0;
+  margin: 4px;
+  font-size: 28px;
+}
+.lapListHeader {
+  background: #DDD;
+  border: none;
+  outline: none;
+  width: 100%;
+  height: 40px;
+  position: relative;
+  padding: 0;
+  box-shadow: 2px 7px 20px rgba(0, 0, 0, 0.2), -2px 7px 20px rgba(0, 0, 0, 0.2);
+}
+.lapListSubHeader {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  overflow: visible;
+  right: 0;
+  bottom: 0;
+  transition: all 0.2s;
+  pointer-events: none;
+  direction: rtl;
+  font-size: 14.66666px;
+}
+.lapListSubHeader.expanded {
+  // width: 0;
+  // margin: 4px;
+  font-size: 28px;
+}
+.lapListMapButton {
+  position: absolute;
+  right: 0;
+  width: 5.5em;
+  height: 2.5em;
+  top: 0;
+  margin: 0;
+  opacity: 0.0;
+  pointer-events: none;
+}
+.lapListMapButton.expanded {
+  opacity: 1.0;
+  pointer-events: auto;
+}
+.lapListBody {
+  width: 100%;
+  height: 100%;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.2s;
+  right: 0;
+  white-space: nowrap;
+  position: relative;
+  transition: max-height 0.4s ease-in-out;
+}
+.lapListBody p {
+  margin: 4px;
+}
+.lapListBody.expanded {
+  max-height: 280px;
+}
+.listBodyRowTitle {
+  color: #464646;
+}
+.greenText {
+  color: green;
+}
+.redText {
+  color: red;
+}
+
+.dataViewOverlay {
+  position: absolute;
+  top: 0;
+  width: 98%;
+  height: 100%;
+  background: rgba(0, 0, 0, 1.0);
+  color: white;
+  opacity: 0.0;
+  left: 0;
+  transition: opacity 0.2s ease-out;
+  pointer-events: none;
+  text-align: left;
+  margin-left: 2%;
+}
+.dataViewOverlay.visible {
+  opacity: 1.0;
+  pointer-events: auto;
+}
+.dataViewOverlay p {
+  margin: 4px;
+  margin-top: 0;
+}
+
+#dataViewOverlayList {
+  width: 94%;
+  height: 93%;
+  overflow: hidden;
+  overflow-y: auto;
+  border: 1px solid white;
+  border-radius: 4px;
+  margin-left: 2%;
+  position: relative;
+}
+#trackTitles {
+  display: block;
+  height: 50px;
+  width: 100%;
+}
+.trackListOverlay {
+  overflow: hidden;
+  white-space: nowrap;
+  position: absolute;
+  margin: 4px;
+  margin-left: 2%;
+  border: 1px solid white;
+  border-radius: 4px;
+  right: 0;
+  width: 96%;
+  background: black;
+  transition: all 0.2s ease-out;
+  box-shadow: 2px 7px 20px rgba(255, 255, 255, 0.2), -2px 7px 20px rgba(255, 255, 255, 0.2);
+}
+.trackListOverlay.hidden {
+  width: 0;
+}
+.trackListOverlay.covered {
+  opacity: 0.2;
+  pointer-events: none;
+}
+.trackListOverlay button {
+  background: none;
+  border: none;
+  border-top: 1px solid white;
+  outline: none;
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: 1.2em;
+  color: white;
+}
+.trackListOverlay img {
+  height: 1.2em;
+  filter: invert(100%);
+  float: right;
+}
+.trackListOverlay button.selected {
+  background: rgba(125, 125, 125, 0.5);
+}
+#mapSearchOverlay {
+  width: 50%;
+  height: 1.5em;
+  margin-top: 1em;
+}

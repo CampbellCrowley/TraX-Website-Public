@@ -1,0 +1,34 @@
+{
+  "name": "traxwebsite",
+  "version": "0.10.0",
+  "description": "TraX: Racing Data Collector",
+  "homepage": "https://trax.campbellcrowley.com",
+  "bugs": {
+    "email": "trax@campbellcrowley.com"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CampbellCrowley/TraXWebsite"
+  },
+  "dependencies": {
+    "dateformat": "^3.0.3",
+    "fs": "0.0.2",
+    "get-folder-size": "^1.0.1",
+    "google-auth-library": "^1.4.0",
+    "http": "0.0.0",
+    "lz-string": "^1.4.4",
+    "mkdirp": "^0.5.1",
+    "mysql": "^2.15.0",
+    "path": "^0.12.7",
+    "rimraf": "^2.6.2",
+    "socket.io": "^2.1.0"
+  },
+  "contributors": [
+    {
+      "name": "Campbell Crowley",
+      "email": "dev@campbellcrowley.com"
+    }
+  ]
+}

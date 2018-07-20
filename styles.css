@@ -1,0 +1,320 @@
+// Copyright 2018 Campbell Crowley. All rights reserved.
+// Author: Campbell Crowley (web@campbellcrowley.com) {}
+nav#top {
+  display: none;
+}
+.green {
+  content: url("https://dev.campbellcrowley.com/trax/images/greenLight.png");
+}
+.yellow {
+  content: url("https://dev.campbellcrowley.com/trax/images/yellowLight.png");
+}
+.red {
+  content: url("https://dev.campbellcrowley.com/trax/images/redLight.png");
+}
+.processing {
+  content: url("https://dev.campbellcrowley.com/trax/images/processing.png");
+}
+.light {
+  width: 16px;
+}
+.largelight {
+  width: 64px;
+}
+.dataBlock {
+  vertical-align: top;
+  display: inline-block;
+  width: 300px;
+}
+.statusLight {
+  // display: inline-block;
+  overflow: ellipsis;
+  border: 1px solid black;
+}
+.links {
+  font-size: 1em;
+}
+.links:active {
+  background-color: white;
+  color: black;
+  border: 2px solid #07f;
+  border-radius: 10px;
+  box-shadow: 2px 7px 20px rgba(0, 0, 0, 0.2), -2px 7px 20px rgba(0, 0, 0, 0.2);
+}
+.contentsection {
+  margin-bottom: 5px;
+}
+#pageTitle h1 {
+  margin: 0;
+}
+#pageTitle {
+  margin: 0;
+}
+#debug {
+  display: none;
+}
+#pausePlayWrapper {
+  text-align: center;
+  display: block;
+}
+#mainStatusLightContainer {
+  width: 100%;
+  text-align: center;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+}
+#controls {
+  text-align: center;
+}
+#pausePlay {
+  font-size: 4.0em;
+  width: 98%;
+  height: 100px;
+  max-width: 720px;
+}
+#sendBuffer {
+  position: fixed;
+  top: 80px;
+  right: 0;
+  text-align: right;
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 0.8em;
+  pointer-events: none;
+}
+#preSendBuffer {
+  display: none;
+  position: fixed;
+  top: 80px;
+  left: 0;
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 0.8em;
+  pointer-events: none;
+}
+#debugMode {
+  display: none;
+}
+#optionsMenu {
+  display: none;
+}
+#optionsMenu div {
+  margin: 4px;
+}
+.optionsSection {
+  padding: 2px;
+  border: 1px solid black;
+  display: inline-block;
+  vertical-align: top;
+}
+#updateFrqDropdown span {
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.5s;
+}
+#friendMapParent {
+  display: none;
+}
+#friendmap {
+  height: 200px;
+  width: 100%;
+}
+#help p {
+  margin: 8px;
+}
+#help {
+  margin-top: 0;
+}
+.transparentcontent {
+  margin-top: 0px;
+  margin-bottom: 8px;
+}
+#statusLightList {
+  display: none;
+  width: 100%;
+}
+#messageBoxWrapper {
+  position: fixed;
+  width: 100%;
+  left: 0;
+  text-align: center;
+  transition: top 0.5s ease-in-out;
+  z-index: 3000;
+  margin: auto;
+  pointer-events: none;
+}
+#messageBoxParent {
+  display: inline-block;
+  background: #bdf;
+  border: 2px solid red;
+  border-radius: 2px;
+  box-shadow: 2px 7px 20px rgba(0, 0, 0, 0.2), -2px 7px 20px rgba(0, 0, 0, 0.2);
+  margin-left: 18px;
+  margin-right: 18px;
+  pointer-events: auto;
+}
+#messageBoxParent button:not(#messageBoxCloseButton) {
+  background: none;
+  border: none;
+}
+#messageBox {
+  display: inline-block;
+  padding: 18px;
+  padding-left: 0;
+  padding-right: 0;
+}
+#messageBoxCloseButton {
+  position: absolute;
+  margin: 0;
+  background: #bdf;
+  border: none;
+  border-right: 2px solid #07f;
+  border-bottom: 2px solid #07f;
+  border-radius: 2px;
+}
+.messageBoxVisible {
+  top: 100px;
+}
+.messageBoxHidden {
+  top: -100px;
+}
+#needIMU {
+  display: none;
+}
+#needAccount {
+  display: none;
+}
+#realtimeData {
+  display: none;
+  position: relative;
+  text-align: justify;
+}
+.realtimeSection, realtimeSectionDouble {
+  max-width: 400px;
+  text-align: center;
+  vertical-align: top;
+  border: 1px solid black;
+  margin: 4px;
+  padding: 4px;
+  display: inline-block;
+  width: 150px;
+  overflow: hidden;
+}
+.realtimeSectionDouble {
+  max-width: 800px;
+}
+.realtimeSectionTitle {
+  font-weight: bold;
+  display: block;
+  font-size: 1.5em;
+  border-bottom: 1px solid #777;
+}
+.realtimeSubTitle {
+  font-weight: bold;
+}
+.realtimeSectionBody {
+  text-align: left;
+}
+
+#timersHUD {
+  text-align: center;
+}
+.visibleHUD {
+  display: block;
+}
+.hiddenHUD {
+  display: none;
+}
+.fsHUD {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+#bigTimer span {
+  font-size: 5em;
+}
+#bigTimer {
+  display: block;
+  width: 100%;
+  // height: 49vw;
+  max-height: 150px;
+  border-bottom: 1px solid black;
+}
+
+.timerTitle {
+  display: block;
+  font-size: 0.75em;
+}
+#littleTimer0 span, #littleTimer1 span, #littleTimer2 span, #littleTimer3 span, #littleTimer4 span {
+  font-size: 2em;
+}
+#littleTimer0 {
+  border-bottom: 1px solid black;
+  border-top: 1px solid black;
+}
+#littleTimer1, #littleTimer2, #littleTimer3, #littleTimer4  {
+  display: inline-block;
+  margin: 0;
+  width: 49%;
+  // height: 24vw;
+  max-height: 75px;
+}
+#littleTimer1, #littleTimer3 {
+  border-right: 1px solid black;
+  padding-right: 0.5%;
+}
+#littleTimer2, #littleTimer4 {
+  float: right;
+  border-left: 1px solid black;
+  padding-left: 0.5%;
+}
+#timerButtons {
+  margin-top: 0;
+  border-top: 1px solid black;
+}
+
+#customMenu {
+  display: block;
+  width: 100%;
+  border: 1px solid black;
+}
+.customMenuHidden {
+  display: none;
+}
+
+#realtimeVideo {
+  display: none;
+}
+.videoCanvas {
+  display: inline-block;
+  width: 50%;
+  height: 100%;
+  max-height: 400px;
+}
+.selected {
+  background: #fff;
+  color: black;
+  border: 2px solid #07f;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+.hudfstoggle {
+  font-size: 2em;
+  float: right;
+}
+
+@media screen and (max-width: 720px) {
+  #otherOptions {
+    text-align: center;
+  }
+  #viewDataOverlay {
+    padding-top: 40px;
+  }
+  .messageBoxVisible {
+    top: 60px;
+  }
+}

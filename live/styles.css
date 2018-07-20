@@ -1,0 +1,84 @@
+// Copyright 2018 Campbell Crowley. All rights reserved.
+// Author: Campbell Crowley (web@campbellcrowley.com) {}
+#content {
+  max-width: none;
+  column-width: 500px;
+  column-gap: 10px;
+}
+#pageOverlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: rgba(125, 125, 125, 0.7);
+  text-align: center;
+  z-index: 10000;
+  font-size: 3em;
+  display: none;
+  left: 0;
+  top: 0;
+}
+#pageOverlay a {
+  position: relative;
+  top: 25%;
+}
+#realtimeData {
+  display: inline-block;
+}
+.contentsection {
+  display: inline-block;
+  // max-width: 1000px;
+  width: 100%;
+  width: calc(100% - 4px);
+  vertical-align: top;
+}
+#map {
+  height: 400px;
+  width: 100%;
+}
+table {
+  width: 100%;
+  height: 100%;
+  max-height: 500px;
+  margin: 0;
+  text-shadow: 2px 7px 20px rgba(0, 0, 0, 0.2), -2px 7px 20px rgba(0, 0, 0, 0.2);
+}
+#driverList tr, #driverStandings tr {
+  transition: text-shadow 0.2s ease-out;
+  cursor: pointer;
+}
+#driverList tr:hover, #driverStandings tr:hover {
+  text-shadow: 3px 7px 20px rgba(0, 0, 0, 0.5), 0px 7px 20px rgba(0, 0, 0, 0.5);
+}
+#driverList tr.selected, #driverStandings tr.selected{
+  text-shadow: 3px 7px 20px rgba(0, 0, 0, 0.6), 0px 7px 20px rgba(0, 0, 0, 0.6);
+  font-style: italic;
+  font-weight: bold;
+}
+#driverList tr.selected td, #driverStandings tr.selected td {
+  background: white;
+}
+#driverList tr.stale, #driverStandings tr.stale {
+  color: gray;
+}
+
+#viewerNumParent {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  text-align: right;
+  color: #888;
+}
+#allData {
+  display: none;
+  position: relative;
+}
+#simpleData {
+  position: relative;
+}
+.showMoreLess {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-size: 0.8em;
+}

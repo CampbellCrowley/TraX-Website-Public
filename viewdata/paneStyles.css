@@ -1,0 +1,80 @@
+// Copyright 2018 Campbell Crowley. All rights reserved.
+// Author: Campbell Crowley (web@campbellcrowley.com) {}
+#paneContainer {
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 90%;
+  height: calc(100% - 40px);
+  margin: auto;
+  text-align: center;
+}
+.paneButton {
+  position: absolute;
+  height: 50%;
+  padding: 2%;
+  top: 25%;
+  left: 0;
+  z-index: 10;
+  background: transparent;
+  border: none;
+  font-size: 1em;
+  outline: none;
+}
+.paneButton:hover {
+  background: rgba(100, 100, 100, 0.3);
+}
+.dataViewPane {
+  display: inline-block;
+  width: 95%;
+  height: 98%;
+  height: calc(100% - 30px);
+  margin: 2%;
+  margin-top: 0;
+  margin-bottom: 0;
+  border: 1px solid black;
+  border-radius: 5px;
+  background: white;
+  transition: left 0.2s ease-in;
+  box-shadow: 2px 7px 20px rgba(0, 0, 0, 0.2), -2px 7px 20px rgba(0, 0, 0, 0.2);
+  overflow: auto;
+  overflow-y: auto;
+}
+.dataViewPane:not(.firstPane) {
+  padding-left: 2%;
+  width: 93%;
+}
+.visiblePane {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+}
+.nextPane {
+  position: absolute;
+  top: 0;
+  left: 93%;
+  z-index: 0;
+}
+.previousPane {
+  position: absolute;
+  top: 0;
+  left: -93%;
+  z-index: 2;
+  transition: left 0.2s ease-in;
+}
+.farRightPane {
+  position: absolute;
+  top: 0;
+  left: 200%;
+}
+.farLeftPane {
+  position: absolute;
+  top: 0;
+  left: -200%;
+}
+// @media screen and (max-width: 720px) {
+//   #paneContainer {
+//     height: calc(100% - 80px);
+//   }
+// }

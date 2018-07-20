@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<!-- Copyright 2018 Campbell Crowley. All rights reserved. -->
+<!-- Author: Campbell Crowley (web@campbellcrowley.com) -->
+<html lang="en">
+<head>
+  <title>TraX: Racing Data Collector</title>
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+  <style></style>
+  <link rel="stylesheet" href="https://dev.campbellcrowley.com/trax/styles.css" type="text/css"/>
+  <link rel="stylesheet" href="https://dev.campbellcrowley.com/trax/friendStyles.css" type="text/css"/>
+  <link rel="stylesheet" href="https://dev.campbellcrowley.com/trax/sidebarStyles.css" type="text/css"/>
+  <script src="https://dev.campbellcrowley.com/trax/scriptloader.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="mainheader"></div>
+<div id ="maincontent">
+  <input id="sidebarToggleOpen" type="button" class="links square nohover" value="&equiv;" onclick="Sidebar.toggleOpen(true);">
+  <div id="sidebar">
+    <div id="sidebarHead">
+      <input id="sidebarToggleClose" type="button" class="links square nohover" value="&#x21DA;" onclick="Sidebar.toggleOpen(false);">
+      <div id="patreonSidebar">
+        <a class="links sidebarOption" href="https://www.patreon.com/bePatron?u=12105522" data-patreon-widget-type="become-patron-button">Become a Patron!</a><script async src="https://c6.patreon.com/becomePatronButton.bundle.js"></script>
+      </div>
+    </div>
+    <div id="sidebarBody">
+      <input id="mapToggle" class="links sidebarOption half" type="button" value="Map" onclick="TraX.toggleMap();">
+      <input id="realtimeDataToggle" class="links sidebarOption half" type="button" value="Sensors" onclick="TraX.toggleRealtimeView();">
+      <input id="friendViewToggle" class="links sidebarOption" type="button" value="Friends" onclick="TraX.toggleFriendsView();">
+      <div class="sidebarThinLine"></div>
+      <a id="viewDataToggle" class="links sidebarOption half" href="https://dev.campbellcrowley.com/trax/viewdata/"><span>Recordings</span></a>
+      <a class="links sidebarOption half" href="https://dev.campbellcrowley.com/trax/live/"><span>Live View</span></a>
+      <a class="links sidebarOption" href="https://www.campbellcrowley.com/account/" target="_blank"><span>Your Account</span></a>
+      <div class="sidebarThinLine"></div>
+    </div>
+  </div>
+  <div id="content">
+    <div id="help" class="contentsection transparentcontent">
+      <p id="needIMU">Only works on devices with IMU (Gyroscope, Accelerometer).</p>
+      <p id="needAccount">To send data to server you must be signed in.</p>
+    </div>
+    <div class="contentsection transparentcontent" style="text-align: center;">
+      <div id="chooseHUDWrapper">
+        <button id="chooseBigButton" class="links smaller nohover selected" onclick="TraX.handleClickBigButton();" disabled><span>Big Button</span></button>
+        <button id="chooseTimers" class="links smaller nohover" onclick="TraX.handleClickTimers();" disabled><span>Times</span></button>
+        <button id="chooseCustom" class="links smaller nohover" onclick="TraX.handleClickCustom();" disabled style="display: none;"><span>Custom</span></button>
+      </div>
+    </div>
+    <div id="bigButtonHUD" class="contentsection HUD visibleHUD">
+      <button class="links square nohover hudfstoggle" onclick="TraX.toggleHUDFullscreen();"><span>&#x2922;</span></button>
+      <button id="mainStatusLightContainer" onclick="TraX.toggleStatus();">
+        <img id="greenLightLarge" class="green largelight">
+        <img id="yellowLightLarge" class="yellow largelight">
+        <img id="redLightLarge" class="red largelight">
+        <img id="processingLightLarge" class="processing largelight">
+      </button>
+      <div id="statusLightList">
+        <div class="statusLight nohover">
+          <p>Sensors and GPS will be red unless the data from these is being used. Open Sensors to see if your sensors and GPS work.</p>
+          <p>Sending to and Receiving from server will not be green unless record is pressed and the user is signed in.</p>
+        </div>
+        <div class="statusLight nohover">
+          <a>Reading Sensors: </a>
+          <img id="greenLightStatus" class="green light" >
+          <img id="redLightStatus" class="red light">
+        </div>
+        <div class="statusLight nohover">
+          <a>GPS: </a>
+          <img id="greenLightGPS" class="green light" >
+          <img id="redLightGPS" class="red light">
+        </div>
+        <div class="statusLight nohover">
+          <a>Data is buffered: </a>
+          <img id="greenLightPaused" class="green light">
+          <img id="redLightPaused" class="red light">
+        </div>
+        <div class="statusLight nohover">
+          <a>Connected to server: </a>
+          <img id="greenLightConnected" class="green light">
+          <img id="redLightConnected" class="red light">
+        </div>
+        <div class="statusLight nohover">
+          <a>Sending to server: </a>
+          <img id="greenLightSending" class="green light">
+          <img id="yellowLightSending" class="yellow light">
+          <img id="redLightSending" class="red light">
+        </div>
+        <div class="statusLight nohover">
+          <a>Server Receiving: </a>
+          <img id="greenLightWriting" class="green light">
+          <img id="redLightWriting" class="red light">
+        </div>
+        <div class="statusLight nohover">
+          <a>Scripts Status: </a>
+          <img id="greenLightScripts" class="green light">
+          <img id="redLightScripts" class="red light">
+        </div>
+      </div>
+      <div id="controls">
+        <div id="pausePlayWrapper">
+          <button id="pausePlay" class="links nohover" onclick="TraX.togglePause()" disabled><span>Loading...</span></button>
+        </div>
+      </div>
+    </div>
+    <div id="timersHUD" class="contentsection HUD hiddenHUD">
+      <button class="links square nohover hudfstoggle" onclick="TraX.toggleHUDFullscreen();"><span>&#x2922;</span></button>
+      <!-- <strong>Times are estimates.</strong><br> -->
+      <strong>Track: </strong>
+      <a id="timersTitle">---/---</a>
+      <div id="littleTimer0">
+        <a class="timerTitle">Session Total</a>
+        <span class="timerBody">
+          XX:XX.XXX
+        </span>
+      </div>
+      <div id="bigTimer">
+        <a class="timerTitle">Current Lap</a>
+        <span class="timerBody">
+          XX:XX.XXX
+        </span>
+      </div>
+      <div id="littleTimer3">
+        <a class="timerTitle">Predicted Lap</a>
+        <span class="timerBody">
+          XX:XX.XXX
+        </span>
+      </div>
+      <div id="littleTimer4">
+        <a class="timerTitle">Current Split (Best)</a>
+        <span class="timerBody">
+          XX:XX.XXX
+        </span>
+      </div>
+      <div id="littleTimer1">
+        <a class="timerTitle">Previous Lap</a>
+        <span class="timerBody">
+          XX:XX.XXX
+        </span>
+      </div>
+      <div id="littleTimer2">
+        <a class="timerTitle">Best Lap</a>
+        <span class="timerBody">
+          XX:XX.XXX
+        </span>
+      </div>
+      <div id="timerButtons">
+        <button id="timerPausePlay" class="links small nohover" onclick="TraX.togglePause(false)"><span>Record</span></button>
+        <button id="timerPausePlay" class="links small nohover" onclick="TraX.togglePause(true)"><span>Stop</span></button>
+      </div>
+    </div>
+    <!-- <div id="customHUD" class="contentsection HUD hiddenHUD">
+      <button id="customMenuButton" class="links tiny nohover" onclick="TraX.CustomHUD.toggleMenu()"><span>Menu</span></button>
+      <table id="customMenu" class="customMenuHidden">
+        <tr>
+          <td>Panel Name</td>
+          <td>Hidden</td>
+          <td>Small</td>
+          <td>Large</td>
+        </tr>
+        <tr>
+          <td>Hello World!</td>
+          <td><input type="radio" name="helloWorld" id="helloWorldOff" checked></td>
+          <td><input type="radio" name="helloWorld" id="helloWorldSmall"></td>
+          <td><input type="radio" name="helloWorld" id="helloWorldLarge"></td>
+        </tr>
+      </table>
+      <div id="customHUDLayout">
+      </div>
+    </div> -->
+    <div class="line"></div>
+    <div class="contentsection transparentcontent">
+      <div id="otherOptions">
+        <button id="optionsMenuToggle" class="links smaller nohover" onclick="TraX.toggleOptionsMenu()"><span>Options</span></button>
+        <button id="debugMode" class="links smaller nohover" onclick="TraX.toggleDebug()"><span>Debug Mode</span></button>
+      </div>
+    </div>
+    <div class="contentsection transparentcontent">
+      <a id="filesize"></a>
+    </div>
+    <div id="optionsMenu" class="contentsection">
+        <div id="updateFrqDropdown" class="optionsSection">
+          <label for="Data save frequency">Save frequency:&nbsp;</label>
+          <select id="updateFrequency" name="Data save frequency" onchange="TraX.changeUpdateFreq()">
+            <option value="100">10Hz</option>
+            <option value="140" selected>7Hz</option>
+            <option value="250">4Hz</option>
+            <option value="500">2Hz</option>
+            <option value="1000">1Hz</option>
+          </select>
+          <br>
+          <input type="checkbox" name="doCompression" id="doCompression" />
+          <label for="doCompression">Compress data (slower)</label>
+        </div>
+        <div class="optionsSection">
+          <div id="sessionSelect">
+            <label for="sessionInput">Session Name: </label>
+            <input id="sessionInput" onKeyUp="TraX.sessionInputChange()" type="text">
+            <!-- <input type="button" onclick="requestFilesize()" value="Check Filesize"> -->
+          </div>
+          <div>
+            <label for="sessionTrackNameSelect">Track Name:&nbsp;</label>
+            <select id="sessionTrackNameSelect" name="sessionTrackNameSelect" onchange="TraX.sessionTrackNameChange()">
+            </select>
+            <a id="sessionTrackNameEdit" class="links tiny nohover" href="https://dev.campbellcrowley.com/trax/viewdata/?viewdata=3&edittrack=1"><span>Edit</span></a>
+          </div>
+          <div>
+            <label for="sessionConfigNameSelect">Config Name:&nbsp;</label>
+            <select id="sessionConfigNameSelect" name="sessionConfigNameSelect" onchange="TraX.sessionConfigNameChange()">
+            </select>
+            <a id="sessionConfigNameEdit" class="links tiny nohover" href="https://dev.campbellcrowley.com/trax/viewdata/?viewdata=3&edittrack=1"><span>Edit</span></a>
+            <div id="sessionPublicSettings">
+              <label for="streamIsPublicCheckbox">Live data is public:&nbsp;</label>
+              <input id="streamIsPublicCheckbox" name="streamIsPublicCheckbox" type="checkbox">
+            </div>
+          </div>
+        </div>
+        <!-- <div class="optionsSection">
+          <label for="units">Units:&nbsp;</label>
+          <select id="unitDropdown" name="units">
+            <option value="metric">Metric</option>
+            <option value="imperial" selected>Imperial</option>
+          </select>
+        </div> -->
+        <div style="display: none;" class="optionsSection">
+          <label for="flipXAxis">Flip X-axis&nbsp;</label>
+          <input name="flipXAxis" id="flipXAxisButton" type="checkbox">
+          <label for="flipYAxis">Flip Y-axis&nbsp;</label>
+          <input name="flipYAxis" id="flipYAxisButton" type="checkbox">
+          <label for="flipZAxis">Flip Z-axis&nbsp;</label>
+          <input name="flipZAxis" id="flipZAxisButton" type="checkbox">
+        </div>
+        <div class="optionsSection">
+          <input name="extraDataCheckbox" id="extraDataCheckbox" type="checkbox">
+          <label for="extraDataCheckbox">Send developer data.</label>
+        </div>
+        <div class="optionsSection">
+          <!-- <label for="authorizeVideo">Stream video:&nbsp;</label>
+          <input name="authorizeVideo" id="authorizeVideo" type="button" class="links smaller nohover" value="Authorize" onclick="TraX.Video.getPerms();" disabled> -->
+          <input name="enableVideo" id="enableVideo" type="checkbox" onchange="TraX.Video.toggleVideo();" disabled>
+          <label for="enableVideo" style="text-decoration: line-through">Recording video&nbsp;</label>
+        </div>
+    </div>
+    <div id="realtimeVideo" class="contentsection">
+      <div id="videoCanvases"></div>
+    </div>
+    <div id="realtimeData" class="contentsection">
+      <div id="realtimeRawData" class="realtimePane">
+        <div id="realtimeGPS" class="realtimeSection">
+          <a class="realtimeSectionTitle">GPS</a>
+          <div class="realtimeSectionBody">
+            <div>
+              <a class="realtimeSubTitle">Lon: </a><br>
+              <a id="realtimeLongitude">Oops</a>
+            </div>
+            <div>
+              <a class="realtimeSubTitle">Lat: </a><br>
+              <a id="realtimeLatitude">Oops</a>
+            </div>
+            <div>
+              <a class="realtimeSubTitle">Alt: </a>
+              <a id="realtimeAltitude">Oops</a>
+            </div>
+            <div>
+              <a class="realtimeSubTitle">Speed: </a>
+              <a id="realtimeGPSSpeed">Oops</a>
+            </div>
+            <div>
+              <a class="realtimeSubTitle">Heading: </a>
+              <a id="realtimeGPSHeading">Oops</a>
+            </div>
+          </div>
+        </div>
+        <div id="realtimeGyro" class="realtimeSection">
+          <a class="realtimeSectionTitle">Orientation</a>
+          <div class="realtimeSectionBody">
+            <canvas id="realtimeGyroSphere" width="150px" height="150px">
+              Oops! It appears your browser doesn't support this canvas!
+            </canvas>
+          </div>
+        </div>
+        <div id="realtimeAccel" class="realtimeSection">
+          <a class="realtimeSectionTitle">Motion</a>
+          <div class="realtimeSectionBody">
+            <canvas id="realtimeAccelCanvas" width="150px" height="150px">
+              Oops! It appears your browser doesn't support this canvas!
+            </canvas>
+          </div>
+        </div>
+        <div id="realtimeClock" class="realtimeSection">
+          <a class="realtimeSectionTitle">Time (UTC)</a>
+          <div class="realtimeSectionBody">
+            <div>
+              <a class="realtimeSubTitle">Device: </a>
+              <a id="realtimeDeviceClock"></a>
+            </div>
+            <div>
+              <a class="realtimeSubTitle">GPS: </a>
+              <a id="realtimeGPSClock"></a>
+            </div>
+            <div>
+              <a class="realtimeSubTitle">Sensors: </a>
+              <a id="realtimeSensorClock"></a>
+            </div>
+          </div>
+        </div>
+        <div id="realtimeDevice" class="realtimeSection">
+          <a class="realtimeSectionTitle">Device</a>
+          <div class="realtimeSectionBody">
+            <div>
+              <a class="realtimeSubTitle">Device: </a>
+              <a id="realtimeDeviceType"></a>
+            </div>
+            <div>
+              <a class="realtimeSubTitle">Browser: </a>
+              <a id="realtimeDeviceBrowser"></a>
+            </div>
+          </div>
+        </div>
+        <div class="realtimeSectionDouble" style="display: none;">
+          <a class="realtimeSectionTitle">Raw-Data Dump</a>
+          <div class="realtimeSectionBody">
+            <a id="realtimeDump"></a>
+          </div>
+        </div>
+      </div>
+      <div id="realtimeLapData" class="realtimePane">
+        <div id="realtimeBigClock">
+        </div>
+      </div>
+    </div>
+    <div id="debug" class="contentsection">
+      <a>Data only shows while recording data and not paused.</a>
+      <div id="sendBuffer">
+        <a>Send Buffer</a>
+      </div>
+      <div id="preSendBuffer">
+        <a>Pre Send Buffer</a>
+      </div>
+      <div id="dataDump">
+        <div class="dataBlock">
+          <h2>Gyro</h2>
+          <p>Absolute: <a id="absolute"></a></p>
+          <p>Compass Alpha: <a id="compassAlpha"></a></p>
+          <p>Alpha: <a id="alpha"></a></p>
+          <p>Beta: <a id="beta"></a></p>
+          <p>Gamma: <a id="gamma"></a></p>
+        </div>
+        <div class="dataBlock">
+          <h2>Accelerometer</h2>
+          <p>Acceleration: <a id="acceleration"></a></p>
+          <p>Accel + Gravity: <a id="accelIncGrav"></a></p>
+          <p>Rotation Rate: <a id="rotationRate"></a></p>
+          <p>Interval: <a id="interval"></a></p>
+        </div>
+        <div class="dataBlock">
+          <h2>GPS</h2>
+          <p>Longitude: <a id="longitude"></a></p>
+          <p>Latitude: <a id="latitude"></a></p>
+          <p><a id="posinfo"></a></p>
+        </div>
+        <div class="dataBlock">
+          <h2>Bluetooth</h2>
+          <div id="bluetoothDebug">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="contentsection" id="friendMapParent">
+      <div id="friendmap"></div>
+    </div>
+    <!-- Friends View -->
+    <div id="friendView" class="hidden">
+        <!-- <a id="friendViewTitle">Friends</a> -->
+      <div id="friendOptions">
+        <button type="button" class="links square nohover" onclick="TraX.toggleFriendsView(false);" style="vertical-align: top"><span>Back</span></button>
+        <div id="friendViewSelf">
+          <a id="friendViewName">Your name</a>
+          <a id="friendViewId">Your id</a>
+          <button class="links tiny nohover" onclick="TraX.copyFriendLink();"><span>Share</span></button>
+        </div>
+      </div>
+      <div id="friendRequestListParent">
+        <h2>Requests</h2>
+        <ul id="friendRequestList">
+          <li>
+            Requests should be here. But something is broken.
+          </li>
+        </ul>
+      </div>
+      <div id="friendListParent">
+        <h2>Friends</h2>
+        <ul id="friendList">
+          <li>
+            Friends should be here. But something is broken.
+          </li>
+        </ul>
+      </div>
+      <div id="blockedListParent">
+        <h2>Blocked</h2>
+        <ul id="blockedList">
+          <li>
+            Blocked should be here. But something is broken.
+          </li>
+        </ul>
+      </div>
+      <div id="publicInfoMessage">
+        <a>Friends can see eachother's sessions, tracks, configs.<br>Friends can
+          also see eachother's live position while data is being recorded or viewed.<br>
+          All users can see your account id and name (displayed above) once you
+          sign in and send a request.</a>
+      </div>
+      <div id="friendAddParent">
+        <label for="friendInput">Friend ID: </label>
+        <input type="number" name="friendInput" id="friendInput" placeholder="100020003000400050006" style="width: 165px;">
+        <button type="button" class="links small nohover" onclick="TraX.addFriend();"><span>Send Request</span></button>
+      </div>
+    </div>
+    <!-- End Friends View -->
+    <!-- Message Box -->
+    <div id="messageBoxWrapper" class="messageBoxHidden">
+      <div id="messageBoxParent">
+        <button id="messageBoxCloseButton" onclick="TraX.hideMessageBox()"><span>X</span></button>
+        <button onclick="TraX.hideMessageBox()">
+          <span id="messageBox"></span>
+        </button>
+      </div>
+    </div>
+    <!-- End Message Box -->
+  </div>
+</div>
+<script>
+var friendmap, friendMarkerCluster;
+function initMap() {
+  friendmap = new google.maps.Map(document.getElementById('friendmap'), {
+    zoom: 1,
+    center: {lat: -28.024, lng: 140.887},
+    gestureHandling: 'auto',
+    clickableIcons: false,
+    fullscreenControlOption: false,
+    streetViewControl: false
+  });
+  friendMarkerCluster = new MarkerClusterer(friendmap, [], {
+    imagePath:
+      'https://dev.campbellcrowley.com/trax/images/m'
+  });
+}
+</script>
+<script src="https://dev.campbellcrowley.com/trax/markerclusterer.js"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI4_A7hSN7upiKouUwuwSp4CjIbTjhVA4&callback=initMap"></script>
+<div id="mainfooter"></div>
+</body>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-89923351-1', 'auto');
+  ga('send', 'pageview');
+</script>
+</html>
+
