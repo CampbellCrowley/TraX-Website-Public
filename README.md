@@ -4,6 +4,14 @@ as well as collecting other information such as G-Forces,
 and streaming it live to any internet connected device.
 Previously recorded track sessions can also be viewed later and played back.
 
+Please consider <a href="https://www.patreon.com/bePatron?u=12105522">becoming a Patron</a> to help support me.
+
+## Contact
+###### Need help? Have questions? Think something is broken?
+Submit a [bug report or feature request](https://github.com/CampbellCrowley/TraX-Website-Public/issues/new/choose)  
+Get help on [Campbell's Discord server](https://discord.gg/ZbKfYSQ)  
+Send an email: [TraX@campbellcrowley.com](mailto:trax@campbellcrowley.com)  
+
 ## Usage
 Go to [https://trax.campbellcrowley.com][home] on a smartphone to record data  
 or  
