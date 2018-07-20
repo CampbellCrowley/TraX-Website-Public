@@ -75,7 +75,7 @@ or
   - Friend is currently at a track
   - Friend is recording a track session
   
-===
+---
 
 © Copyright 2018, Campbell Crowley
 
