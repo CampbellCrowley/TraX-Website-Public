@@ -6,14 +6,13 @@ const CLIENT_ID = auth.gClientTokenAuthId;
 const common = require('/var/www/servers/common.js');
 const http = require('http');
 const app = http.createServer(handler);
-const https_ = require('https');
+// const https_ = require('https');
 const path = require('path');
 const io = require('socket.io')(app, {
   path: '/' + path.relative('/var/www', process.cwd()).split('/')[0] +
       '/socket.io/',
-  serveClient: false
+  serveClient: false,
 });
-const dateFormat = require('dateformat');
 const fs = require('fs');
 const sql = require('mysql');
 const mkdirp = require('mkdirp');
@@ -24,24 +23,24 @@ const getSize = require('get-folder-size');
 const gal = require('google-auth-library');
 const client = new gal.OAuth2Client(CLIENT_ID, '', '');
 
-const versionType = __dirname == "/var/www/trax.campbellcrowley.com" ?
-    "release" :
-    "development";
+const versionType = __dirname == '/var/www/trax.campbellcrowley.com' ?
+    'release' :
+    'development';
 
-const userdata = "/var/www/data/user/";
-const traxsubdir = "/TraX/";
-const sessionsubdir = "sessions/";
-const usertracksubdir = "tracks/";
-const usersummariessubdir = "summaries/";
+const userdata = '/var/www/data/user/';
+const traxsubdir = '/TraX/';
+const sessionsubdir = 'sessions/';
+const usertracksubdir = 'tracks/';
+const usersummariessubdir = 'summaries/';
 const trackdataDirs = {
-  development: "/var/www/dev.campbellcrowley.com/trax/trackdata/",
-  release: "/var/www/trax.campbellcrowley.com/trackdata/"
+  development: '/var/www/dev.campbellcrowley.com/trax/trackdata/',
+  release: '/var/www/trax.campbellcrowley.com/trackdata/',
 };
 const trackdata = trackdataDirs[versionType];
 
-const accountsTable = "Accounts";
-const friendTable = "Friends";
-const statusColumn = "relationship";
+const accountsTable = 'Accounts';
+const friendTable = 'Friends';
+const statusColumn = 'relationship';
 // No relationship
 const noStatus = -1;
 // User 1 requested to be friends.
@@ -57,48 +56,53 @@ const twoBlockedStatus = 4;
 // Both users blocked eachother.
 const bothBlockedStatus = 5;
 // User 1 requested User 2 to be crew for 1.
-const onePullRequestCrew = 6;
+// const onePullRequestCrew = 6;
 // User 1 requested to be crew for 2.
-const onePushRequestCrew = 7;
+// const onePushRequestCrew = 7;
 // user 2 requested 1 to be crew for 2.
-const twoPushRequestCrew = 8;
+// const twoPushRequestCrew = 8;
 // User 2 requested to be crew for 1.
-const twoPullRequestCrew = 9;
+// const twoPullRequestCrew = 9;
 // User 1 is crew for 2.
-const oneCrewStatus = 10;
+// const oneCrewStatus = 10;
 // User 2 is crew for 1.
-const twoCrewStatus = 11;
+// const twoCrewStatus = 11;
 
-const versionNumFile = "./version.txt";
-var versionNum = "Unknown";
-var versionNumLastUpdate = 0;
-var versionNumUpdateInterval;
-versionNumUpdateInterval = setInterval(updateVersionNum, 15000);
+const versionNumFile = './version.txt';
+let versionNum = 'Unknown';
+let versionNumLastUpdate = 0;
+setInterval(updateVersionNum, 15000);
 updateVersionNum();
 
-if (versionType == "development") {
+if (versionType == 'development') {
   common.begin(false, false);
-  common.log("STARTING IN DEVELOPMENT MODE!");
+  common.log('STARTING IN DEVELOPMENT MODE!');
 } else {
   common.begin(false, true);
-  common.log("STARTING IN RELEASE MODE!");
+  common.log('STARTING IN RELEASE MODE!');
 }
 app.listen(process.argv[2]);
 
 // All connected sockets.
-var sockets = [];
+let sockets = [];
 // All connected sockets requesting live data streams.
-var liveSockets = [];
+let liveSockets = [];
 
-// Connect to SQL server
-var sqlCon;
+let sqlCon;
+/**
+ * Connect to SQL server. Only used for initial connection test or to reconnect
+ * on fatal error.
+ *
+ * @private
+ */
 function connectSQL() {
+  /* eslint-disable-next-line new-cap */
   sqlCon = new sql.createConnection({
-    user: 'webserver',
-    password: 'hellosql',
+    user: auth.sqlUsername,
+    password: auth.sqlPassword,
     host: 'campbell-pi-2.local',
     database: 'appusers',
-    port: 3306
+    port: 3306,
   });
   sqlCon.on('error', function(e) {
     common.error(e);
@@ -109,11 +113,17 @@ function connectSQL() {
 }
 connectSQL();
 
-// There is no reason for this to ever be called unless something went wrong.
+/**
+ * Handler for all http requests. Should never be called unless something broke.
+ *
+ * @private
+ * @param {http.IncomingMessage} req Client request.
+ * @param {http.ServerResponse} res Server response.
+ */
 function handler(req, res) {
-  common.error("TEAPOT " + req.url);
+  common.error('TEAPOT ' + req.url);
   res.writeHead(418);
-  res.end("I'm a little teapot.");
+  res.end('I\'m a little teapot.');
 }
 
 /**
@@ -123,20 +133,32 @@ function handler(req, res) {
  * @return {object} list Object of key-pairs for each cookie.
  */
 function parseCookies(headers) {
-  var list = {};
-  var rc = headers.cookie;
+  let list = {};
+  let rc = headers.cookie;
 
   rc && rc.split(';').forEach(function(cookie) {
-    var parts = cookie.split('=');
+    let parts = cookie.split('=');
     list[parts.shift().trim()] = decodeURI(parts.join('='));
   });
 
   return list;
 }
-var lastReceiveTime = 0;
-var lastReceiveName = "";
+let lastReceiveTime = 0;
+let lastReceiveName = '';
 
+/**
+ * Stores the current Patreon tier benefits read from patreon.json
+ *
+ * @private
+ * @type {Array}
+ */
 let patreonTiers = [];
+/**
+ * Read the Patreon tier beneits from patreon.json
+ * @see {patreonTiers}
+ *
+ * @private
+ */
 function updatePatreonTiers() {
   common.log('Reading patreon.json');
   fs.readFile('./patreon.json', function(err, data) {
@@ -163,14 +185,14 @@ fs.watchFile('./patreon.json', function(curr, prev) {
 
 // TODO: Move events to functions.
 io.on('connection', function(socket) {
-  var userId = "";
-  var token = parseCookies(socket.handshake.headers)['token'];
-  var hastoken =
+  let userId = '';
+  let token = parseCookies(socket.handshake.headers)['token'];
+  let hastoken =
       typeof token !== 'undefined' && token !== '' && token !== 'undefined';
-  var dirname;
-  var streaming = false;
-  var streamIsPublic = false;
-  var dataLimit, dataSize;
+  let dirname;
+  let streaming = false;
+  let streamIsPublic = false;
+  let dataLimit; let dataSize;
   sockets.push(socket);
   const ip = common.getIPName(
       socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
@@ -184,9 +206,9 @@ io.on('connection', function(socket) {
           {idToken: token, audience: CLIENT_ID}, function(e, login) {
             if (e) {
             } else if (typeof login !== 'undefined') {
-              var payload = login.getPayload();
-              var userid = payload['sub'];
-              common.log("ID CHANGE: " + userId + " to " + userid, socket.id);
+              let payload = login.getPayload();
+              let userid = payload['sub'];
+              common.log('ID CHANGE: ' + userId + ' to ' + userid, socket.id);
               userId = userid;
               socket.userId = userId;
               updateDirname(userId);
@@ -197,7 +219,7 @@ io.on('connection', function(socket) {
     }
   }
   common.log(
-      ip + ": Connected (token: " + hastoken + "), Connected: " +
+      ip + ': Connected (token: ' + hastoken + '), Connected: ' +
           sockets.length,
       socket.id);
   updateDirname(userId);
@@ -210,14 +232,14 @@ io.on('connection', function(socket) {
   // New connection procedure ends here.
 
   socket.on('disconnect', function(reason) {
-    common.log(userId + ": Disconnect (" + reason + ")", socket.id);
-    for (var i = 0; i < sockets.length; i++) {
+    common.log(userId + ': Disconnect (' + reason + ')', socket.id);
+    for (let i = 0; i < sockets.length; i++) {
       if (sockets[i].id == socket.id) {
         sockets.splice(i, 1);
         break;
       }
     }
-    for (var i = 0; i < liveSockets.length; i++) {
+    for (let i = 0; i < liveSockets.length; i++) {
       if (liveSockets[i].id == socket.id) {
         liveSockets.splice(i, 1);
         break;
@@ -225,19 +247,21 @@ io.on('connection', function(socket) {
     }
   });
 
-  socket.on('ping', function(data) { socket.emit('pong', data); });
-  socket.on('ping_', function() {
-    socket.emit.apply(socket, ['pong_', 'PONG'].concat(arguments));
+  socket.on('ping', function(data) {
+    socket.emit('pong', data);
+  });
+  socket.on('ping_', function(...args) {
+    socket.emit(['pong_', 'PONG'].concat(args));
   });
 
   socket.on('setliveview', function() {
-    common.log("Set to live view", socket.id);
+    common.log('Set to live view', socket.id);
     socket.live = true;
     liveSockets.push(socket);
   });
   socket.on('unsetliveview', function() {
-    common.log("Unset live view", socket.id);
-    for (var i = 0; i < liveSockets.length; i++) {
+    common.log('Unset live view', socket.id);
+    for (let i = 0; i < liveSockets.length; i++) {
       if (liveSockets[i].id == liveSockets.id) {
         socket.live = false;
         liveSockets.splice(i, 1);
@@ -259,8 +283,8 @@ io.on('connection', function(socket) {
               if (e) {
                 common.log(e, socket.id);
               } else if (typeof login !== 'undefined') {
-                var payload = login.getPayload();
-                var userid = payload['sub'];
+                let payload = login.getPayload();
+                let userid = payload['sub'];
                 if (userid != userId) {
                   userId = userid;
                   socket.userId = userId;
@@ -268,7 +292,7 @@ io.on('connection', function(socket) {
                   fetchDataLimit();
                   fetchDataSize();
                   common.log(
-                      userId + ": New token (token: " + hastoken + ")",
+                      userId + ': New token (token: ' + hastoken + ')',
                       socket.id);
                 }
               }
@@ -277,18 +301,19 @@ io.on('connection', function(socket) {
         common.error(e);
       }
     } else {
-      common.log("New token attempted without sending token.", socket.id);
-      userId = "";
-      socket.userId = "";
+      common.log('New token attempted without sending token.', socket.id);
+      userId = '';
+      socket.userId = '';
     }
   });
 
-  socket.on('newsession', function(sessionName, trackId, trackOwnerId, configId, configOwnerId, sessionId) {
+  socket.on('newsession', function(sessionName, trackId, trackOwnerId, configId,
+      configOwnerId, sessionId) {
     if (typeof sessionId !== 'string' || sessionId.length <= 0) {
       sessionId = Date.now() + socket.id;
     }
     const mydir = path.normalize(dirname + sessionId);
-    const filename = path.normalize(mydir + "/data.json");
+    const filename = path.normalize(mydir + '/data.json');
     const file = JSON.stringify({
       id: sessionId,
       ownerId: userId + '',
@@ -297,14 +322,14 @@ io.on('connection', function(socket) {
       trackId: trackId,
       trackOwnerId: trackOwnerId,
       configId: configId,
-      configOwnerId: configOwnerId
+      configOwnerId: configOwnerId,
     });
     checkFilePerms(filename, userId, undefined, function(err2, perms) {
       mkdirp(mydir, {mode: 0700}, function(err3) {
         if (err3) {
           socket.emit('fail', 'writeerror');
           common.error(
-              "Failed to create directory " + filename + " " + err3, socket.id);
+              'Failed to create directory ' + filename + ' ' + err3, socket.id);
           return;
         }
         fs.readFile(filename, function(err3, readFileData) {
@@ -318,10 +343,10 @@ io.on('connection', function(socket) {
             if (err4) {
               socket.emit('fail', 'writeerror');
               common.error(
-                  "Failed to write to " + filename + " " + err4, socket.id);
+                  'Failed to write to ' + filename + ' ' + err4, socket.id);
               return;
             }
-            common.log("Added new session to " + filename, socket.id);
+            common.log('Added new session to ' + filename, socket.id);
             socket.emit('createdsession', sessionId);
           });
         });
@@ -329,9 +354,10 @@ io.on('connection', function(socket) {
     });
   });
 
-  socket.on('editsession', function(sessionName, trackId, trackOwnerId, configId, configOwnerId, sessionId) {
+  socket.on('editsession', function(sessionName, trackId, trackOwnerId,
+      configId, configOwnerId, sessionId) {
     const mydir = path.normalize(dirname + sessionId);
-    const filename = path.normalize(mydir + "/data.json");
+    const filename = path.normalize(mydir + '/data.json');
     checkFilePerms(filename, userId, undefined, function(err, perms) {
       if (err || !perms) {
         socket.emit('fail', 'noperm');
@@ -357,17 +383,17 @@ io.on('connection', function(socket) {
           trackId: trackId,
           trackOwnerId: trackOwnerId,
           configId: configId,
-          configOwnerId: configOwnerId
+          configOwnerId: configOwnerId,
         });
         // Write data file
         fs.writeFile(filename, file, function(err4) {
           if (err4) {
             socket.emit('fail', 'writeerror');
             common.error(
-                "Failed to write to " + filename + " " + err4, socket.id);
+                'Failed to write to ' + filename + ' ' + err4, socket.id);
             return;
           }
-          common.log("Edited session " + filename, socket.id);
+          common.log('Edited session ' + filename, socket.id);
           socket.emit('editedsession', sessionId);
         });
       });
@@ -380,7 +406,7 @@ io.on('connection', function(socket) {
       return;
     }
     const mydir = dirname + sessionId;
-    const filename = path.normalize(mydir + "/session.dat");
+    const filename = path.normalize(mydir + '/session.dat');
     checkFilePerms(filename, userId, undefined, function(err, perms) {
       if (err || !perms) {
         socket.emit('fail', err, sessionId);
@@ -389,7 +415,7 @@ io.on('connection', function(socket) {
       if (Date.now() - lastReceiveTime > 30000 ||
           lastReceiveName != sessionId) {
         common.log(
-            "Started receiving session " + userId + "/" + sessionId, socket.id);
+            'Started receiving session ' + userId + '/' + sessionId, socket.id);
         /* if (userId !== "112755862396374027799")
           sendEventToTopic(
               'notification_message', "TraX: User started recording session.");
@@ -413,9 +439,9 @@ io.on('connection', function(socket) {
   });
 
   socket.on('requestsessionsize', function(sessionId, otherId) {
-    var mydir = path.normalize(dirname + sessionId);
+    let mydir = path.normalize(dirname + sessionId);
     if (typeof otherId !== 'undefined' && otherId !== userId &&
-        otherId !== "") {
+        otherId !== '') {
       mydir = path.normalize(
           userdata + otherId + traxsubdir + sessionsubdir + sessionId);
     }
@@ -427,7 +453,7 @@ io.on('connection', function(socket) {
       }
       getSize(filename, function(err2, size) {
         if (err2) {
-          common.error("Failed to get filesize of " + filename + ". " + err2);
+          common.error('Failed to get filesize of ' + filename + '. ' + err2);
           socket.emit('stats', -1, sessionId);
         } else {
           socket.emit('stats', size, sessionId);
@@ -437,22 +463,34 @@ io.on('connection', function(socket) {
     });
   });
 
+  /**
+   * Calculates the amount of data the current user is using on the server.
+   * Result is stored in `dataSize`.
+   *
+   * @private
+   */
   function fetchDataSize() {
     if (!userId) return;
     getSize(dirname, function(err, size) {
       if (err) {
-        common.error("Failed to get filesize of " + dirname + ". " + err);
+        common.error('Failed to get filesize of ' + dirname + '. ' + err);
       } else {
         dataSize = size;
       }
     });
   }
 
+  /**
+   * Calculates the current user's data limit based off their Patreon pledge
+   * amount, or account override. Result is stored in `dataLimit`.
+   *
+   * @private
+   */
   function fetchDataLimit() {
     if (!userId || dataLimit < 0) return;
     if (!dataLimit) dataLimit = -1;
 
-    let patreonParsed, accountParsed;
+    let patreonParsed; let accountParsed;
 
     requestsComplete = function() {
       let currentTier = -1;
@@ -473,7 +511,7 @@ io.on('connection', function(socket) {
     const reqOpts1 = {
       port: 89,
       path: '/fetchaccount/id/' + userId,
-      headers: {'x-local-server-override-key': auth.localServerOverrideKey}
+      headers: {'x-local-server-override-key': auth.localServerOverrideKey},
     };
     let req1 = http.request(reqOpts1, function(res1) {
       let data = '';
@@ -495,7 +533,7 @@ io.on('connection', function(socket) {
     const reqOpts2 = {
       port: 82,
       path: '/fetchuser/' + userId + '/patreonPledgeOverride',
-      headers: {'x-local-server-override-key': auth.localServerOverrideKey}
+      headers: {'x-local-server-override-key': auth.localServerOverrideKey},
     };
     let req2 = http.request(reqOpts2, function(res2) {
       let data = '';
@@ -525,7 +563,7 @@ io.on('connection', function(socket) {
   });
 
   socket.on('requestsessionlist', function(otherId) {
-    var mydir = dirname;
+    let mydir = dirname;
     if (otherId && otherId !== 'undefined') {
       mydir = path.normalize(userdata + otherId + traxsubdir + sessionsubdir);
     }
@@ -536,34 +574,34 @@ io.on('connection', function(socket) {
       }
       fs.readdir(mydir, function(err2, files) {
         if (err2) {
-          socket.emit('sessionlist', "readerror", 'requestsessionlist');
-          common.error("Failed to read " + mydir + " " + err2, socket.id);
+          socket.emit('sessionlist', 'readerror', 'requestsessionlist');
+          common.error('Failed to read ' + mydir + ' ' + err2, socket.id);
           return;
         }
-        var responses = 0;
-        var callback = function() {
+        let responses = 0;
+        let callback = function() {
           responses++;
           if (responses == files.length) {
             trackIdsToNames(finalfiles, function(nameList) {
-              for (var i = 0; i < nameList.length; i++) {
-                if (!nameList[i]["ownerId"]) {
-                  nameList[i]["ownerId"] = otherId || userId;
+              for (let i = 0; i < nameList.length; i++) {
+                if (!nameList[i]['ownerId']) {
+                  nameList[i]['ownerId'] = otherId || userId;
                 }
               }
               socket.emit('sessionlist', nameList);
             });
           }
         };
-        var finalfiles = [];
-        for (var i = 0; i < files.length; i++) {
+        let finalfiles = [];
+        for (let i = 0; i < files.length; i++) {
           const file = files[i];
           fs.stat(path.join(mydir, file), function(err3, stats) {
             if (err3) {
               common.error(
-                  "Failed to stat " + mydir + "/" + file + " " + err3,
+                  'Failed to stat ' + mydir + '/' + file + ' ' + err3,
                   socket.id);
             } else {
-              if (stats.isDirectory()) finalfiles.push(mydir + "/" + file);
+              if (stats.isDirectory()) finalfiles.push(mydir + '/' + file);
             }
             callback();
           });
@@ -580,11 +618,11 @@ io.on('connection', function(socket) {
     }
     if (typeof sessionId !== 'string' || sessionId.length <= 0) return;
     streaming = true;
-    var mydir = dirname + sessionId;
+    let mydir = dirname + sessionId;
     if (typeof otherId !== 'undefined' && otherId !== userId) {
       mydir = userdata + otherId + traxsubdir + sessionsubdir + sessionId;
     }
-    const sessionFile = mydir + "/session.dat";
+    const sessionFile = mydir + '/session.dat';
     checkFilePerms(sessionFile, userId, otherId, function(err, perm) {
       if (err || !perm) {
         streaming = false;
@@ -593,23 +631,23 @@ io.on('connection', function(socket) {
       }
       fs.stat(sessionFile, function(err, stats) {
         if (err) {
-          socket.emit('fail', "readerr", sessionId);
-          common.log("Failed to stat " + sessionFile + ": " + err, socket.id);
+          socket.emit('fail', 'readerr', sessionId);
+          common.log('Failed to stat ' + sessionFile + ': ' + err, socket.id);
           streaming = false;
           return;
         }
 
-        var bytessent = 0;
+        let bytessent = 0;
         const numbytes = stats['size'];
 
-        var options = {};
+        let options = {};
         if (typeof startByte !== 'undefined') options.start = startByte;
         if (typeof endByte !== 'undefined') options.end = endByte;
-        var stream = fs.createReadStream(sessionFile, options);
+        let stream = fs.createReadStream(sessionFile, options);
 
-        common.log("Stream of " + sessionFile + " started", socket.id);
+        common.log('Stream of ' + sessionFile + ' started', socket.id);
         stream.on('readable', function() {
-          var chunk;
+          let chunk;
           while (null !== (chunk = stream.read())) {
             const size = chunk.length;
             bytessent += size;
@@ -620,13 +658,13 @@ io.on('connection', function(socket) {
         });
         stream.on('close', function() {
           socket.emit(
-              "streamresponse", -1, null, sessionId, bytessent, numbytes);
+              'streamresponse', -1, null, sessionId, bytessent, numbytes);
           streaming = false;
         });
         stream.on('error', function(err2) {
           common.log(
-              "Stream of " + sessionFile + " errored " + bytessent + "/" +
-                  numbytes + " (" + err + ")",
+              'Stream of ' + sessionFile + ' errored ' + bytessent + '/' +
+                  numbytes + ' (' + err + ')',
               socket.id);
         });
       });
@@ -634,7 +672,7 @@ io.on('connection', function(socket) {
   });
 
   socket.on('deletesession', function(sessionId) {
-    common.log("Deleting session " + userId + "/" + sessionId, socket.id);
+    common.log('Deleting session ' + userId + '/' + sessionId, socket.id);
     if (typeof sessionId === 'number' && sessionId >= 0) {
       sessionId = sessionId + '';
     }
@@ -647,7 +685,7 @@ io.on('connection', function(socket) {
       }
       rimraf(mydir, function(err2) {
         if (err2) {
-          common.error("Failed to delete " + mydir + err2, socket.id);
+          common.error('Failed to delete ' + mydir + err2, socket.id);
           socket.emit('fail', 'rmerror');
         }
       });
@@ -656,8 +694,8 @@ io.on('connection', function(socket) {
 
   socket.on('renamesession', function(sessionId, newName) {
     newName = String(newName);
-    const filename = path.normalize(dirname + sessionId + "/data.json");
-    console.log("Renaming session " + userId + "/" + sessionId);
+    const filename = path.normalize(dirname + sessionId + '/data.json');
+    console.log('Renaming session ' + userId + '/' + sessionId);
     checkFilePerms(filename, userId, undefined, function(err, perms) {
       if (err || !perms) {
         socket.emit('fail', err);
@@ -678,7 +716,7 @@ io.on('connection', function(socket) {
         fs.writeFile(filename, JSON.stringify(file), function(err3) {
           if (err3) {
             socket.emit('fail', 'writeerror');
-            common.error("Failed to rename session " + sessionId, socket.id);
+            common.error('Failed to rename session ' + sessionId, socket.id);
             return;
           }
         });
@@ -699,8 +737,8 @@ io.on('connection', function(socket) {
       mydir = userdata + otherId + traxsubdir + usertracksubdir + "/" + trackId;
     } */
     trackId = String(trackId);
-    var mydir = userdata + (otherId ? otherId : userId) + traxsubdir +
-        usertracksubdir + "/" + trackId;
+    let mydir = userdata + (otherId ? otherId : userId) + traxsubdir +
+        usertracksubdir + '/' + trackId;
     mydir = path.normalize(mydir);
     checkFilePerms(mydir, userId, otherId, function(err, perms) {
       if (err || !perms) {
@@ -709,10 +747,10 @@ io.on('connection', function(socket) {
       }
       rimraf(mydir, function(err2) {
         if (err2) {
-          socket.emit('filelist', "deleteerror");
-          common.error("Failed to delete " + mydir + " " + err2, socket.id);
+          socket.emit('filelist', 'deleteerror');
+          common.error('Failed to delete ' + mydir + ' ' + err2, socket.id);
         } else {
-          common.log("Deleted " + mydir, socket.id);
+          common.log('Deleted ' + mydir, socket.id);
         }
       });
     });
@@ -730,8 +768,8 @@ io.on('connection', function(socket) {
       mydir =
           userdata + otherId + traxsubdir + usertracksubdir + "/" + trackId;
     } */
-    var mydir = userdata + (otherId ? otherId : userId) + traxsubdir +
-        usertracksubdir + "/" + trackId + "/data.json";
+    let mydir = userdata + (otherId ? otherId : userId) + traxsubdir +
+        usertracksubdir + '/' + trackId + '/data.json';
     mydir = path.normalize(mydir);
     checkFilePerms(mydir, userId, otherId, function(err, perms) {
       if (err || !perms) {
@@ -741,9 +779,9 @@ io.on('connection', function(socket) {
       fs.readFile(mydir, function(err2, file) {
         if (err2) {
           socket.emit('filelist', 'editerror');
-          common.error("Failed to edit " + mydir + " " + err2, socket.id);
+          common.error('Failed to edit ' + mydir + ' ' + err2, socket.id);
         } else {
-          var newFile;
+          let newFile;
           try {
             newFile = JSON.parse(file);
           } catch (e) {
@@ -754,7 +792,7 @@ io.on('connection', function(socket) {
           fs.writeFile(mydir, JSON.stringify(newFile), function(err3) {
             if (err3) {
               socket.emit('filelist', 'editerror');
-              common.error("Failed to edit " + mydir + " " + err3, socket.id);
+              common.error('Failed to edit ' + mydir + ' ' + err3, socket.id);
             }
           });
         }
@@ -763,10 +801,10 @@ io.on('connection', function(socket) {
   });
 
   socket.on('requesttracklist', function(pathname, otherId) {
-    var origPath = pathname;
-    if (typeof pathname == 'undefined' || pathname == "track") pathname = '';
+    let origPath = pathname;
+    if (typeof pathname == 'undefined' || pathname == 'track') pathname = '';
     const useUserDir = ((otherId && true) || false);
-    const isFriendDir = useUserDir && otherId != "myself";
+    const isFriendDir = useUserDir && otherId != 'myself';
 
     if (useUserDir && !isFriendDir) otherId = userId;
 
@@ -775,42 +813,43 @@ io.on('connection', function(socket) {
         userdata + otherId + traxsubdir + usertracksubdir + pathname);
     const finalDir = useUserDir ? userdir : mydir;
 
-    checkFilePerms(finalDir, userId, isFriendDir ? otherId : undefined, function(err, perms) {
+    checkFilePerms(finalDir, userId, isFriendDir ? otherId : undefined,
+        function(err, perms) {
       if (err || !perms) {
         socket.emit('fail', err);
         return;
       }
       fs.readdir(finalDir, function(err2, files) {
         if (err2) {
-          socket.emit('tracklist', "readerror", 'requesttracklist');
-          common.error("Failed to read " + finalDir + " " + err2, socket.id);
+          socket.emit('tracklist', 'readerror', 'requesttracklist');
+          common.error('Failed to read ' + finalDir + ' ' + err2, socket.id);
           return;
         }
-        var responses = 0;
-        var callback = function() {
+        let responses = 0;
+        let callback = function() {
           responses++;
           if (responses == files.length) {
             trackIdsToNames(finalfiles, function(nameList) {
-              for (var i = 0; i < nameList.length; i++) {
-                if (!nameList[i]["ownerId"]) {
-                  nameList[i]["ownerId"] =
-                      nameList[i]["owner"] || otherId || "";
+              for (let i = 0; i < nameList.length; i++) {
+                if (!nameList[i]['ownerId']) {
+                  nameList[i]['ownerId'] =
+                      nameList[i]['owner'] || otherId || '';
                 }
               }
               socket.emit('tracklist', nameList, origPath, otherId);
             });
           }
         };
-        var finalfiles = [];
-        for (var i = 0; i < files.length; i++) {
+        let finalfiles = [];
+        for (let i = 0; i < files.length; i++) {
           const file = files[i];
           fs.stat(path.join(finalDir, file), function(err5, stats) {
             if (err5) {
               common.error(
-                  "Failed to stat " + finalDir + "/" + file + " " + err5,
+                  'Failed to stat ' + finalDir + '/' + file + ' ' + err5,
                   socket.id);
             } else {
-              if (stats.isDirectory()) finalfiles.push(finalDir + "/" + file);
+              if (stats.isDirectory()) finalfiles.push(finalDir + '/' + file);
             }
             callback();
           });
@@ -824,15 +863,15 @@ io.on('connection', function(socket) {
 
   socket.on('newtrack', function(trackName, trackCoords) {
     const idFile = path.normalize(
-        userdata + userId + traxsubdir + usertracksubdir + "/data.json");
+        userdata + userId + traxsubdir + usertracksubdir + '/data.json');
     fs.readFile(idFile, function(err, idData) {
       let trackId;
       if (err) {
-        common.log("Creating new track data for user " + err, socket.id);
+        common.log('Creating new track data for user ' + err, socket.id);
         trackId = 0;
       } else {
         try {
-          trackId = JSON.parse(idData)["nextId"];
+          trackId = JSON.parse(idData)['nextId'];
         } catch (e) {
           common.error(idFile + e, socket.id);
           return;
@@ -840,34 +879,34 @@ io.on('connection', function(socket) {
       }
       const mydir = path.normalize(
           userdata + userId + traxsubdir + usertracksubdir + trackId);
-      const filename = path.normalize(mydir + "/data.json");
+      const filename = path.normalize(mydir + '/data.json');
       const file = JSON.stringify({
         id: trackId,
         name: trackName,
         coord: trackCoords,
         createdDate: Date.now(),
         nextId: 0,
-        ownerId: userId + ""
+        ownerId: userId + '',
       });
       mkdirp(mydir, {mode: 0700}, function(err2) {
         if (err2) {
           socket.emit('fail', 'writeerror');
           common.error(
-              "Failed to create directory " + filename + " " + err2, socket.id);
+              'Failed to create directory ' + filename + ' ' + err2, socket.id);
           return;
         }
         fs.writeFile(filename, file, function(err3) {
           if (err3) {
             socket.emit('fail', 'writeerror');
             common.error(
-                "Failed to write to " + filename + " " + err3, socket.id);
+                'Failed to write to ' + filename + ' ' + err3, socket.id);
           }
-          common.log("Added new track to " + filename, socket.id);
+          common.log('Added new track to ' + filename, socket.id);
           fs.writeFile(
               idFile, JSON.stringify({nextId: trackId + 1}), function(err3) {
                 if (err3) {
                   common.error(
-                      "Failed to increment track ID!" + idFile, socket.id);
+                      'Failed to increment track ID!' + idFile, socket.id);
                 }
               });
         });
@@ -878,7 +917,7 @@ io.on('connection', function(socket) {
   socket.on('edittrack', function(trackName, trackCoords, trackId) {
     const mydir = path.normalize(
         userdata + userId + traxsubdir + usertracksubdir + trackId);
-    const filename = path.normalize(mydir + "/data.json");
+    const filename = path.normalize(mydir + '/data.json');
     checkFilePerms(filename, userId, undefined, function(err, perms) {
       if (err || !perms) {
         socket.emit('fail', 'badtrackid');
@@ -886,7 +925,7 @@ io.on('connection', function(socket) {
       }
       fs.readFile(filename, function(err2, oldData) {
         if (err2) {
-          common.error("Failed to read old trackData" + err2, socket.id);
+          common.error('Failed to read old trackData' + err2, socket.id);
           socket.emit('fail', 'editreaderr', 'edittrack');
           return;
         }
@@ -903,25 +942,26 @@ io.on('connection', function(socket) {
           createdDate: oldData.createdDate,
           lastEdit: Date.now(),
           nextId: oldData.nextId,
-          ownerId: oldData.ownerId
+          ownerId: oldData.ownerId,
         });
         fs.writeFile(filename, file, function(err3) {
           if (err3) {
             socket.emit('fail', 'writeerror');
             common.error(
-                "Failed to write to " + filename + " " + err3, socket.id);
+                'Failed to write to ' + filename + ' ' + err3, socket.id);
             return;
           }
-          common.log("Edited track " + filename, socket.id);
+          common.log('Edited track ' + filename, socket.id);
         });
       });
     });
   });
 
-  socket.on('newconfig', function(trackId, trackName, configName, start, finish, sectors) {
+  socket.on('newconfig', function(trackId, trackName, configName, start, finish,
+      sectors) {
     const idFile = path.normalize(
         userdata + userId + traxsubdir + usertracksubdir + trackId +
-        "/data.json");
+        '/data.json');
     checkFilePerms(idFile, userId, undefined, function(err, perms) {
       if (err || !perms) {
         socket.emit('fail', 'badtrackid');
@@ -938,40 +978,41 @@ io.on('connection', function(socket) {
           (idFile + e, socket.id);
           return;
         }
-        const configId = idData["nextId"];
+        const configId = idData['nextId'];
         const mydir = path.normalize(
-            userdata + userId + traxsubdir + usertracksubdir + trackId + "/" +
+            userdata + userId + traxsubdir + usertracksubdir + trackId + '/' +
             configId);
-        const filename = path.normalize(mydir + "/data.json");
+        const filename = path.normalize(mydir + '/data.json');
         const file = JSON.stringify({
           id: configId,
-          ownerId: userId + "",
+          ownerId: userId + '',
           createdDate: Date.now(),
           trackId: trackId,
           name: configName,
           start: start,
           finish: finish,
-          sectors: sectors
+          sectors: sectors,
         });
         mkdirp(mydir, {mode: 0700}, function(err3) {
           if (err3) {
             socket.emit('fail', 'writeerror');
             common.error(
-                "Failed to create directory " + mydir + " " + err3, socket.id);
+                'Failed to create directory ' + mydir + ' ' + err3, socket.id);
             return;
           }
           fs.writeFile(filename, file, function(err4) {
             if (err4) {
               socket.emit('fail', 'writeerror');
               common.error(
-                  "Failed to write to " + filename + " " + err4, socket.id);
+                  'Failed to write to ' + filename + ' ' + err4, socket.id);
             }
-            common.log("Added new config to " + filename, socket.id);
+            common.log('Added new config to ' + filename, socket.id);
             idData.nextId++;
             fs.writeFile(idFile, JSON.stringify(idData), function(err5) {
-              if (err5)
+              if (err5) {
                 common.error(
-                    "Failed to increment config id! " + err4, socket.id);
+                    'Failed to increment config id! ' + err4, socket.id);
+              }
             });
           });
         });
@@ -979,11 +1020,12 @@ io.on('connection', function(socket) {
     });
   });
 
-  socket.on('editconfig', function(trackId, trackName, configName, start, finish, sectors, configId) {
+  socket.on('editconfig', function(trackId, trackName, configName, start,
+      finish, sectors, configId) {
     const mydir = path.normalize(
-        userdata + userId + traxsubdir + usertracksubdir + trackId + "/" +
+        userdata + userId + traxsubdir + usertracksubdir + trackId + '/' +
         configId);
-    const filename = path.normalize(mydir + "/data.json");
+    const filename = path.normalize(mydir + '/data.json');
     checkFilePerms(filename, userId, undefined, function(err, perms) {
       if (err || !perms) {
         socket.emit('fail', 'badtrackids');
@@ -1009,16 +1051,16 @@ io.on('connection', function(socket) {
           name: configName,
           start: start,
           finish: finish,
-          sectors: sectors
+          sectors: sectors,
         });
         fs.writeFile(filename, file, function(err3) {
           if (err3) {
             socket.emit('fail', 'writeerror');
             common.error(
-                "Failed to write to " + filename + " " + err3, socket.id);
+                'Failed to write to ' + filename + ' ' + err3, socket.id);
             return;
           }
-          common.log("Edited config " + filename, socket.id);
+          common.log('Edited config ' + filename, socket.id);
         });
       });
     });
@@ -1027,7 +1069,7 @@ io.on('connection', function(socket) {
   socket.on('getfriendslist', function() {
     getFriendsList(userId, friendStatus, function(err, data) {
       if (err) {
-        common.error("Failed to get relation list" + err, socket.id);
+        common.error('Failed to get relation list' + err, socket.id);
         return;
       }
       socket.emit('friendslist', data);
@@ -1037,7 +1079,7 @@ io.on('connection', function(socket) {
   socket.on('getallrelations', function() {
     getFriendsList(userId, undefined, function(err, data) {
       if (err) {
-        common.error("Failed to get relation list" + err, socket.id);
+        common.error('Failed to get relation list' + err, socket.id);
         return;
       }
       socket.emit('relationshiplist', data);
@@ -1050,21 +1092,22 @@ io.on('connection', function(socket) {
         common.error(err, socket.id);
         return;
       }
-      var newRel = friendStatus;
+      let newRel = friendStatus;
       if (row) {
-        var rel = row[statusColumn];
-        if ((row["user1"] == userId && rel != twoRequestStatus) ||
-            (row["user2"] == userId && rel != oneRequestStatus))
+        let rel = row[statusColumn];
+        if ((row['user1'] == userId && rel != twoRequestStatus) ||
+            (row['user2'] == userId && rel != oneRequestStatus)) {
           return;
+        }
       } else {
-        common.log("Can't accept request, no relation " + friendId, socket.id);
+        common.log('Can\'t accept request, no relation ' + friendId, socket.id);
         return;
       }
 
-      common.log("Accepting request" + friendId, socket.id);
+      common.log('Accepting request' + friendId, socket.id);
       setFriendRelation(userId, friendId, newRel, true, function(err) {
         if (err) {
-          common.error("Failed to accept request. " + err, socket.id);
+          common.error('Failed to accept request. ' + err, socket.id);
         }
       });
     });
@@ -1075,21 +1118,22 @@ io.on('connection', function(socket) {
         common.error(err, socket.id);
         return;
       }
-      var newRel = noStatus;
+      let newRel = noStatus;
       if (row) {
-        var rel = row[statusColumn];
-        if ((row["user1"] == userId && rel != twoRequestStatus) ||
-            (row["user2"] == userId && rel != oneRequestStatus))
+        let rel = row[statusColumn];
+        if ((row['user1'] == userId && rel != twoRequestStatus) ||
+            (row['user2'] == userId && rel != oneRequestStatus)) {
           return;
+        }
       } else {
-        common.log("Can't deny request, no relation " + friendId, socket.id);
+        common.log('Can\'t deny request, no relation ' + friendId, socket.id);
         return;
       }
 
-      common.log("Denying request" + friendId, socket.id);
+      common.log('Denying request' + friendId, socket.id);
       setFriendRelation(userId, friendId, newRel, true, function(err) {
         if (err) {
-          common.error("Failed to deny request. " + err, socket.id);
+          common.error('Failed to deny request. ' + err, socket.id);
         }
       });
     });
@@ -1100,35 +1144,35 @@ io.on('connection', function(socket) {
         common.error(err, socket.id);
         return;
       }
-      var newRel = noStatus;
+      let newRel = noStatus;
       if (row) {
-        var rel = row[statusColumn];
+        let rel = row[statusColumn];
         if (rel != friendStatus) {
-          if (row["user1"] == userId && rel != oneRequestStatus) {
-            if (row["user2"] == userId && rel != twoRequestStatus) {
+          if (row['user1'] == userId && rel != oneRequestStatus) {
+            if (row['user2'] == userId && rel != twoRequestStatus) {
               return;
             }
           }
         }
       } else {
-        common.log("Can't accept request, no relation " + friendId, socket.id);
+        common.log('Can\'t accept request, no relation ' + friendId, socket.id);
         return;
       }
 
-      common.log("Removing friends " + friendId, socket.id);
+      common.log('Removing friends ' + friendId, socket.id);
       setFriendRelation(userId, friendId, newRel, true, function(err) {
         if (err) {
-          common.error("Failed to deny request. " + err, socket.id);
+          common.error('Failed to deny request. ' + err, socket.id);
         }
       });
     });
   });
   socket.on('blockrequest', function(friendId) {
     getFriendRelation(userId, friendId, function(err, row) {
-      var newRel = oneBlockedStatus;
+      let newRel = oneBlockedStatus;
       if (row) {
         if (row[statusColumn] == bothBlockedStatus) return;
-        if (row["user1"] == userId) {
+        if (row['user1'] == userId) {
           if (row[statusColumn] == twoBlockedStatus) {
             newRel = bothBlockedStatus;
           } else {
@@ -1143,10 +1187,10 @@ io.on('connection', function(socket) {
         }
       }
 
-      common.log("Blocking friends " + friendId, socket.id);
+      common.log('Blocking friends ' + friendId, socket.id);
       setFriendRelation(userId, friendId, newRel, true, function(err) {
         if (err) {
-          common.error("Failed to block user. " + err, socket.id);
+          common.error('Failed to block user. ' + err, socket.id);
         }
       });
     });
@@ -1154,9 +1198,9 @@ io.on('connection', function(socket) {
 
   socket.on('unblockuser', function(friendId) {
     getFriendRelation(userId, friendId, function(err, row) {
-      var newRel = noStatus;
+      let newRel = noStatus;
       if (row) {
-        if (row["user1"] == userId) {
+        if (row['user1'] == userId) {
           if (row[statusColumn] == twoBlockedStatus) {
             return;
           } else if (row[statusColumn] == oneBlockedStatus) {
@@ -1181,10 +1225,10 @@ io.on('connection', function(socket) {
         return;
       }
 
-      common.log("Unblocking user" + friendId, socket.id);
+      common.log('Unblocking user' + friendId, socket.id);
       setFriendRelation(userId, friendId, newRel, true, function(err) {
         if (err) {
-          common.error("Failed to unblock user. " + err, socket.id);
+          common.error('Failed to unblock user. ' + err, socket.id);
         }
       });
     });
@@ -1196,23 +1240,23 @@ io.on('connection', function(socket) {
       return;
     }
     const toSend = sqlCon.format(
-        "SELECT * FROM ?? WHERE ((??=? AND ??=?) OR (??=? AND ??=?))", [
-          friendTable, "user1", userId, "user2", friendId, "user1", friendId,
-          "user2", userId
+        'SELECT * FROM ?? WHERE ((??=? AND ??=?) OR (??=? AND ??=?))', [
+          friendTable, 'user1', userId, 'user2', friendId, 'user1', friendId,
+          'user2', userId,
         ]);
     sqlCon.query(toSend, function(err, res) {
       if (err) {
         socket.emit('fail', err);
         return;
       }
-      var newRel = oneRequestStatus;
+      let newRel = oneRequestStatus;
       if (res && res.length > 0) {
-        var data = res[0];
-        var rel = data[statusColumn];
+        let data = res[0];
+        let rel = data[statusColumn];
         if (rel == friendStatus) {
           socket.emit('friendfail', 'alreadyfriends');
           return;
-        } else if (data["user1"] == userId) {
+        } else if (data['user1'] == userId) {
           if (rel == oneRequestStatus) {
             socket.emit('friendfail', 'alreadyrequested');
             return;
@@ -1224,7 +1268,7 @@ io.on('connection', function(socket) {
                   } else {
                     socket.emit('friendfail', 'nowfriends');
                     common.log(
-                        "Updated relationship: " + friendId + " -> " +
+                        'Updated relationship: ' + friendId + ' -> ' +
                             friendStatus,
                         socket.id);
                   }
@@ -1238,12 +1282,12 @@ io.on('connection', function(socket) {
             return;
           } else if (rel == noStatus) {
             newRel =
-                data["user1"] == userId ? oneRequestStatus : twoRequestStatus;
+                data['user1'] == userId ? oneRequestStatus : twoRequestStatus;
           } else {
             socket.emit('friendfail', 'notimplemented', 0);
             return;
           }
-        } else if (data["user2"] == userId) {
+        } else if (data['user2'] == userId) {
           if (rel == oneRequestStatus) {
             setFriendRelation(
                 userId, friendId, friendStatus, true, function(err) {
@@ -1252,7 +1296,7 @@ io.on('connection', function(socket) {
                   } else {
                     socket.emit('friendfail', 'nowfriends');
                     common.log(
-                        "Updated relationship: " + friendId + " -> " +
+                        'Updated relationship: ' + friendId + ' -> ' +
                             friendStatus,
                         socket.id);
                   }
@@ -1269,7 +1313,7 @@ io.on('connection', function(socket) {
             return;
           } else if (rel == noStatus) {
             newRel =
-                data["user1"] == userId ? oneRequestStatus : twoRequestStatus;
+                data['user1'] == userId ? oneRequestStatus : twoRequestStatus;
           } else {
             socket.emit('friendfail', 'notimplemented', 1);
             return;
@@ -1277,22 +1321,23 @@ io.on('connection', function(socket) {
         }
       }
       const toSend = sqlCon.format(
-          "SELECT * FROM ?? WHERE ??=?", [accountsTable, "id", friendId]);
+          'SELECT * FROM ?? WHERE ??=?', [accountsTable, 'id', friendId]);
       sqlCon.query(toSend, function(err, acc) {
         if (err) common.error(err);
         if (!acc || acc.length == 0) {
           socket.emit('friendfail', 'unknownuser');
           return;
         }
-        setFriendRelation(userId, friendId, newRel, res && res.length > 0, function(err) {
+        setFriendRelation(userId, friendId, newRel, res && res.length > 0,
+            function(err) {
           if (err) {
             socket.emit('friendfail', 'servererr');
           } else {
             socket.emit('friendfail', 'success');
             common.log(
-                "Updated relationship: " + friendId + " -> " + newRel,
+                'Updated relationship: ' + friendId + ' -> ' + newRel,
                 socket.id);
-            for (var i = 0; i < sockets.length; i++) {
+            for (let i = 0; i < sockets.length; i++) {
               if (sockets[i].userId == userId ||
                   sockets[i].userId == friendId && sockets[i].id != socket.id) {
                 sockets[i].emit('friendlistchanged');
@@ -1306,8 +1351,8 @@ io.on('connection', function(socket) {
 
   socket.on('updateposition', function(pos) {
     getFriendsList(userId, friendStatus, function(err, data) {
-      for (var j = 0; j < sockets.length; j++) {
-        for (var i = 0; i < data.length; i++) {
+      for (let j = 0; j < sockets.length; j++) {
+        for (let i = 0; i < data.length; i++) {
           if (sockets[j].userId == data[i].id) {
             sockets[j].emit('friendPos', pos);
           }
@@ -1320,9 +1365,9 @@ io.on('connection', function(socket) {
   });
 
   socket.on('updatesummary', function(trackId, configId, user, friendId, data) {
-    if (user == "myself") user = userId;
+    if (user == 'myself') user = userId;
     else if (!user) user = '0';
-    const trackFileName = friendId + "," + trackId + "," + configId + ".json";
+    const trackFileName = friendId + ',' + trackId + ',' + configId + '.json';
     const mydir =
         path.normalize(userdata + user + traxsubdir + usersummariessubdir);
     const filename = path.normalize(mydir + trackFileName);
@@ -1335,23 +1380,23 @@ io.on('connection', function(socket) {
         if (err3) {
           socket.emit('fail', 'writeerror');
           common.error(
-              "Failed to create directory " + mydir + " " + err3, socket.id);
+              'Failed to create directory ' + mydir + ' ' + err3, socket.id);
           return;
         }
         fs.writeFile(filename, data, function(err4) {
           if (err4) {
             socket.emit('fail', 'writeerror');
             common.error(
-                "Failed to write to " + filename + " " + err4, socket.id);
+                'Failed to write to ' + filename + ' ' + err4, socket.id);
           }
-          common.log("Updated summary: " + filename, socket.id);
+          common.log('Updated summary: ' + filename, socket.id);
         });
       });
     });
   });
 
   socket.on('getsummary', function(trackId, configId, user, friendId) {
-    if (user == "myself") user = userId;
+    if (user == 'myself') user = userId;
     else if (!user) user = '';
     if (!configId && typeof configId !== 'number') {
       socket.emit('fail', 'badsumaryids');
@@ -1362,7 +1407,7 @@ io.on('connection', function(socket) {
       return;
     }
     if (!friendId) friendId = '';
-    const trackFileName = friendId + "," + trackId + "," + configId + ".json";
+    const trackFileName = friendId + ',' + trackId + ',' + configId + '.json';
     const mydir =
         path.normalize(userdata + user + traxsubdir + usersummariessubdir);
     const filename = path.normalize(mydir + trackFileName);
@@ -1374,15 +1419,16 @@ io.on('connection', function(socket) {
       fs.readFile(filename, function(err2, data) {
         if (err2) {
           socket.emit('fail', 'readerr', 'getsummary');
-          // common.error('Failed to read ' + filename + ": " + err2, socket.id);
           return;
         }
-        socket.emit("newsummary", trackId, configId, user, friendId, data);
+        socket.emit('newsummary', trackId, configId, user, friendId, data);
       });
     });
   });
 
-  socket.on('getversion', function() { socket.emit('version', versionNum); });
+  socket.on('getversion', function() {
+    socket.emit('version', versionNum);
+  });
 });
 
 /**
@@ -1423,28 +1469,28 @@ function setFriendRelation(user, friend, relation, exists, callback) {
     callback('baduser');
     return;
   }
-  var toSend = "";
+  let toSend = '';
   if (exists) {
     const dat = {};
     dat[statusColumn] = relation;
     toSend = sqlCon.format(
-        "UPDATE ?? SET ? WHERE ((??=? AND ??=?) OR (??=? AND ??=?))", [
-          friendTable, dat, "user1", user, "user2", friend, "user1", friend,
-          "user2", user
+        'UPDATE ?? SET ? WHERE ((??=? AND ??=?) OR (??=? AND ??=?))', [
+          friendTable, dat, 'user1', user, 'user2', friend, 'user1', friend,
+          'user2', user,
         ]);
   } else {
-    const dat = {"user1": user, "user2": friend};
+    const dat = {'user1': user, 'user2': friend};
     dat[statusColumn] = relation;
-    toSend = sqlCon.format("INSERT INTO ?? SET ?", [
-      friendTable, dat
+    toSend = sqlCon.format('INSERT INTO ?? SET ?', [
+      friendTable, dat,
     ]);
   }
   sqlCon.query(toSend, function(err) {
     if (err) {
-      common.error("Failed to update relationship" + err);
-      callback("sqlerr");
+      common.error('Failed to update relationship' + err);
+      callback('sqlerr');
     }
-    for (var i = 0; i < sockets.length; i++) {
+    for (let i = 0; i < sockets.length; i++) {
       if (sockets[i].userId == user || sockets[i].userId == friend) {
         sockets[i].emit('friendlistchanged');
       }
@@ -1470,13 +1516,13 @@ function checkIfFriends(user, friend, callback) {
     return;
   }
   const toSend = sqlCon.format(
-      "SELECT * FROM ?? WHERE ((??=? AND ??=?) OR (??=? AND ??=?)) AND ??=?", [
-        friendTable, "user1", user, "user2", friend, "user1", friend, "user2",
-        user, statusColumn, friendStatus
+      'SELECT * FROM ?? WHERE ((??=? AND ??=?) OR (??=? AND ??=?)) AND ??=?', [
+        friendTable, 'user1', user, 'user2', friend, 'user1', friend, 'user2',
+        user, statusColumn, friendStatus,
       ]);
   sqlCon.query(toSend, function(err, res) {
     if (err) common.error(err);
-    var friends = (res && res.length && true) || false;
+    let friends = (res && res.length && true) || false;
     callback(friends ? null : 'notfriends', friends);
   });
 }
@@ -1522,8 +1568,8 @@ function checkFriendFilePerms(filename, userId, otherId, callback) {
     if (err || !res) {
       callback(err, false);
       common.log(
-          (userId || "No Id") + " Requested non-friend's data: " +
-          (otherId || "No Id") + " " + err);
+          (userId || 'No Id') + ' Requested non-friend\'s data: ' +
+          (otherId || 'No Id') + ' ' + err);
     } else {
       checkFilePerms(filename, otherId, undefined, callback);
     }
@@ -1539,16 +1585,16 @@ function checkFriendFilePerms(filename, userId, otherId, callback) {
  * in a different user's userdata.
  * @param {permCallback} callback
  */
-function checkAllFilePerms(fileList, userId, otherId, callback) {
-  var responded = false;
+/* function checkAllFilePerms(fileList, userId, otherId, callback) {
+  let responded = false;
   cb = function(err, perms) {
     if (!responded && (err || !perms)) callback(err, perms);
     responded = true;
   };
-  for (var i = 0; i < fileList.length; i++) {
+  for (let i = 0; i < fileList.length; i++) {
     checkFilePerms(fileList[i], userId, otherId, cb);
   }
-}
+} */
 
 /**
  * Appends a given session chunk to its file. Creates parent directories if
@@ -1564,23 +1610,23 @@ function checkAllFilePerms(fileList, userId, otherId, callback) {
  * @param {socket} socket The socket.io socket to respond to with status
  * updates.
  */
-function appendFile(attempts, filename, dirname, chunkId, buffer, socket) {
+/* function appendFile(attempts, filename, dirname, chunkId, buffer, socket) {
   attempts--;
-  if (typeof filename === "undefined" || filename.length < 1) {
+  if (typeof filename === 'undefined' || filename.length < 1) {
     socket.emit('fail', 'invalidname');
     return;
   }
   fs.appendFile(filename, buffer, {mode: 0o600}, function(err) {
     if (err) {
       if (attempts == 0) {
-        common.error("Failed to append file: \"" + filename + "\"", socket.id);
+        common.error('Failed to append file: "' + filename + '"', socket.id);
         console.log(err);
         socket.emit('fail', 'writeerror', chunkId);
       } else if (attempts == 1) {
         mkdirp(dirname, {mode: 0700}, function(err2) {
           if (err2) {
             attempts = 0;
-            common.error("Failed to create dir: " + dirname, socket.id);
+            common.error('Failed to create dir: ' + dirname, socket.id);
             console.log(err);
             socket.emit('fail', 'writeerror', chunkId);
           } else {
@@ -1593,13 +1639,12 @@ function appendFile(attempts, filename, dirname, chunkId, buffer, socket) {
       attempts = 0;
     }
   });
-}
+} */
 
 /**
  * Appends a given session chunk to its file. Responds to socket.
  *
  * @param {string} filename The base name of the file we are writing to.
- * @param {string} dirname The directory we are writing filename to.
  * @param {string} chunkId The id of the chunk we are writing in order to tell
  * the client the status of this chunk.
  * @param {string} buffer The data to write to the file.
@@ -1610,7 +1655,7 @@ function appendChunk(filename, chunkId, buffer, socket) {
   fs.appendFile(filename, buffer, {mode: 0o600}, function(err) {
     if (err) {
       common.error(
-          "Failed to append file: \"" + filename + "\" " + err, socket.id);
+          'Failed to append file: "' + filename + '" ' + err, socket.id);
       socket.emit('fail', 'writeerror', chunkId);
     } else {
       socket.emit('success', chunkId);
@@ -1632,12 +1677,12 @@ function forwardChunk(userId, chunkId, buffer, isPublic) {
   if (!isPublic) {
   getFriendsList(userId, friendStatus, function(err, rows) {
     if (err) {
-      common.log("Failed to get friends list for " + userId + ": " + err);
+      common.log('Failed to get friends list for ' + userId + ': ' + err);
       return;
     }
-    for (var i = -1; i < rows.length; i++) {
+    for (let i = -1; i < rows.length; i++) {
       const friendId = (i < 0) ? userId : rows[i].id;
-      for (var j = 0; j < liveSockets.length; j++) {
+      for (let j = 0; j < liveSockets.length; j++) {
         if (friendId == liveSockets[j].userId) {
           liveSockets[j].emit('livefrienddata', userId, chunkId, buffer);
         }
@@ -1645,7 +1690,7 @@ function forwardChunk(userId, chunkId, buffer, isPublic) {
     }
   });
   } else {
-    for (var j = 0; j < liveSockets.length; j++) {
+    for (let j = 0; j < liveSockets.length; j++) {
       liveSockets[j].emit('livefrienddata', userId, chunkId, buffer);
     }
   }
@@ -1660,21 +1705,21 @@ function forwardChunk(userId, chunkId, buffer, isPublic) {
  * argument.
  */
 function trackIdsToNames(idArray, callback) {
-  var fileList = [];
-  var numFail = 0;
-  for (var i = 0; i < idArray.length; i++) {
-    var filename = path.normalize(idArray[i] + "/data.json");
+  let fileList = [];
+  let numFail = 0;
+  for (let i = 0; i < idArray.length; i++) {
+    let filename = path.normalize(idArray[i] + '/data.json');
     fs.readFile(filename, function(err, data) {
       if (err) {
         numFail++;
-        common.error("Failed to read /data.json " + err);
+        common.error('Failed to read /data.json ' + err);
       }
       try {
         if (!err) {
-          var fileData;
+          let fileData;
           try {
             fileData = JSON.parse(data);
-          } catch(e) {
+          } catch (e) {
             common.error(filename + e);
             callback([]);
             return;
@@ -1683,7 +1728,7 @@ function trackIdsToNames(idArray, callback) {
         }
       } catch (e) {
         numFail++;
-        common.error("Failed to parse data.json " + e);
+        common.error('Failed to parse data.json ' + e);
         console.log(e);
       }
       if (fileList.length + numFail == idArray.length) {
@@ -1702,9 +1747,11 @@ function updateVersionNum() {
       common.error(err);
       return;
     }
-    var mtime = stats['mtime'] + "";
-    if (versionNumLastUpdate === mtime && typeof versionNumFile !== 'undefined')
+    let mtime = stats['mtime'] + '';
+    if (versionNumLastUpdate === mtime &&
+        typeof versionNumFile !== 'undefined') {
       return;
+    }
 
     versionNumLastUpdate = mtime;
     fs.readFile(versionNumFile, function(err, data) {
@@ -1712,7 +1759,7 @@ function updateVersionNum() {
         common.error(err);
         return;
       }
-      common.log("Updating " + versionNumFile);
+      common.log('Updating ' + versionNumFile);
       try {
         versionNum = data.toString();
         sendVersionToAll();
@@ -1727,7 +1774,7 @@ function updateVersionNum() {
  * Sends the version number to all connected clients.
  */
 function sendVersionToAll() {
-  for (var i = 0; i < sockets.length; i++) {
+  for (let i = 0; i < sockets.length; i++) {
     sockets[i].emit('version', versionNum);
   }
 }
@@ -1740,57 +1787,58 @@ function sendVersionToAll() {
  * @param {rowCallback} callback
  */
 function getFriendsList(userId, relation, callback) {
-  var toSend = sqlCon.format(
-      "SELECT * FROM ?? WHERE (??=? OR ??=?)",
-      [friendTable, "user1", userId, "user2", userId]);
-  if (typeof relation !== 'undefined')
-    toSend += sqlCon.format(" AND ??=?", [statusColumn, relation]);
+  let toSend = sqlCon.format(
+      'SELECT * FROM ?? WHERE (??=? OR ??=?)',
+      [friendTable, 'user1', userId, 'user2', userId]);
+  if (typeof relation !== 'undefined') {
+    toSend += sqlCon.format(' AND ??=?', [statusColumn, relation]);
+  }
   sqlCon.query(toSend, function(err, res) {
     if (err) {
       common.error(err);
-      callback("Data format error", false);
+      callback('Data format error', false);
     } else {
       if (!res || res.length == 0) {
         callback(null, []);
         return;
       }
-      var chunk = function(res) {
-        var friendsList = [];
-        var numRes = 0;
-        var cb = function(data) {
+      let chunk = function(res) {
+        let friendsList = [];
+        let numRes = 0;
+        let cb = function(data) {
           numRes++;
           friendsList = friendsList.concat(data);
           if (numRes == res.length) callback(null, friendsList);
         };
-        var query = function(res) {
-          const Id = res["user1"] == userId ? res["user2"] : res["user1"];
+        let query = function(res) {
+          const Id = res['user1'] == userId ? res['user2'] : res['user1'];
           const toSend = sqlCon.format(
-              "SELECT * FROM ?? WHERE ??=?", [accountsTable, "id", Id]);
+              'SELECT * FROM ?? WHERE ??=?', [accountsTable, 'id', Id]);
           sqlCon.query(toSend, function(err, res2) {
             if (err) common.error(err);
             if (err || !res2 || res2.length == 0) {
               res2 = [];
             } else {
-              for (var j = 0; j < res2.length; j++) {
+              for (let j = 0; j < res2.length; j++) {
                 // I am assuming nobody will have the name 'undefined' here.
-                if (res2[j]["firstName"] === 'undefined' ||
+                if (res2[j]['firstName'] === 'undefined' ||
                     !res2[j]['firstName']) {
-                  res2[j]["firstName"] = '';
+                  res2[j]['firstName'] = '';
                 }
-                if (res2[j]["lastName"] === 'undefined' ||
+                if (res2[j]['lastName'] === 'undefined' ||
                     !res2[j]['lastName']) {
-                  res2[j]["lastName"] = '';
+                  res2[j]['lastName'] = '';
                 }
-                res2[j]["relation"] = res[statusColumn];
-                res2[j]["usernum"] = res["user1"] == userId ? 1 : 2;
-                res2[j]["perms"] = "REDACTED";
-                res2[j]["email"] = "REDACTED";
+                res2[j]['relation'] = res[statusColumn];
+                res2[j]['usernum'] = res['user1'] == userId ? 1 : 2;
+                res2[j]['perms'] = 'REDACTED';
+                res2[j]['email'] = 'REDACTED';
               }
             }
             cb(res2);
           });
         };
-        for (var i = 0; i < res.length; i++) {
+        for (let i = 0; i < res.length; i++) {
           query(res[i]);
         }
       };
@@ -1808,46 +1856,52 @@ function getFriendsList(userId, relation, callback) {
  */
 function getFriendRelation(user, friend, callback) {
   const toSend = sqlCon.format(
-      "SELECT * FROM ?? WHERE (??=? AND ??=?) OR (??=? AND ??=?)", [
-        friendTable, "user1", user, "user2", friend, "user1", friend, "user2",
-        user
+      'SELECT * FROM ?? WHERE (??=? AND ??=?) OR (??=? AND ??=?)', [
+        friendTable, 'user1', user, 'user2', friend, 'user1', friend, 'user2',
+        user,
       ]);
   sqlCon.query(toSend, function(err, res) {
     if (err) common.error(err);
-    callback(err ? "sqlerr" : null, res ? res[0] : undefined);
+    callback(err ? 'sqlerr' : null, res ? res[0] : undefined);
   });
 };
 
-const topicHeaders = {
-  "Content-Type": "application/json",
-  "Authorization": "key=" + auth.firebaseNotificationKey
+/**
+ * Send notifications via Firebase.
+ */
+/* const topicHeaders = {
+  'Content-Type': 'application/json',
+  'Authorization': 'key=' + auth.firebaseNotificationKey,
 };
 const sendTopic = {
   hostname: 'fcm.googleapis.com',
   path: '/fcm/send',
   headers: topicHeaders,
   port: 443,
-  method: "POST"
+  method: 'POST',
 };
 function sendEventToTopic(topic, message) {
-  common.log("Sending topic request: " + topic + message);
-  var message = "{\n  \"to\": \"/topics/" + topic +
-      "\",\n  \"data\": {\n    \"message\":  \"" + (message || topic) +
-      "\",\n  }\n}";
-  var req = https_.request(sendTopic, function(response) {
-    var content = '';
-    response.on('data', function(chunk) { content += chunk; });
+  common.log('Sending topic request: ' + topic + message);
+  message = '{\n  "to": "/topics/' + topic +
+      '",\n  "data": {\n    "message":  "' + (message || topic) + '",\n  }\n}';
+  let req = https_.request(sendTopic, function(response) {
+    let content = '';
+    response.on('data', function(chunk) {
+      content += chunk;
+    });
     response.on('end', function() {
-      common.log("Firebase replied: " + content);
+      common.log('Firebase replied: ' + content);
     });
     response.on('close', function() {
-      common.log("Firebase request closed! " + content.length);
+      common.log('Firebase request closed! ' + content.length);
     });
     response.on('error', function() {
-      common.log("Firebase request errored! " + content.length);
+      common.log('Firebase request errored! ' + content.length);
     });
   });
   req.write(message);
   req.end();
-  req.on('error', function(e) {common.error(e);});
-}
+  req.on('error', function(e) {
+    common.error(e);
+  });
+} */
