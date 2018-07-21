@@ -2,36 +2,44 @@
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
 (function(Video, undefined) {
-
 // var SESSION_STATUS;
 // var STREAM_STATUS;
 
 // const GOpts = {'scope': 'https://www.googleapis.com/auth/youtube.force-ssl'};
 // const flashphonerURL =
-//     "https://dev.campbellcrowley.com/trax/video/flashphoner-api-0.5.27/flashphoner-no-flash.min.js";
+//     "https://dev.campbellcrowley.com/trax/video/flashphoner-api-0.5.27/
+//                                                 flashphoner-no-flash.min.js";
 // const youTubeRTMP = "rtmp://a.rtmp.youtube.com/live2/";
 
 // DOM Elements
-var authorizeButtonDom, enableVideoDom, videoPreviewDom, videoCanvasesDom;
+// let authorizeButtonDom;
+let enableVideoDom;
+let videoPreviewDom;
+let videoCanvasesDom;
 
 // States and objects //
 // Streams from cameras currently open.
-var localStreams = [];
+let localStreams = [];
 // Media recorders receiving streams and buffering data.
-var mediaRecorders = [];
+let mediaRecorders = [];
 // The user has given permission to stream to YouTube.
-var havePerms = false;
+let havePerms = false;
 // Are we currently recording cameras.
-var recording = false;
+let recording = false;
 // The access token for managing YouTube data.
-//var accessToken = "";
+// var accessToken = "";
 // Has flashphoner been initialized.
 // var flashphonerReady = false;
 // Has flashphoner been downloaded.
 // var flashphonerFetched = false;
 
+/**
+ * Initialize Video module.
+ *
+ * @public
+ */
 Video.init = function() {
-  authorizeButtonDom = document.getElementById('authorizeVideo');
+  // authorizeButtonDom = document.getElementById('authorizeVideo');
   enableVideoDom = document.getElementById('enableVideo');
   videoPreviewDom = document.getElementById('realtimeVideo');
   videoCanvasesDom = document.getElementById('videoCanvases');
@@ -41,8 +49,12 @@ Video.init = function() {
   // downloadFlashphoner();
 };
 
-// Download flashphoner to manage streaming video.
-/*function downloadFlashphoner() {
+/**
+ * Download flashphoner to manage streaming video.
+ *
+ * @private
+ */
+/* function downloadFlashphoner() {
   if (flashphonerFetched) return;
   if (!TraX.initialized) {
     setTimeout(downloadFlashphoner, 50);
@@ -65,7 +77,12 @@ function flashphonerDownloaded() {
   flashphonerReady = true;
 }*/
 
-// Check if we have permission to edit user's data.
+/**
+ * Check if we have permission to edit user's data.
+ *
+ * @public
+ * @param {boolean} [silent=false] Reduce messages sent to user.
+ */
 Video.getPerms = function(silent) {
   Video.setPerms(true);
   /*
@@ -97,7 +114,13 @@ Video.getPerms = function(silent) {
   } */
 };
 
-// Verify that the given permissions will work once we start recording.
+/**
+ * Verify that the given permissions will work once we start recording.
+ *
+ * @private
+ * @param {string} accessToken Token for streaming to user's account.
+ * @param {boolean} [silent=false] Reduce messages sent to user.
+ */
 /* function verifyPerms(accessToken, silent) {
   var xhr = new XMLHttpRequest();
   xhr.open(
@@ -120,7 +143,12 @@ Video.getPerms = function(silent) {
   xhr.send();
 } */
 
-// Set that we have perms or not and update UI.
+/**
+ * Set that we have perms or not and update UI.
+ *
+ * @public
+ * @param {boolean} perm Whether we have permission or not.
+ */
 Video.setPerms = function(perm) {
   havePerms = perm;
   if (!perm) {
@@ -132,24 +160,29 @@ Video.setPerms = function(perm) {
   // authorizeButtonDom.disabled = havePerms;
 };
 
-// Start buffering or streaming video.
+/**
+ * Start buffering or streaming video.
+ *
+ * @public
+ * @return {boolean} Whether recording actually started or not.
+ */
 Video.startRecording = function() {
   if (!havePerms || recording || !enableVideoDom.checked) return false;
   recorder = function(stream, index) {
     const mediaRecorder = new MediaRecorder(stream);
-    var recordedChunks = [];
+    let recordedChunks = [];
 
     const fileType = mediaRecorder.mimeType;
-    var ext = ".vid";
-    if (fileType == "video/webm") ext = ".webm";
-    if (fileType == "video/mp4") ext = ".mp4";
-    const fileName = "TraX " + (new Date()).toString() + " Cam" + index + ext;
+    let ext = '.vid';
+    if (fileType == 'video/webm') ext = '.webm';
+    if (fileType == 'video/mp4') ext = '.mp4';
+    const fileName = 'TraX ' + (new Date()).toString() + ' Cam' + index + ext;
 
     mediaRecorder.addEventListener('dataavailable', function(e) {
       if (e.data.size > 0) recordedChunks.push(e.data);
     });
     mediaRecorder.addEventListener('stop', function() {
-      console.log("Downloading recording...");
+      console.log('Downloading recording...');
       TraX.Export.download(fileName, new Blob(recordedChunks));
     });
     mediaRecorder.start();
@@ -157,14 +190,14 @@ Video.startRecording = function() {
   };
   mediaRecorders = [];
   recording = true;
-  for (var i = 0; i < localStreams.length; i++) {
+  for (let i = 0; i < localStreams.length; i++) {
     recorder(localStreams[i], i);
   }
-  console.log("Starting recording...");
+  console.log('Starting recording...');
   return true;
 
 
-  /*if (!flashphonerReady) {
+  /* if (!flashphonerReady) {
     TraX.showMessageBox(
         "Video encoder not ready yet. Please try again in a moment.");
     return false;
@@ -195,32 +228,53 @@ Video.startRecording = function() {
   return true;
   */
 };
-// Stop streaming or buffering video.
+/**
+ * Stop streaming or buffering video.
+ *
+ * @public
+ */
 Video.stopRecording = function() {
   if (!recording) return;
-  for (var i = 0; i < mediaRecorders.length; i++) {
+  for (let i = 0; i < mediaRecorders.length; i++) {
     mediaRecorders[i].stop();
   }
-  console.log("Stopping recording...");
+  console.log('Stopping recording...');
   recording = false;
 };
-// TODO: Remove?
+/**
+ * Pause a recording without completely eding the file.
+ * TODO: Remove?
+ *
+ * @public
+ */
 Video.pauseRecording = function() {
   if (!recording) return;
 };
 
-// Get URL where we can find the saved video if it was streamed to a server.
-Video.getURL = function() { return ""; };
+/**
+ * Get URL where we can find the saved video if it was streamed to a server.
+ *
+ * @public
+ * @return {string} URL of where to watch the current video being streamed.
+ */
+Video.getURL = function() {
+ return '';
+};
 
-// Toggle the visibility of cameras. Also opens and closes streams of video.
-// Must be open in order to record video.
+/**
+ * Toggle the visibility of cameras. Also opens and closes streams of video.
+ * Must be open in order to record video.
+ *
+ * @public
+ * @param {?boolean} [force=undefined] Set video state or toggle with undefined.
+ */
 Video.toggleVideo = function(force) {
   if (typeof force !== 'undefined') {
     enableVideoDom.checked = force;
   }
-  if (TraX.debugMode) console.log("Video open:", enableVideoDom.checked);
-  videoPreviewDom.style.display = enableVideoDom.checked ? "block" : "none";
-  TraX.setURLOption("video", enableVideoDom.checked ? "1" : undefined);
+  if (TraX.debugMode) console.log('Video open:', enableVideoDom.checked);
+  videoPreviewDom.style.display = enableVideoDom.checked ? 'block' : 'none';
+  TraX.setURLOption('video', enableVideoDom.checked ? '1' : undefined);
   if (enableVideoDom.checked) {
     videoPreviewDom.scrollIntoView({behaviour: 'smooth'});
     getCamera();
@@ -229,7 +283,12 @@ Video.toggleVideo = function(force) {
   }
 };
 
-// Setup settings for streaming to YouTube.
+/**
+ * Setup settings for streaming to YouTube.
+ * I was unable to find a client side encoder to allow for this to work.
+ *
+ * @private
+ */
 /* function createStream(callback) {
   if (!TraX.debugMode) {
     callback("notimplemented", null);
@@ -268,15 +327,19 @@ Video.toggleVideo = function(force) {
   xhr.send(liveBroadcast);
 } */
 
-// Get all cameras and start streams to record them.
+/**
+ * Get all cameras and start streams to record them.
+ *
+ * @private
+ */
 function getCamera() {
   navigator.mediaDevices.enumerateDevices()
       .then(function(devices) {
-        var audioIndex = -1;
-        var backupAudio = -1;
-        for (var i = 0; i < devices.length; i++) {
-          if (devices[i].kind == "audioinput") {
-            if (devices[i].deviceId == "default") {
+        let audioIndex = -1;
+        let backupAudio = -1;
+        for (let i = 0; i < devices.length; i++) {
+          if (devices[i].kind == 'audioinput') {
+            if (devices[i].deviceId == 'default') {
               audioIndex = i;
               break;
             } else if (backupAudio < 0) {
@@ -288,13 +351,13 @@ function getCamera() {
           audioIndex = backupAudio;
         }
         console.log(
-            "Media Devices:", devices, "Using audio input:", audioIndex);
-        for (var i = 0; i < devices.length; i++) {
-          if (devices[i].kind == "videoinput" ) {
-            var constraints = {video: {deviceId: {exact: devices[i].deviceId}}};
+            'Media Devices:', devices, 'Using audio input:', audioIndex);
+        for (let i = 0; i < devices.length; i++) {
+          if (devices[i].kind == 'videoinput' ) {
+            let constraints = {video: {deviceId: {exact: devices[i].deviceId}}};
             if (audioIndex >= 0) {
               constraints.audio = {
-                deviceId: {exact: devices[audioIndex].deviceId}
+                deviceId: {exact: devices[audioIndex].deviceId},
               };
             }
             navigator.mediaDevices.getUserMedia(constraints)
@@ -303,40 +366,55 @@ function getCamera() {
           }
         }
       })
-      .catch(function(err) { console.log(err); });
+      .catch(function(err) {
+        console.log(err);
+      });
 }
-// Release all cameras and stop streaming data.
+/**
+ * Release all cameras and stop streaming data.
+ *
+ * @private
+ */
 function releaseCamera() {
   if (!localStreams) return;
-  for (var i = 0; i < localStreams.length; i++) {
-    var tracks = localStreams[i].getTracks();
-    for (var j = 0; j < tracks.length; j++) {
+  for (let i = 0; i < localStreams.length; i++) {
+    let tracks = localStreams[i].getTracks();
+    for (let j = 0; j < tracks.length; j++) {
       tracks[j].stop();
     }
     localStreams.splice(i, 1);
     i--;
   }
-  videoCanvasesDom.innerHTML = "";
-  console.log("Video Cameras released");
+  videoCanvasesDom.innerHTML = '';
+  console.log('Video Cameras released');
 }
-// Successfully started receiving data from camera, show it on UI.
+/**
+ * Successfully started receiving data from camera, show it on UI.
+ *
+ * @private
+ * @param {MediaStream} stream The media stream being recorded..
+ */
 function handleRecordSucces(stream) {
   localStreams.push(stream);
-  var newVideo = document.createElement("video");
-  newVideo.className = "videoCanvas";
+  let newVideo = document.createElement('video');
+  newVideo.className = 'videoCanvas';
   newVideo.muted = true;
   newVideo.autoplay = true;
   newVideo.srcObject = stream;
   // newVideo.play();
   videoCanvases.appendChild(newVideo);
-  console.log("Video Camera authorized");
+  console.log('Video Camera authorized');
 }
-// Failed to get camera stream, notify user.
+/**
+ * Failed to get camera stream, notify user.
+ *
+ * @private
+ * @param {Error} err The error.
+ */
 function handleRecordFail(err) {
-  console.error("Failed to get camera", err);
-  TraX.showMessageBox("Failed to get camera");
+  console.error('Failed to get camera', err);
+  TraX.showMessageBox('Failed to get camera');
   Video.toggleVideo(false);
 }
-
 }(window.TraX.Video = window.TraX.Video || {}));
 }(window.TraX = window.TraX || {}));
