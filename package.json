@@ -30,5 +30,16 @@
       "name": "Campbell Crowley",
       "email": "dev@campbellcrowley.com"
     }
-  ]
+  ],
+  "devDependencies": {
+    "eslint": "^5.1.0",
+    "eslint-config-google": "^0.9.1",
+    "jsdoc-to-markdown": "^4.0.1"
+  },
+  "scripts": {
+    "install": ".hooks/install-hooks.sh",
+    "lint": "eslint $(find -iname '*.js' -not -path './node_modules/*' -not -iname '*.min.js' -printf '%p ')",
+    "lint:fix": "eslint $(find -iname '*.js' -not -path './node_modules/*' -not -iname '*.min.js' -printf '%p ') --fix",
+    "docs": "npm run lint && bash .hooks/make-docs.sh"
+  }
 }
