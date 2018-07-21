@@ -1,6 +1,8 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 
+/* eslint-disable no-unused-vars */
+
 // Global Constants //
 // Filesize conversions.
 const byteTokByte = 1 / 1000.0;
@@ -44,12 +46,13 @@ const oneCrewStatus = 10;
 // User 2 is crew for 1.
 const twoCrewStatus = 11;
 
+/* eslint-enable no-unused-vars */
+
 (function(TraX, undefined) {
 (function(Units, undefined) {
-
 // If this is implemented, others should override this with the DOM element that
 // selects the units.
-TraX.unitDropdownDom = {value: "imperial"};
+TraX.unitDropdownDom = {value: 'imperial'};
 
 // Meters per second to miles per hour or kilometers per hour
 Units.speedToUnit = function(input, units) {
@@ -60,10 +63,10 @@ Units.speedToUnit = function(input, units) {
 };
 // Meters to mile or kilometer
 Units.distanceToLargeUnit = function(input, units, noround) {
-  if (typeof units === "undefined") {
+  if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
   }
-  var val;
+  let val;
   if (units) {
     val = input / 1609.34;
   } else {
@@ -76,10 +79,10 @@ Units.distanceToLargeUnit = function(input, units, noround) {
 };
 // Kilometers per hour to MPH or KPH.
 Units.speedToLargeUnit = function(input, units) {
-  if (typeof units === "undefined") {
+  if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
   }
-  var val;
+  let val;
   if (units) {
     val = input / 0.621371;
   } else {
@@ -89,7 +92,7 @@ Units.speedToLargeUnit = function(input, units) {
 };
 // Meters to feet or meters.
 Units.distanceToSmallUnit = function(input, units) {
-  if (typeof units === "undefined") {
+  if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
   }
   if (units) {
@@ -100,54 +103,52 @@ Units.distanceToSmallUnit = function(input, units) {
 };
 // Get feet or meters unit.
 Units.getSmallDistanceUnit = function(units) {
-  if (typeof units === "undefined") {
+  if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
   }
   if (units) {
-    return "ft";
+    return 'ft';
   } else {
-    return "m";
+    return 'm';
   }
 };
 // Get miles per hour, or kilometers per hour unit.
 Units.getLargeSpeedUnit = function(units) {
-  if (typeof units === "undefined") {
+  if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
   }
   if (units) {
-    return "mph";
+    return 'mph';
   } else {
-    return "kmh";
+    return 'kmh';
   }
 };
 // Convert given two points latitude and longitude, get the distance between the
 // two.
 Units.coordToMeters = function(lat1, lng1, lat2, lng2) {
-  var R = 6378.137;  // Radius of earth in KM
-  var dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
-  var dLon = lng2 * Math.PI / 180 - lng1 * Math.PI / 180;
-  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+  let R = 6378.137;  // Radius of earth in KM
+  let dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
+  let dLon = lng2 * Math.PI / 180 - lng1 * Math.PI / 180;
+  let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
           Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  var d = R * c;
+  let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  let d = R * c;
   return d * 1000;
 };
 // Given two coords, find distance in meters between the two.
 Units.latLngToMeters = function(one, two) {
   return Units.coordToMeters(one.lat, one.lng, two.lat, two.lng);
 };
-
 }(TraX.Units = TraX.Units || {}));
 (function(Common, undefined) {
-
-Common.point3d = function(x, y, z, color) {
+Common.Point3d = function(x, y, z, color) {
   this.x = 0;
   this.y = 0;
   this.z = 0;
-  this.color = "black";
+  this.color = 'black';
 
-  if (x instanceof Common.point3d) {
+  if (x instanceof Common.Point3d) {
     this.x = x.x;
     this.y = x.y;
     this.z = x.z;
@@ -161,13 +162,13 @@ Common.point3d = function(x, y, z, color) {
 };
 
 Common.rotateVector = function(vector, rotation, flip) {
-  var point;
-  if (vector instanceof Common.point3d) {
-    point = new Common.point3d(vector);
+  let point;
+  if (vector instanceof Common.Point3d) {
+    point = new Common.Point3d(vector);
   } else {
-    point = new Common.point3d(vector[0], vector[1], vector[2]);
+    point = new Common.Point3d(vector[0], vector[1], vector[2]);
   }
-  var xRot, yRot, zRot;
+  let xRot; let yRot; let zRot;
   if (typeof rotation[0] === 'undefined') {
     zRot = rotation.a;
     xRot = rotation.b;
@@ -192,17 +193,17 @@ Common.rotateVector = function(vector, rotation, flip) {
     [s1, -s2 * c1, c2 * c1]
   ]; */
 
-  var c1 = Math.cos(zRot);
-  var s1 = Math.sin(zRot);
-  var c2 = Math.cos(xRot);
-  var s2 = Math.sin(xRot);
-  var c3 = Math.cos(yRot);
-  var s3 = Math.sin(yRot);
+  let c1 = Math.cos(zRot);
+  let s1 = Math.sin(zRot);
+  let c2 = Math.cos(xRot);
+  let s2 = Math.sin(xRot);
+  let c3 = Math.cos(yRot);
+  let s3 = Math.sin(yRot);
   // Rotation matrix (z,x,y) Tait-Bryan
-  var A = [
+  let A = [
     [c1 * c3 - s1 * s2 * s3, -c2 * s1, c1 * s3 + c3 * s1 * s2],
     [c3 * s1 + c1 * s2 * s3, c1 * c2, s1 * s3 - c1 * c3 * s2],
-    [-c2 * s3, s2, c2 * c3]
+    [-c2 * s3, s2, c2 * c3],
   ];
   // Rotation matrix (x,y,z) Tair-Bryan
   /* var A = [
@@ -213,12 +214,12 @@ Common.rotateVector = function(vector, rotation, flip) {
 
   // Apply inverse rotation instead.
   if (flip) {
-    var det = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
+    let det = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
         A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]) +
         A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
-    var invdet = 1 / det;
+    let invdet = 1 / det;
 
-    var iA = [[], [], []];
+    let iA = [[], [], []];
     iA[0][0] = (A[1][1] * A[2][2] - A[2][1] * A[1][2]) * invdet;
     iA[0][1] = (A[0][2] * A[2][1] - A[0][1] * A[2][2]) * invdet;
     iA[0][2] = (A[0][1] * A[1][2] - A[0][2] * A[1][1]) * invdet;
@@ -232,9 +233,9 @@ Common.rotateVector = function(vector, rotation, flip) {
     A = iA;
   }
 
-  var x = (point.x * A[0][0]) + (point.y * A[1][0]) + (point.z * A[2][0]);
-  var y = (point.x * A[0][1]) + (point.y * A[1][1]) + (point.z * A[2][1]);
-  var z = (point.x * A[0][2]) + (point.y * A[1][2]) + (point.z * A[2][2]);
+  let x = (point.x * A[0][0]) + (point.y * A[1][0]) + (point.z * A[2][0]);
+  let y = (point.x * A[0][1]) + (point.y * A[1][1]) + (point.z * A[2][1]);
+  let z = (point.x * A[0][2]) + (point.y * A[1][2]) + (point.z * A[2][2]);
 
   point.x = x;
   point.y = y;
@@ -244,84 +245,86 @@ Common.rotateVector = function(vector, rotation, flip) {
 };
 
 Common.rotateX = function(point, rad) {
-  var y = point.y;
+  let y = point.y;
   point.y = (y * Math.cos(rad)) + (point.z * Math.sin(rad) * -1.0);
   point.z = (y * Math.sin(rad)) + (point.z * Math.cos(rad));
 };
 Common.rotateY = function(point, rad) {
-  var x = point.x;
+  let x = point.x;
   point.x = (x * Math.cos(rad)) + (point.z * Math.sin(rad) * -1.0);
   point.z = (x * Math.sin(rad)) + (point.z * Math.cos(rad));
 };
 Common.rotateZ = function(point, rad) {
-  var x = point.x;
+  let x = point.x;
   point.x = (x * Math.cos(rad)) + (point.y * Math.sin(rad) * -1.0);
   point.y = (x * Math.sin(rad)) + (point.y * Math.cos(rad));
 };
 
 Common.cross = function(a, b) {
-  if (a instanceof Common.point3d) {
+  if (a instanceof Common.Point3d) {
     a[0] = a.x;
     a[1] = a.y;
     a[2] = a.z;
   }
-  if (b instanceof Common.point3d) {
+  if (b instanceof Common.Point3d) {
     b[0] = b.x;
     b[1] = b.y;
     b[2] = b.z;
   }
   return [
     a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
-    a[0] * b[1] - a[1] * b[0]
+    a[0] * b[1] - a[1] * b[0],
   ];
 };
 
 Common.formatMsec = function(msecs, plusSign, minSections) {
   msecs = Math.floor(msecs);
-  var sign = msecs >= 0 ? (plusSign ? "+" : "") : "-";
+  let sign = msecs >= 0 ? (plusSign ? '+' : '') : '-';
   if (msecs < 0) msecs *= -1;
-  var milliseconds = msecs % 1000;
-  var seconds = Math.floor(msecs / 1000) % 60;
-  var minutes = Math.floor(msecs / 1000 / 60) % 60;
-  var hours = Math.floor(msecs / 1000 / 60 / 60) % 24;
-  var days = Math.floor(msecs / 1000 / 60 / 60 / 24);
+  let milliseconds = msecs % 1000;
+  let seconds = Math.floor(msecs / 1000) % 60;
+  let minutes = Math.floor(msecs / 1000 / 60) % 60;
+  let hours = Math.floor(msecs / 1000 / 60 / 60) % 24;
+  let days = Math.floor(msecs / 1000 / 60 / 60 / 24);
   if (minSections > 2 || days > 0) {
-    return sign + Common.pad(days, 2) + ":" + Common.pad(hours, 2) + ":" +
-        Common.pad(minutes, 2) + ":" + Common.pad(seconds, 2) + "." +
+    return sign + Common.pad(days, 2) + ':' + Common.pad(hours, 2) + ':' +
+        Common.pad(minutes, 2) + ':' + Common.pad(seconds, 2) + '.' +
         Common.pad(milliseconds, 3);
   } else if (minSections > 1 || hours > 0) {
-    return sign + Common.pad(hours, 2) + ":" + Common.pad(minutes, 2) + ":" +
-        Common.pad(seconds, 2) + "." + Common.pad(milliseconds, 3);
+    return sign + Common.pad(hours, 2) + ':' + Common.pad(minutes, 2) + ':' +
+        Common.pad(seconds, 2) + '.' + Common.pad(milliseconds, 3);
   } else if (minSections > 0 || minutes > 0) {
-    return sign + Common.pad(minutes, 2) + ":" + Common.pad(seconds, 2) + "." +
+    return sign + Common.pad(minutes, 2) + ':' + Common.pad(seconds, 2) + '.' +
         Common.pad(milliseconds, 3);
   } else {
-    return sign + Common.pad(seconds, 2) + "." + Common.pad(milliseconds, 3);
+    return sign + Common.pad(seconds, 2) + '.' + Common.pad(milliseconds, 3);
   }
 };
 
 Common.formatTime = function(msecs, showSeconds) {
-  var date = new Date(msecs);
-  return TraX.Common.pad(date.getHours(), 2) + ":" +
+  let date = new Date(msecs);
+  return TraX.Common.pad(date.getHours(), 2) + ':' +
       TraX.Common.pad(date.getMinutes(), 2) +
-      (showSeconds ? ("." + TraX.Common.pad(date.getSeconds(), 2)) : "");
+      (showSeconds ? ('.' + TraX.Common.pad(date.getSeconds(), 2)) : '');
 };
 
 Common.pad = function(num, digits) {
-  var str = String(num);
+  let str = String(num);
   while (str.length < digits) {
-    str = "0" + str;
+    str = '0' + str;
   }
   return str;
 };
 
 Common.interpolateCoord = function(one, two, val) {
-  var latitude = Common.lerp(one["lat"], two["lat"], val);
-  var longitude = Common.lerp(one["lng"], two["lng"], val);
+  let latitude = Common.lerp(one['lat'], two['lat'], val);
+  let longitude = Common.lerp(one['lng'], two['lng'], val);
   return {lat: latitude, lng: longitude};
 };
 
-Common.lerp = function(one, two, val) { return (1.0 - val) * one + val * two; };
+Common.lerp = function(one, two, val) {
+ return (1.0 - val) * one + val * two;
+};
 
 Common.coordDistance = function(one, two) {
   return Math.sqrt(
@@ -329,16 +332,15 @@ Common.coordDistance = function(one, two) {
 };
 
 Common.compareVersion = function(a, b) {
-  var as = a.split('.');
-  var bs = b.split('.');
-  for (var i = 0; i < a.length && i < b.length; i++) {
-    a[i] = Number(a[i]);
-    b[i] = Number(b[i]);
-    if (a[i] < b[i]) return -1;
-    if (a[i] > b[i]) return 1;
+  let as = a.split('.');
+  let bs = b.split('.');
+  for (let i = 0; i < as.length && i < bs.length; i++) {
+    as[i] = Number(as[i]);
+    bs[i] = Number(bs[i]);
+    if (as[i] < bs[i]) return -1;
+    if (as[i] > bs[i]) return 1;
   }
   return 0;
 };
-
 }(TraX.Common = TraX.Common || {}));
 }(window.TraX = window.TraX || {}));

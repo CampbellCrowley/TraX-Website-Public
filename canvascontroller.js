@@ -61,7 +61,7 @@ Canvases.sphere3d = function(radius) {
   this.numberOfVertexes = 0;
 
   for (var alpha = 0.0; alpha < 2.0 * Math.PI; alpha += pointAngleDelta) {
-    var point = new TraX.Common.point3d();
+    var point = new TraX.Common.Point3d();
 
     point.x = Math.cos(alpha) * this.radius;
     point.y = 0;
@@ -77,7 +77,7 @@ Canvases.sphere3d = function(radius) {
       var Y = Math.sin(beta) * this.radius * direction;
 
       for (var alpha = 0; alpha < Math.PI * 2.0; alpha += pointAngleDelta) {
-        var point = new TraX.Common.point3d();
+        var point = new TraX.Common.Point3d();
 
         point.x = Math.cos(alpha) * r;
         point.y = Y;
@@ -125,7 +125,7 @@ Canvases.renderGyro = function(makeDown) {
 
   // Gyro Sphere
   for (var i = 0; i < sphere.numberOfVertexes; i++) {
-    var point = new TraX.Common.point3d(sphere.point[i]);
+    var point = new TraX.Common.Point3d(sphere.point[i]);
 
     point = TraX.Common.rotateVector(point, rotation, makeDown);
 
@@ -136,7 +136,7 @@ Canvases.renderGyro = function(makeDown) {
   for (var i = 0; i < numAccelPoints; i++) {
     var percent = i / numAccelPoints;
     var point =
-        new TraX.Common.point3d(0, 0, -sphere.radius * percent, "magenta");
+        new TraX.Common.Point3d(0, 0, -sphere.radius * percent, "magenta");
 
     point = TraX.Common.rotateVector(point, downRotationAdjusted, false);
     point = TraX.Common.rotateVector(point, rotation, makeDown);
@@ -148,7 +148,7 @@ Canvases.renderGyro = function(makeDown) {
     for (var i = 0; i < numAccelPoints; i++) {
       var percent = i / numAccelPoints;
       var point =
-          new TraX.Common.point3d(0, 0, -sphere.radius * percent, "green");
+          new TraX.Common.Point3d(0, 0, -sphere.radius * percent, "green");
 
       point = TraX.Common.rotateVector(point, downRotationAdjusted, false);
 
@@ -158,7 +158,7 @@ Canvases.renderGyro = function(makeDown) {
   // Calculated forwards vector
   for (var i = 0; i < numAccelPoints; i++) {
     var percent = i / numAccelPoints;
-    var point = new TraX.Common.point3d(
+    var point = new TraX.Common.Point3d(
         Canvases.forwardVector[0] * sphere.radius * percent,
         Canvases.forwardVector[1] * sphere.radius * percent,
         Canvases.forwardVector[2] * sphere.radius * percent, "blue");
@@ -173,7 +173,7 @@ Canvases.renderGyro = function(makeDown) {
   if (makeDown) {
     for (var i = 0; i < rotatedPoints.length; i++) {
       // TraX.Common.rotateZ(rotatedPoints[i], Canvases.headingOffset);
-      var tmp = new TraX.Common.point3d(rotatedPoints[i]);
+      var tmp = new TraX.Common.Point3d(rotatedPoints[i]);
       rotatedPoints[i].y = tmp.z;
       rotatedPoints[i].z = -tmp.y;
     }
@@ -238,7 +238,7 @@ Canvases.renderAccel = function(externalDevice) {
   accelCtx.closePath();
 
   // Acceleration vector3d
-  var point = new TraX.Common.point3d(
+  var point = new TraX.Common.Point3d(
       -Canvases.drawAccel[0], Canvases.drawAccel[1], Canvases.drawAccel[2]);
 
   point = TraX.Common.rotateVector(point, Canvases.rotation, true);
