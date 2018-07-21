@@ -1,14 +1,14 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
-
 // Prevent navigating away from page if not all data was sent saved.
 window.onbeforeunload = function() {
   if (!isPaused) {
-    return "You are still recording data, are you sure you wish to leave?";
+    return 'You are still recording data, are you sure you wish to leave?';
   }
   if (sendBuffer.length > 0) {
-    return "Not all data has been sent to the server, are you sure you wish to leave?";
+    return 'Not all data has been sent to the server, ' +
+        'are you sure you wish to leave?';
   }
   return null;
 };
@@ -26,10 +26,12 @@ const realtimeClockUpdateFrequency = 51;
 const gpsMinFrequency = 5000;
 
 // Screen size (x/y) in pixels.
-var w = window, d = document, e = d.documentElement,
-    g = d.getElementsByTagName('body')[0],
-    x = w.innerWidth || e.clientWidth || g.clientWidth,
-    y = w.innerHeight || e.clientHeight || g.clientHeight;
+/* let w = window;
+let d = document;
+let e = d.documentElement;
+let g = d.getElementsByTagName('body')[0];
+let x = w.innerWidth || e.clientWidth || g.clientWidth;
+let y = w.innerHeight || e.clientHeight || g.clientHeight; */
 
 // Settings/Events/Intervals/Timeouts //
 // All scripts loaded and initialized.
@@ -39,37 +41,35 @@ TraX.initialized = false;
 TraX.debugMode = 0;
 // Timeout until heartbeat hasn't happened for too long and we can assume death
 // of sensors.
-var heartbeatTimeout;
+let heartbeatTimeout;
 // Timeout until heartbeat hasn't happened for too long and we can assume death
 // of GPS updates.
-var gpsHeartbeatTimeout;
+let gpsHeartbeatTimeout;
 // Heartbeat from server
-var serverTimeout;
+let serverTimeout;
 // Watch Position ID. For GPS update watching.
-var wpid;
+let wpid;
 // If data sending to server is paused or recording.
-var isPaused = true;
+let isPaused = true;
 // If we have prevented sending to server via options or setting. Not flipped
 // due to errors or invalid state.
-var preventSend = false;
+let preventSend = false;
 // If we have sent the user's login token to server at least once. If the token
 // is empty this will also be false.
-var tokenSent = false;
-// Interval and Timeout for checking filesize on server.
-var filesizeCheckInterval, filesizeCheckTimeout;
+let tokenSent = false;
 // How often to save data
-var updateFrequency;
+let updateFrequency;
 // Number of heartbeats we have received since starting getting data to
 // determine if this device has usable sensors.
-var heartbeatCount;
+let heartbeatCount;
 // Previous setting the user had chosen for frequency of sending data to server.
-var previousUpdateFrequency = Math.Infinity;
+let previousUpdateFrequency = Math.Infinity;
 // Interval to check for data to pop from preSendBuffer and send to server.
-var updateInterval;
+let updateInterval;
 // Interval to update clocks in live data view.
-var realtimeDataClockInterval;
+let realtimeDataClockInterval;
 // Interval to update the realtime timers HUD.
-var updateTimersInterval;
+let updateTimersInterval;
 // Options to pass into watching GPS.
 const geoOptions = {
   enableHighAccuracy: true,
@@ -78,174 +78,259 @@ const geoOptions = {
 };
 
 // UI States //
-var statusLightsVisible = false;
-var optionsMenuOpen = false;
-var realtimeViewOpen = false;
-var friendViewOpen = false;
-var friendmapEnabled = false;
+let statusLightsVisible = false;
+let optionsMenuOpen = false;
+let realtimeViewOpen = false;
+let friendViewOpen = false;
+let friendmapEnabled = false;
 
-var visibleHUD = 0;
+let visibleHUD = 0;
 
 // Socket //
 // Whether we are connected to the server or not.
-var isConnected = false;
+let isConnected = false;
 // The session we are recording right now.
-var sessionId = '';
+let sessionId = '';
 // The previous session id we were recording for.
-var previousSessionId = '';
+let previousSessionId = '';
 // The name of the session we are recording now.
-var sessionName = "";
+let sessionName = '';
 // Track and config id's.
-var trackId, trackOwnerId, configId, configOwnerId;
+let trackId;
+let trackOwnerId;
+let configId;
+let configOwnerId;
 // Name of current user.
-var driverName = "";
+let driverName = '';
 // Queue of messages to send once we have connected to the server.
-var socketMessageQueue = [];
+let socketMessageQueue = [];
 
 // App version.
-var versionNum = "Unknown";
+let versionNum = 'Unknown';
 
 // HTML Elements
-var redLight, greenLight, absoluteDom, compassAlphaDom, alphaDom, betaDom,
-    gammaDom, accelerationDom, accelIncGravDom, rotationRateDom, intervalDom,
-    longitudeDom, latitudeDom, posInfoDdom, pausePlayButton, pausedGreenLight,
-    pausedRedLight, debugDom, updateFrequencyDom, preSendBufferDom,
-    sendBufferDom, greenLightConnected, redLightConnected, friendmapDom,
-    greenLightSending, yellowLightSending, redLightSending, greenLightWriting,
-    redLightWriting, filesizeDom, needIMUDom, needAccountDom, sessionInputDom,
-    messageBoxDom, messageBoxWrapperDom, trackNameSelectDom,
-    configNameSelectDom, optionsMenuDom, realtimeDataDom,
-    realtimeDeviceClockDom, realtimeGPSClockDom, realtimeSensorClockDom,
-    largeGreenLight, largeYellowLight, largeRedLight, largeProcessingLight,
-    statusLightListDom, greenLightGPS, redLightGPS, greenLightScripts,
-    redLightScripts, xAxisFlipDom, yAxisFlipDom, zAxisFlipDom,
-    realtimeDeviceTypeDom, realtimeDeviceBrowserDom, friendmapToggleDom,
-    optionsToggleDom, realtimeDataToggleDom, realtimeDumpDom, toggleDebugDom,
-    trackNameEditButton, configNameEditButton, bigButtonModeButton,
-    timerModeButton, /*customModeButton,*/ timersHUDDom, bigButtonHUDDom,
-    /*customHUDDom,*/ bigTimerDom, littleTimerTopDom, littleTimerLeftDom,
-    littleTimerRightDom, littleTimerLeftTopDom, littleTimerRightTopDom,
-    doCompressionDom, timersTrackTitleDom, debugBluetoothDom,
-    friendsViewToggleDom, friendsViewDom, friendsUsernameDom, friendsListDom,
-    friendsIdDom, friendsIdInputDom, friendsRequestListDom, blockedListDom,
-    extraDataDom, dataViewButtonDom, streamIsPublicDom;
-// TraX.unitDropdownDom;
+let redLight;
+let greenLight;
+let absoluteDom;
+let compassAlphaDom;
+let alphaDom;
+let betaDom;
+let gammaDom;
+let accelerationDom;
+let accelIncGravDom;
+let rotationRateDom;
+let intervalDom;
+let longitudeDom;
+let latitudeDom;
+let posInfoDom;
+let pausePlayButton;
+let pausedGreenLight;
+let pausedRedLight;
+let debugDom;
+let updateFrequencyDom;
+let sendBufferDom;
+let greenLightConnected;
+let redLightConnected;
+let friendmapDom;
+let greenLightSending;
+let yellowLightSending;
+let redLightSending;
+let greenLightWriting;
+let redLightWriting;
+let filesizeDom;
+let needIMUDom;
+let needAccountDom;
+let sessionInputDom;
+let trackNameSelectDom;
+let configNameSelectDom;
+let optionsMenuDom;
+let realtimeDataDom;
+let realtimeDeviceClockDom;
+let realtimeGPSClockDom;
+let realtimeSensorClockDom;
+let largeGreenLight;
+let largeYellowLight;
+let largeRedLight;
+let largeProcessingLight;
+let statusLightListDom;
+let greenLightGPS;
+let redLightGPS;
+let greenLightScripts;
+let redLightScripts;
+let xAxisFlipDom;
+let yAxisFlipDom;
+let zAxisFlipDom;
+let realtimeDeviceTypeDom;
+let realtimeDeviceBrowserDom;
+let friendmapToggleDom;
+let optionsToggleDom;
+let realtimeDataToggleDom;
+let toggleDebugDom;
+let trackNameEditButton;
+let configNameEditButton;
+let bigButtonModeButton;
+let timerModeButton;
+// let customModeButton;
+let timersHUDDom;
+let bigButtonHUDDom;
+// let customHUDDom;
+let bigTimerDom;
+let littleTimerTopDom;
+let littleTimerLeftDom;
+let littleTimerRightDom;
+let littleTimerLeftTopDom;
+let littleTimerRightTopDom;
+let doCompressionDom;
+let timersTrackTitleDom;
+let debugBluetoothDom;
+let friendsViewToggleDom;
+let friendsViewDom;
+let friendsUsernameDom;
+let friendsListDom;
+let friendsIdDom;
+let friendsIdInputDom;
+let friendsRequestListDom;
+let blockedListDom;
+let extraDataDom;
+let dataViewButtonDom;
+let streamIsPublicDom;
 
 // Device Info //
 // Buffered data to send
-var longitude, latitude, accuracy, altitude, altAccuracy, heading, speed,
-    timestamp, absolute, compassAlpha, acceleration, accelIncGrav, rotationRate,
-    interval, asBar, bsBar, gsBar, acBar, bcBar, gcBar, alpha, beta, gamma,
-    messages;
+let longitude;
+let latitude;
+let accuracy;
+let altitude;
+let altAccuracy;
+let heading;
+let speed;
+let timestamp;
+let absolute;
+let compassAlpha;
+let acceleration;
+let accelIncGrav;
+let rotationRate;
+let interval;
+let asBar;
+let bsBar;
+let gsBar;
+let acBar;
+let bcBar;
+let gcBar;
+let alpha;
+let beta;
+let gamma;
+
+
+let messages;
 // Number of sensors readings received to average.
-var orientationCount, accelerationCount;
-// Gamma only goes from -90 to 90deg, so this will flip to indicate the device
-// is screen-down.
-var gammaFlip = false;
-// Previous gamma reading.
-var previousGamma = 0;
+let orientationCount; let accelerationCount;
 // User agent of current browser.
-var userAgent;
+let userAgent;
 // Should we reset buffered gyro data since data changes periodically but the
 // value doesn't necessarily change.
-var doGyroDataReset = true;
+let doGyroDataReset = true;
 // Rotation with -Z pointing towards the Earth.
 TraX.downRotation = {a: 0, b: 0, g: 0};
 // Number of received sensor values with minimal acceleration.
-var resetDownCount = 0;
+let resetDownCount = 0;
 // The last time we attempted to pop the preSendBuffer.
-var previousUpdate;
+let previousUpdate;
 // Collection of buffered data to send to server.
-var sendBuffer = [];
+let sendBuffer = [];
 // Current rotation of device screen only used for realtime canvases.
-var currentScreenOrientation = {angle: 0};
+let currentScreenOrientation = {angle: 0};
 
 // Message Box //
 // Number of message boxes shown for warning the user their device is slow.
-var popMessageWarningCount = 0;
+let popMessageWarningCount = 0;
 
 // Code status //
 // No sensor data received for too long.
-var sensorsDead = false;
+let sensorsDead = false;
 // No gps data received for too long.
-var gpsDead = false;
+let gpsDead = false;
 // Socket.io thinks the server connection died.
-var connectionDead = true;
+let connectionDead = true;
 // No data from server received for too long.
-var serverDead = true;
+// let serverDead = true;
 // A script failed to load.
-var scriptsDead = false;
+let scriptsDead = false;
 // If the user is not signed in.
-var accountDead = true;
+let accountDead = true;
 // Override to force the big light to red. Set if we're sure sensors don't work
 // and we're not getting enough data to function minimally.
-var forceDead = false;
+let forceDead = false;
 
 // Timers Data view //
 // The time when Record was pressed.
-var sessionStartTime = 0;
+let sessionStartTime = 0;
 // The time when the start line was crossed.
-var lapStartTime = 0;
+let lapStartTime = 0;
 // The time the previous lap started to allow for processing laps while data
 // overlaps.
-var previousLapStartTime = 0;
+let previousLapStartTime = 0;
 // Previous lap duration in milliseconds.
-var previousLapDuration = 0;
+let previousLapDuration = 0;
 // The best lap duration in milliseconds.
-var bestLapDuration = 0;
+let bestLapDuration = 0;
 // The predicted milliseconds the current lap will take.
-var predictedLapDuration = 0;
+let predictedLapDuration = 0;
 // Driver has crossed start but not finish yet.
-var currentlyRacing = false;
+let currentlyRacing = false;
 // Just crossed the start/finish line and haven't left the threshold radius yet.
-var justStartedRacing = false;
-var justFinishedRacing = false;
-var inTransition = false;
-var currentLapState = false;
+let justStartedRacing = false;
+let justFinishedRacing = false;
+let inTransition = false;
+let currentLapState = false;
 // Previous received coordinate.
-var previousCoord = {lat: 0, lng: 0};
-var previousPreviousCoord = {lat: 0, lng: 0};
+let previousCoord = {lat: 0, lng: 0};
+let previousPreviousCoord = {lat: 0, lng: 0};
 // Times at distances driven during the best lap.
-var bestLapData = [];
+let bestLapData = [];
 // Times at distances through lap driven (Starts at start line).
-var previousLapData = [];
+let previousLapData = [];
 // Current lap times at distances since start line.
-var currentLapData = [];
+let currentLapData = [];
 // Current lap distance driven since start line.
-var currentDistanceDriven = 0;
+let currentDistanceDriven = 0;
 // Number of laps driven this session.
-var lapNum = 0;
+let lapNum = 0;
 // Number of nonlaps driven this session.
-var nonLapNum = 1;
+let nonLapNum = 1;
 
 
 // Friends //
 // All of user's friends.
 TraX.friendsList = [];
 // All users with a relationship to user.
-var allRelations = [];
+let allRelations = [];
 // Locations of friends who are currently sharing location.
-var friendPositions = [];
+let friendPositions = [];
 // Array of markers on map of each friend position.
-var friendMarkers = [];
+let friendMarkers = [];
 
-var trackList = [];
-var configList = [];
-var waitingForTrackList = false;
+let trackList = [];
+let configList = [];
+let waitingForTrackList = false;
 
-var datasize = 0;
-var datalimit = 0;
+let datasize = 0;
+let datalimit = 0;
 
-// Resume receiving data and sending.
+/**
+ * Resume receiving data and sending.
+ *
+ * @private
+ */
 function resume() {
   // Event Listeners / Data collection
   if (!realtimeViewOpen) {
-    window.addEventListener("deviceorientation", handleOrientation, true);
-    window.addEventListener("devicemotion", handleMotion, true);
+    window.addEventListener('deviceorientation', handleOrientation, true);
+    window.addEventListener('devicemotion', handleMotion, true);
     if (!friendmapEnabled) {
       if (!navigator.geolocation) {
         TraX.showMessageBox(
-            "Your current browser does not allow me to view geolocation.");
+            'Your current browser does not allow me to view geolocation.');
       } else {
         wpid = navigator.geolocation.watchPosition(
             handleNewPosition, handlePosError, geoOptions);
@@ -289,13 +374,13 @@ function resume() {
     } else {
       socketMessageQueue.push([
         'newsession', sessionName, trackId, trackOwnerId, configId,
-        configOwnerId, sessionId
+        configOwnerId, sessionId,
       ]);
     }
   } else if (!preventSend) {
     socketMessageQueue.push([
       'newsession', sessionName, trackId, trackOwnerId, configId, configOwnerId,
-      sessionId
+      sessionId,
     ]);
   }
 
@@ -309,7 +394,7 @@ function resume() {
   popMessageWarningCount = 0;
 
   // Reset values to show we have resumed.
-  pausePlayButton.innerHTML = "Stop";
+  pausePlayButton.innerHTML = 'Stop';
   isPaused = false;
   heartbeatCount = 0;
   updateServerLights();
@@ -320,12 +405,16 @@ function resume() {
   // Record video.
   if (TraX.Video) TraX.Video.startRecording();
 }
-// Pause/Stop data collection
+/**
+ * Pause/Stop data collection
+ *
+ * @private
+ */
 function pause() {
   // Stop data collection to save device resources
   if (!realtimeViewOpen) {
-    window.removeEventListener("deviceorientation", handleOrientation, true);
-    window.removeEventListener("devicemotion", handleMotion, true);
+    window.removeEventListener('deviceorientation', handleOrientation, true);
+    window.removeEventListener('devicemotion', handleMotion, true);
     if (!friendmapEnabled) {
       if (navigator.geolocation) {
         navigator.geolocation.clearWatch(wpid);
@@ -353,9 +442,9 @@ function pause() {
 
   // Show user data collection has stopped.
   pausePlayButton.innerHTML =
-      previousSessionId.length <= 0 ? "Record" : "Resume";
-  pausedRedLight.style.display = "inline-block";
-  pausedGreenLight.style.display = "none";
+      previousSessionId.length <= 0 ? 'Record' : 'Resume';
+  pausedRedLight.style.display = 'inline-block';
+  pausedGreenLight.style.display = 'none';
   isPaused = true;
   updateServerLights();
 
@@ -365,10 +454,16 @@ function pause() {
   // End video recording.
   if (TraX.Video) TraX.Video.stopRecording();
 }
-// Toggle recording of data.
+/**
+ * Toggle recording of data.
+ *
+ * @public
+ * @param {?boolean} [force=undefined] Force state, or toggle with undefined.
+ */
 TraX.togglePause = function(force) {
-  if (typeof force === 'boolean')
+  if (typeof force === 'boolean') {
     if (force == isPaused) return;
+  }
   if (isPaused) {
     resume();
   } else {
@@ -376,7 +471,11 @@ TraX.togglePause = function(force) {
   }
 };
 
-// Initialize script
+/**
+ * Initialize script
+ *
+ * @public
+ */
 TraX.init = function() {
   redLight = document.getElementById('redLightStatus');
   greenLight = document.getElementById('greenLightStatus');
@@ -396,7 +495,6 @@ TraX.init = function() {
   pausedGreenLight = document.getElementById('greenLightPaused');
   pausedRedLight = document.getElementById('redLightPaused');
   debugDom = document.getElementById('debug');
-  preSendBufferDom = document.getElementById('preSendBuffer');
   sendBufferDom = document.getElementById('sendBuffer');
   updateFrequencyDom = document.getElementById('updateFrequency');
   redLightConnected = document.getElementById('redLightConnected');
@@ -411,8 +509,6 @@ TraX.init = function() {
   needIMUDom = document.getElementById('needIMU');
   needAccountDom = document.getElementById('needAccount');
   sessionInputDom = document.getElementById('sessionInput');
-  messageBoxDom = document.getElementById('messageBox');
-  messageBoxWrapperDom = document.getElementById('messageBoxWrapper');
   trackNameSelectDom = document.getElementById('sessionTrackNameSelect');
   configNameSelectDom = document.getElementById('sessionConfigNameSelect');
   optionsMenuDom = document.getElementById('optionsMenu');
@@ -427,7 +523,6 @@ TraX.init = function() {
   realtimeSensorClockDom = document.getElementById('realtimeSensorClock');
   realtimeDeviceTypeDom = document.getElementById('realtimeDeviceType');
   realtimeDeviceBrowserDom = document.getElementById('realtimeDeviceBrowser');
-  realtimeDumpDom = document.getElementById('realtimeDump');
   largeGreenLight = document.getElementById('greenLightLarge');
   largeYellowLight = document.getElementById('yellowLightLarge');
   largeRedLight = document.getElementById('redLightLarge');
@@ -444,35 +539,35 @@ TraX.init = function() {
   friendmapToggleDom = document.getElementById('mapToggle');
   optionsToggleDom = document.getElementById('optionsMenuToggle');
   realtimeDataToggleDom = document.getElementById('realtimeDataToggle');
-  toggleDebugDom = document.getElementById("debugMode");
-  trackNameEditButton = document.getElementById("sessionTrackNameEdit");
-  configNameEditButton = document.getElementById("sessionConfigNameEdit");
-  bigButtonModeButton = document.getElementById("chooseBigButton");
-  timerModeButton = document.getElementById("chooseTimers");
+  toggleDebugDom = document.getElementById('debugMode');
+  trackNameEditButton = document.getElementById('sessionTrackNameEdit');
+  configNameEditButton = document.getElementById('sessionConfigNameEdit');
+  bigButtonModeButton = document.getElementById('chooseBigButton');
+  timerModeButton = document.getElementById('chooseTimers');
   // customModeButton = document.getElementById("chooseCustom");
-  bigButtonHUDDom = document.getElementById("bigButtonHUD");
-  timersHUDDom = document.getElementById("timersHUD");
+  bigButtonHUDDom = document.getElementById('bigButtonHUD');
+  timersHUDDom = document.getElementById('timersHUD');
   // customHUDDom = document.getElementById("customHUD");
-  bigTimerDom = document.getElementById("bigTimer");
-  littleTimerTopDom = document.getElementById("littleTimer0");
-  littleTimerLeftDom = document.getElementById("littleTimer1");
-  littleTimerRightDom = document.getElementById("littleTimer2");
-  littleTimerLeftTopDom = document.getElementById("littleTimer3");
-  littleTimerRightTopDom = document.getElementById("littleTimer4");
-  doCompressionDom = document.getElementById("doCompression");
-  timersTrackTitleDom = document.getElementById("timersTitle");
-  debugBluetoothDom = document.getElementById("bluetoothDebug");
-  friendsViewToggleDom = document.getElementById("friendViewToggle");
-  friendsViewDom = document.getElementById("friendView");
-  friendsUsernameDom = document.getElementById("friendViewName");
-  friendsIdDom = document.getElementById("friendViewId");
-  friendsListDom = document.getElementById("friendList");
-  friendsIdInputDom = document.getElementById("friendInput");
-  friendsRequestListDom = document.getElementById("friendRequestList");
-  blockedListDom = document.getElementById("blockedList");
-  extraDataDom = document.getElementById("extraDataCheckbox");
-  dataViewButtonDom = document.getElementById("viewDataToggle");
-  streamIsPublicDom = document.getElementById("streamIsPublicCheckbox");
+  bigTimerDom = document.getElementById('bigTimer');
+  littleTimerTopDom = document.getElementById('littleTimer0');
+  littleTimerLeftDom = document.getElementById('littleTimer1');
+  littleTimerRightDom = document.getElementById('littleTimer2');
+  littleTimerLeftTopDom = document.getElementById('littleTimer3');
+  littleTimerRightTopDom = document.getElementById('littleTimer4');
+  doCompressionDom = document.getElementById('doCompression');
+  timersTrackTitleDom = document.getElementById('timersTitle');
+  debugBluetoothDom = document.getElementById('bluetoothDebug');
+  friendsViewToggleDom = document.getElementById('friendViewToggle');
+  friendsViewDom = document.getElementById('friendView');
+  friendsUsernameDom = document.getElementById('friendViewName');
+  friendsIdDom = document.getElementById('friendViewId');
+  friendsListDom = document.getElementById('friendList');
+  friendsIdInputDom = document.getElementById('friendInput');
+  friendsRequestListDom = document.getElementById('friendRequestList');
+  blockedListDom = document.getElementById('blockedList');
+  extraDataDom = document.getElementById('extraDataCheckbox');
+  dataViewButtonDom = document.getElementById('viewDataToggle');
+  streamIsPublicDom = document.getElementById('streamIsPublicCheckbox');
 
   streamIsPublicDom.onchange = function() {
     if (this.checked) {
@@ -519,12 +614,12 @@ TraX.init = function() {
   serverHeartbeat();
 
   // Update UI to ready.
-  greenLightScripts.style.display = "inline-block";
-  redLightScripts.style.display = "none";
+  greenLightScripts.style.display = 'inline-block';
+  redLightScripts.style.display = 'none';
   timerModeButton.disabled = false;
   // customModeButton.disabled = false;
   bigButtonModeButton.disabled = false;
-  pausePlayButton.innerHTML = "Record";
+  pausePlayButton.innerHTML = 'Record';
   pausePlayButton.disabled = false;
 
   doCompressionDom.onchange = function() {
@@ -542,10 +637,10 @@ TraX.init = function() {
   TraX.addEventListener('signout', signInStateChange);
 
   // Add bluetooth menu.
-  var btRefresh = document.createElement("button");
+  let btRefresh = document.createElement('button');
   btRefresh.onclick = TraX.handleClickBluetoothRefresh;
-  btRefresh.innerHTML = "Add Device";
-  debugBluetoothDom.innerHTML = "";
+  btRefresh.innerHTML = 'Add Device';
+  debugBluetoothDom.innerHTML = '';
   debugBluetoothDom.appendChild(btRefresh);
 
   socketInit();
@@ -554,15 +649,16 @@ TraX.init = function() {
   // cached version.
   if (navigator.serviceWorker) {
     navigator.serviceWorker
-        .register("https://dev.campbellcrowley.com/trax/traxSW.js")
+        .register('https://dev.campbellcrowley.com/trax/traxSW.js')
         .then(function(registration) {
-          if (TraX.debugMode)
+          if (TraX.debugMode) {
             console.log(
-                "ServiceWorker registration successful with scope:",
+                'ServiceWorker registration successful with scope:',
                 registration.scope);
+          }
         })
         .catch(function(err) {
-          console.warn("ServiceWorker registration failed:", err);
+          console.warn('ServiceWorker registration failed:', err);
         });
   }
 
@@ -581,7 +677,11 @@ TraX.init = function() {
     TraX.sessionInputChange();
   });
 };
-// Initialize socket portion of script.
+/**
+ * Initialize socket portion of script.
+ *
+ * @private
+ */
 function socketInit() {
   TraX.socket.on('connected', function() {
     isConnected = true;
@@ -593,8 +693,8 @@ function socketInit() {
     TraX.requestFilesize();
 
     console.log('Flushing unsent messages:', socketMessageQueue);
-    for (var i = 0; i < socketMessageQueue.length; i++) {
-      TraX.socket.emit.apply(TraX.socket, socketMessageQueue[i]);
+    for (let i = 0; i < socketMessageQueue.length; i++) {
+      TraX.socket.emit(...socketMessageQueue[i]);
     }
     socketMessageQueue = [];
   });
@@ -619,7 +719,7 @@ function socketInit() {
     updateFilesize();
   });
   TraX.socket.on('createdsession', function(newSessionId) {
-    console.log("Session created successfully:", newSessionId);
+    console.log('Session created successfully:', newSessionId);
   });
   TraX.socket.on('success', function(chunkid) {
     connectionDead = false;
@@ -631,15 +731,15 @@ function socketInit() {
         connectionDead = false;
         // console.log("Server failed. Reason:", reason, extraInfo);
         if (reason === 'noid' && TraX.isSignedIn) {
-          console.log("Re-sending token");
+          console.log('Re-sending token');
           TraX.socket.emit('newtoken', token);
           tokenSent = true;
           TraX.requestFriendsList();
         } else if (TraX.isSignedIn && !isPaused && reason === 'writeerror') {
-          console.log("Writing failed due to session not created yet.");
+          console.log('Writing failed due to session not created yet.');
         } else if (reason === 'readerr') {
           console.log(
-              "Reading data failed. Data probably doesn't exist.", extraInfo);
+              'Reading data failed. Data probably doesn\'t exist.', extraInfo);
         } else if (reason === 'invalidsessionid') {
           console.error(
               'Server says we are not sending sessionId', sessionId,
@@ -651,12 +751,13 @@ function socketInit() {
               ' to the server!');
         } else if (reason !== 'noid') {
           console.warn(
-              "UNCAUGHT SERVER FAIL:", reason, extraInfo,
-              "All failures should be handled properly!");
-          if (isPaused)
-            TraX.showMessageBox(
-                "Ignore this message: (Server responded with fail code: " +
-                reason + ")");
+              'UNCAUGHT SERVER FAIL:', reason, extraInfo,
+              'All failures should be handled properly!');
+          if (isPaused) {
+TraX.showMessageBox(
+                'Ignore this message: (Server responded with fail code: ' +
+                reason + ')');
+}
         }
       });
   TraX.socket.on('friendPos', function(friendId, pos) {
@@ -672,53 +773,68 @@ function socketInit() {
     });
   });
   TraX.socket.on('relationshiplist', function(list) {
-    if (TraX.debugMode) console.log("All relations", list);
+    if (TraX.debugMode) console.log('All relations', list);
     allRelations = list;
     updateFriendsList();
   });
   TraX.socket.on(
       'friendfail', function(fail, more) {
         console.log('Server failed friend request. Reason:', fail, more);
-        if (fail == "success") {
-          TraX.showMessageBox("Successfully sent friend request!");
-        } else if (fail == "nowfriends") {
+        if (fail == 'success') {
+          TraX.showMessageBox('Successfully sent friend request!');
+        } else if (fail == 'nowfriends') {
           TraX.showMessageBox(
-              "Both of you wish to be friends. You are now friends!");
-        } else if (fail == "unknownuser") {
+              'Both of you wish to be friends. You are now friends!');
+        } else if (fail == 'unknownuser') {
           TraX.showMessageBox(
-              "I don't know who that is. Perhaps that person has not made an account yet.");
-        } else if (fail == "addingself") {
+              'I don\'t know who that is. Perhaps that person has not made ' +
+              'an account yet.');
+        } else if (fail == 'addingself') {
           TraX.showMessageBox(
-              "Sorry, adding yourself as a friend doesn't work.");
+              'Sorry, adding yourself as a friend doesn\'t work.');
         } else {
-          TraX.showMessageBox("Sending friend request failed: " + fail);
+          TraX.showMessageBox('Sending friend request failed: ' + fail);
         }
       });
   TraX.socket.on('pong_', console.log);
 }
-// Request total storage size the user has on server.
+/**
+ * Request total storage size the user has on server.
+ *
+ * @public
+ */
 TraX.requestFilesize = function() {
-  TraX.socket.emit('requestsessionsize', "../");
+  TraX.socket.emit('requestsessionsize', '../');
   TraX.socket.emit('requestsessionlimit');
 };
+/**
+ * Request the summary of the best lap for this configuration.
+ *
+ * @private
+ * @param {boolean} [force=false] Force updating even if we already have the
+ * summary.
+ */
 function requestConfigSummary(force) {
   if (typeof trackId === 'undefined') return;
-  var tempConfigId = configId;
+  let tempConfigId = configId;
   if (typeof configId === 'undefined') {
     tempConfigId = configNameSelectDom.value;
   }
   if (typeof tempConfigId === 'undefined') return;
 
-  for (var i = 0; i < TraX.friendsList.length; i++) {
+  for (let i = 0; i < TraX.friendsList.length; i++) {
     if (!force) {
       const search = [
-        TraX.friendsList[i].id, trackOwnerId, trackId, tempConfigId
+        TraX.friendsList[i].id,
+        trackOwnerId,
+        trackId,
+        tempConfigId,
       ].join(',');
       if (TraX.summaryList[search]) continue;
     }
     console.log(
-        "Requested config summary", TraX.friendsList[i].id, trackOwnerId,
-        trackId, /*configOwnerId,*/ tempConfigId);
+        'Requested config summary', TraX.friendsList[i].id, trackOwnerId,
+        trackId, /* configOwnerId,*/ tempConfigId);
     TraX.socket.emit(
         'getsummary', trackId, tempConfigId, TraX.friendsList[i].id,
         trackOwnerId);
@@ -728,31 +844,41 @@ function requestConfigSummary(force) {
         [TraX.getDriverId(), trackOwnerId, trackId, tempConfigId].join(',');
     if (TraX.summaryList[search]) return;
   }
-  if (TraX.debugMode)
+  if (TraX.debugMode) {
     console.log(
-        "Requested config summary", TraX.getDriverId(), trackOwnerId, trackId,
-        /*configOwnerId,*/ tempConfigId);
+        'Requested config summary', TraX.getDriverId(), trackOwnerId, trackId,
+        /* configOwnerId,*/ tempConfigId);
+  }
   TraX.socket.emit(
       'getsummary', trackId, tempConfigId, TraX.getDriverId(), trackOwnerId);
 }
+/**
+ * Update the summary of the current configuration with current data.
+ *
+ * @private
+ */
 function updateConfigSummary() {
   const search =
       [TraX.getDriverId(), trackOwnerId, trackId, configId].join(',');
-  var summary = TraX.summaryList[search];
+  let summary = TraX.summaryList[search];
   if (!summary || summary.bestLapDuration > bestLapDuration) {
     summary = {
-      "bestLapDuration": bestLapDuration,
-      "bestLapData": bestLapData,
-      "sessionStartTime": sessionStartTime,
-      "sessionId": sessionId
+      'bestLapDuration': bestLapDuration,
+      'bestLapData': bestLapData,
+      'sessionStartTime': sessionStartTime,
+      'sessionId': sessionId,
     };
-    console.log("Updating Summary:", search, summary);
+    console.log('Updating Summary:', search, summary);
     TraX.socket.emit(
         'updatesummary', trackId, configId, TraX.getDriverId(), trackOwnerId,
         JSON.stringify(summary));
   }
 }
-// Reset buffered data.
+/**
+ * Reset buffered data.
+ *
+ * @private
+ */
 function resetData() {
   doGyroDataReset = true;
   longitude = 0.0;
@@ -769,56 +895,60 @@ function resetData() {
   accelerationCount = 0;
   messages = [];
 }
-// Check URL for queries.
+/**
+ * Check URL for queries.
+ *
+ * @private
+ */
 function checkURLOptions() {
-  var options = getURLOptions();
-  if (TraX.debugMode) console.log("Options:", options);
-  if (options["map"] > 0 /*&& y < 690*/) {
+  let options = getURLOptions();
+  if (TraX.debugMode) console.log('Options:', options);
+  if (options['map'] > 0 /* && y < 690*/) {
     TraX.toggleMap();
   }
-  if (options["debug"] > 0) {
-    toggleDebugDom.style.display = "block";
-    TraX.toggleDebug(options["debug"] - 1);
+  if (options['debug'] > 0) {
+    toggleDebugDom.style.display = 'block';
+    TraX.toggleDebug(options['debug'] - 1);
   }
-  if (options["livedata"] > 0) {
+  if (options['livedata'] > 0) {
     TraX.toggleRealtimeView(true);
   }
-  if (options["friends"] > 0) {
+  if (options['friends'] > 0) {
     TraX.toggleFriendsView(true);
   }
-  if (options["friendId"] > 0) {
+  if (options['friendId'] > 0) {
     TraX.toggleFriendsView(true);
-    friendsIdInputDom.value = options["friendId"];
+    friendsIdInputDom.value = options['friendId'];
     TraX.showMessageBox(
-        "Click Send Request at the bottom to confirm sending request.");
-    TraX.setURLOption("friendId");
+        'Click Send Request at the bottom to confirm sending request.');
+    TraX.setURLOption('friendId');
   }
-  if (options["docompression"] > 0) {
+  if (options['docompression'] > 0) {
     doCompressionDom.checked = true;
   }
-  if (options["frequency"] > 0) {
-    updateFrequencyDom.value = options["frequency"];
+  if (options['frequency'] > 0) {
+    updateFrequencyDom.value = options['frequency'];
   }
-  if (options["options"] > 0) {
+  if (options['options'] > 0) {
     TraX.toggleOptionsMenu(true);
   }
-  if (options["video"] > 0) {
+  if (options['video'] > 0) {
     if (TraX.Video) TraX.Video.toggleVideo(true);
   }
-  if (options["sidebar"] > 0) {
+  if (options['sidebar'] > 0) {
     if (Sidebar) Sidebar.toggleOpen(true);
   } else {
-    if (Sidebar) Sidebar.toggleOpen("default");
+    if (Sidebar) Sidebar.toggleOpen('default');
   }
-  if (typeof options["id"] !== 'undefined') {
-    sessionInputDom.value = options["id"];
+  if (typeof options['id'] !== 'undefined') {
+    sessionInputDom.value = options['id'];
     TraX.sessionInputChange();
     // TraX.requestFilesize();
   }
-  if (options["hud"] > 0 ) {
-    if (options["hud"] == 1) TraX.handleClickTimers();
+  if (options['hud'] > 0 ) {
+    if (options['hud'] == 1) TraX.handleClickTimers();
     /* if (options["hud"] == 2) {
-      var tries = 0;
+      let tries = 0;
       checkIfLoaded = function() {
         tries++;
         if (tries > 20) {
@@ -832,174 +962,238 @@ function checkURLOptions() {
       checkIfLoaded();
     } */
   }
-  if (options["start"] == 1) {
+  if (options['start'] == 1) {
     setTimeout(resume);
   }
-  if (options["nosend"] == 1) {
+  if (options['nosend'] == 1) {
     preventSend = true;
-    console.warn("SENDING DATA HAS BEEN DISABLED DUE TO HREF FLAG.");
+    console.warn('SENDING DATA HAS BEEN DISABLED DUE TO HREF FLAG.');
   }
   // if (y > 822) {
   //   toggleOptionsMenu();
   // }
 }
-// Parse options embedded in URL.
+/**
+ * Parse options embedded in URL.
+ *
+ * @private
+ * @return {Object.<string>} The options defined in the URL.
+ */
 function getURLOptions() {
-  var options = {};
-  var optionString = document.URL.split("?")[1];
+  let options = {};
+  let optionString = document.URL.split('?')[1];
   if (typeof optionString === 'undefined') return options;
-  var splitURI = optionString.split("#")[0].split("&");
-  for (var i = 0; i < splitURI.length; i++) {
-    const pair = splitURI[i].split("=");
+  let splitURI = optionString.split('#')[0].split('&');
+  for (let i = 0; i < splitURI.length; i++) {
+    const pair = splitURI[i].split('=');
     options[pair[0]] = pair[1];
   }
   return options;
 }
-// Set query option in URL.
+/**
+ * Set query option in URL.
+ *
+ * @public
+ * @param {string} option The key name.
+ * @param {string} setting The key value.
+ */
 TraX.setURLOption = function(option, setting) {
-  var newhref;
-  const postregex = "=[^&#]*";
+  let newhref;
+  const postregex = '=[^&#]*';
   if (typeof setting !== 'undefined') {
     newhref = location.href.replace(
-        new RegExp(option + postregex), option + "=" + setting);
-    var postOptions = newhref.split("#");
-    var Options = postOptions[0];
-    postOptions = postOptions[1] || "";
-    if (newhref == location.href && newhref.indexOf(option + "=") < 0) {
-      if (newhref.indexOf("?") > 0) {
-        Options += "&" + option + "=" + setting;
+        new RegExp(option + postregex), option + '=' + setting);
+    let postOptions = newhref.split('#');
+    let Options = postOptions[0];
+    postOptions = postOptions[1] || '';
+    if (newhref == location.href && newhref.indexOf(option + '=') < 0) {
+      if (newhref.indexOf('?') > 0) {
+        Options += '&' + option + '=' + setting;
       } else {
-        Options += "?" + option + "=" + setting;
+        Options += '?' + option + '=' + setting;
       }
     }
-    newhref = Options + "#" + postOptions;
+    newhref = Options + '#' + postOptions;
   } else {
-    newhref = location.href.replace(new RegExp("&" + option + postregex), "");
+    newhref = location.href.replace(new RegExp('&' + option + postregex), '');
     if (newhref == location.href) {
       newhref =
-          location.href.replace(new RegExp("\\?" + option + postregex), "");
+          location.href.replace(new RegExp('\\?' + option + postregex), '');
       if (newhref != location.href) {
-        newhref = newhref.replace("&", "?");
+        newhref = newhref.replace('&', '?');
       }
     }
   }
-  history.pushState(null, "TraX: Racing Data Collector", newhref);
+  history.pushState(null, 'TraX: Racing Data Collector', newhref);
 };
-// Change certain settings based off device variables (browser/OS etc.).
+/**
+ * Change certain settings based off device variables (browser/OS etc.).
+ *
+ * @private
+ */
 function checkDeviceOptions() {
   userAgent = navigator.userAgent;
-  var deviceType = TraX.getDeviceType();
-  var browserType = TraX.getBrowser();
+  let deviceType = TraX.getDeviceType();
+  let browserType = TraX.getBrowser();
 
   realtimeDeviceTypeDom.innerHTML = deviceType;
   realtimeDeviceBrowserDom.innerHTML = browserType;
 
-  if (browserType == "Safari") {
+  if (browserType == 'Safari') {
     xAxisFlipDom.checked = false;
     yAxisFlipDom.checked = false;
     zAxisFlipDom.checked = false;
-    keepAwakeSetting("pageload");
-  } else if (browserType == "Chrome") {
+    keepAwakeSetting('pageload');
+  } else if (browserType == 'Chrome') {
     xAxisFlipDom.checked = true;
     yAxisFlipDom.checked = true;
     zAxisFlipDom.checked = true;
-    keepAwakeSetting("video");
-  } else if (browserType == "Firefox") {
+    keepAwakeSetting('video');
+  } else if (browserType == 'Firefox') {
     xAxisFlipDom.checked = true;
     yAxisFlipDom.checked = true;
     zAxisFlipDom.checked = true;
-    keepAwakeSetting("video");
+    keepAwakeSetting('video');
     Trax.showMessageBox(
-        "Firefox does not allow me to keep your phone on while recording.");
+        'Firefox does not allow me to keep your phone on while recording.');
   } else {
-    keepAwakeSetting("video");
+    keepAwakeSetting('video');
   }
 }
-// Update the big light.
+/**
+ * Update the big light.
+ *
+ * @private
+ */
 function updateMainStatus() {
   if (forceDead) {
-    setMainLights("red");
+    setMainLights('red');
   } else if (isPaused && !realtimeViewOpen && !friendmapEnabled) {
     if (!connectionDead && !accountDead) {
       if (sendBuffer.length > 1) {
-        setMainLights("processing");
+        setMainLights('processing');
       } else {
-        setMainLights("green");
+        setMainLights('green');
       }
     } else if (!connectionDead && accountDead) {
-      setMainLights("yellow");
+      setMainLights('yellow');
     } else {
-      setMainLights("red");
+      setMainLights('red');
     }
   } else if (!isPaused || realtimeViewOpen) {
     if (!sensorsDead && !gpsDead && !scriptsDead && !accountDead) {
       if (sendBuffer.length > 1) {
-        setMainLights("processing");
+        setMainLights('processing');
       } else {
-        setMainLights("green");
+        setMainLights('green');
       }
     } else if (!sensorsDead && !gpsDead && !scriptsDead && accountDead) {
-      setMainLights("yellow");
+      setMainLights('yellow');
     } else {
-      setMainLights("red");
+      setMainLights('red');
     }
   } else if (friendmapEnabled) {
     if (!gpsDead && !scriptsDead && !accountDead) {
       if (sendBuffer.length > 1) {
-        setMainLights("processing");
+        setMainLights('processing');
       } else {
-        setMainLights("green");
+        setMainLights('green');
       }
     } else if (!gpsDead && !scriptsDead && accountDead) {
-      setMainLights("yellow");
+      setMainLights('yellow');
     } else {
-      setMainLights("red");
+      setMainLights('red');
     }
   } else {
-    setMainLights("red yellow");
+    setMainLights('red yellow');
   }
 }
-// Add setting to main light to show multiple lights.
-function addMainLights(color) {
-  if (color.indexOf("red") != -1) largeRedLight.style.display = "inline-block";
-  if (color.indexOf("yellow") != -1) largeYellowLight.style.display = "inline-block";
-  if (color.indexOf("green") != -1) largeGreenLight.style.display = "inline-block";
-  if (color.indexOf("processing") != -1) largeProcessingLight.style.display = "inline-block";
-}
-// Set main light to color or list of colors.
+/**
+ * Add setting to main light to show multiple lights.
+ *
+ * @private
+ * @param {string} color The light or list of light names to show.
+ */
+// function addMainLights(color) {
+//   if (color.indexOf('red') != -1) {
+//     largeRedLight.style.display = 'inline-block';
+//   }
+//   if (color.indexOf('yellow') != -1) {
+//     largeYellowLight.style.display = 'inline-block';
+//   }
+//   if (color.indexOf('green') != -1) {
+//     largeGreenLight.style.display = 'inline-block';
+//   }
+//   if (color.indexOf('processing') != -1) {
+//     largeProcessingLight.style.display = 'inline-block';
+//   }
+// }
+/**
+ * Set main light to color or list of colors.
+ *
+ * @private
+ * @param {string} color Acceptable light name to show or list of lights.
+ */
 function setMainLights(color) {
-  if (color.indexOf("red") != -1) largeRedLight.style.display = "inline-block";
-  else largeRedLight.style.display = "none";
+  if (color.indexOf('red') != -1) {
+    largeRedLight.style.display = 'inline-block';
+  } else {
+    largeRedLight.style.display = 'none';
+  }
 
-  if (color.indexOf("yellow") != -1) largeYellowLight.style.display = "inline-block";
-  else largeYellowLight.style.display = "none";
+  if (color.indexOf('yellow') != -1) {
+    largeYellowLight.style.display = 'inline-block';
+  } else {
+    largeYellowLight.style.display = 'none';
+  }
 
-  if (color.indexOf("green") != -1) largeGreenLight.style.display = "inline-block";
-  else largeGreenLight.style.display = "none";
+  if (color.indexOf('green') != -1) {
+    largeGreenLight.style.display = 'inline-block';
+  } else {
+    largeGreenLight.style.display = 'none';
+  }
 
-  if (color.indexOf("processing") != -1) largeProcessingLight.style.display = "inline-block";
-  else largeProcessingLight.style.display = "none";
+  if (color.indexOf('processing') != -1) {
+    largeProcessingLight.style.display = 'inline-block';
+  } else {
+    largeProcessingLight.style.display = 'none';
+  }
 }
-// Returns current client version.
-TraX.getVersion = function() { return versionNum; };
-// Heartbeat to check if data is actually being received.
+/**
+ * Returns current client version.
+ *
+ * @public
+ * @return {string} Current version.
+ */
+TraX.getVersion = function() {
+ return versionNum;
+};
+/**
+ * Heartbeat to check if data is actually being received.
+ *
+ * @private
+ */
 function heartbeat() {
   sensorsDead = false;
   clearTimeout(heartbeatTimeout);
   heartbeatTimeout = setTimeout(pageDeath, updateFrequency);
-  greenLight.style.display = "inline-block";
-  redLight.style.display = "none";
+  greenLight.style.display = 'inline-block';
+  redLight.style.display = 'none';
   updateMainStatus();
 }
-// Triggered if heartbeat hasn't happened for a while.
+/**
+ * Triggered if heartbeat hasn't happened for a while.
+ *
+ * @private
+ */
 function pageDeath() {
   sensorsDead = true;
-  redLight.style.display = "inline-block";
-  greenLight.style.display = "none";
+  redLight.style.display = 'inline-block';
+  greenLight.style.display = 'none';
   if ((!isPaused || realtimeViewOpen) && heartbeatCount < 2) {
     TraX.showMessageBox(
-        "We aren't able to get some sensor data." +
-            " Your device may be incompatible with this site.",
+        'We aren\'t able to get some sensor data.' +
+            ' Your device may be incompatible with this site.',
         10000);
     forceDead = true;
   } else if (!isPaused) {
@@ -1009,97 +1203,129 @@ function pageDeath() {
   }
   updateMainStatus();
 }
-// Heartbeat from server responses.
+/**
+ * Heartbeat from server responses.
+ *
+ * @private
+ */
 function serverHeartbeat() {
-  serverDead = false;
+  // serverDead = false;
   clearTimeout(serverTimeout);
   // If server doesn't reply with 200% of the time we gave it, we can assume it
   // is dead.
   serverTimeout = setTimeout(serverDeath, updateFrequency * 2);
-  greenLightWriting.style.display = "inline-block";
-  redLightWriting.style.display = "none";
+  greenLightWriting.style.display = 'inline-block';
+  redLightWriting.style.display = 'none';
   updateMainStatus();
 }
-// Triggered if serverHeartbeat hasn't happened for a while.
+/**
+ * Triggered if serverHeartbeat hasn't happened for a while.
+ *
+ * @private
+ */
 function serverDeath() {
-  serverDead = true;
-  redLightWriting.style.display = "inline-block";
-  greenLightWriting.style.display = "none";
+  // serverDead = true;
+  redLightWriting.style.display = 'inline-block';
+  greenLightWriting.style.display = 'none';
   updateMainStatus();
 }
-// Heartbeat to check if we're actually getting gps data.
+/**
+ * Heartbeat to check if we're actually getting gps data.
+ *
+ * @private
+ */
 function gpsHeartbeat() {
   gpsDead = false;
   clearTimeout(gpsHeartbeatTimeout);
   gpsHeartbeatTimeout = setTimeout(gpsDeath, gpsMinFrequency);
 
-  greenLightGPS.style.display = "inline-block";
-  redLightGPS.style.display = "none";
+  greenLightGPS.style.display = 'inline-block';
+  redLightGPS.style.display = 'none';
   updateMainStatus();
 }
-// gpsHeartbeat hasn't happened for too long and GPS can be assumed dead.
+/**
+ * gpsHeartbeat hasn't happened for too long and GPS can be assumed dead.
+ *
+ * @private
+ */
 function gpsDeath() {
   gpsDead = true;
-  redLightGPS.style.display = "inline-block";
-  greenLightGPS.style.display = "none";
+  redLightGPS.style.display = 'inline-block';
+  greenLightGPS.style.display = 'none';
   if (!isPaused || realtimeViewOpen || friendmapEnabled) {
     TraX.showMessageBox(
-        "We aren't able to get GPS data, or data is infrequent.", 5000, false);
+        'We aren\'t able to get GPS data, or data is infrequent.', 5000, false);
   }
   updateMainStatus();
 }
-// Hanlder for when the sign in state changes.
+/**
+ * Handler for when the sign in state changes.
+ *
+ * @private
+ */
 function signInStateChange() {
   updateServerLights();
-  needAccountDom.style.display = TraX.isSignedIn ? "none" : "block";
-  friendsUsernameDom.innerHTML = TraX.getDriverName() || "_";
+  needAccountDom.style.display = TraX.isSignedIn ? 'none' : 'block';
+  friendsUsernameDom.innerHTML = TraX.getDriverName() || '_';
   friendsIdDom.innerHTML = TraX.getDriverId();
   accountDead = !TraX.isSignedIn;
   updateMainStatus();
 }
-// Update the green and red lights for things related to the connection with the
-// server.
+/**
+ * Update the green and red lights for things related to the connection with the
+ * server.
+ *
+ * @private
+ */
 function updateServerLights() {
   if (sendBuffer.length > 0 || !isPaused) {
-    pausedGreenLight.style.display = "inline-block";
-    pausedRedLight.style.display = "none";
+    pausedGreenLight.style.display = 'inline-block';
+    pausedRedLight.style.display = 'none';
   } else {
-    pausedRedLight.style.display = "inline-block";
-    pausedGreenLight.style.display = "none";
+    pausedRedLight.style.display = 'inline-block';
+    pausedGreenLight.style.display = 'none';
   }
   if (isConnected) {
-    greenLightConnected.style.display = "inline-block";
-    redLightConnected.style.display = "none";
-    if ((TraX.isSignedIn || tokenSent) && (sendBuffer.length > 0 || !isPaused)) {
-      greenLightSending.style.display = "inline-block";
-      yellowLightSending.style.display = "none";
-      redLightSending.style.display = "none";
+    greenLightConnected.style.display = 'inline-block';
+    redLightConnected.style.display = 'none';
+    if ((TraX.isSignedIn || tokenSent) &&
+        (sendBuffer.length > 0 || !isPaused)) {
+      greenLightSending.style.display = 'inline-block';
+      yellowLightSending.style.display = 'none';
+      redLightSending.style.display = 'none';
     } else if ((TraX.isSignedIn || tokenSent) && isPaused) {
-      yellowLightSending.style.display = "inline-block";
-      greenLightSending.style.display = "none";
-      redLightSending.style.display = "none";
+      yellowLightSending.style.display = 'inline-block';
+      greenLightSending.style.display = 'none';
+      redLightSending.style.display = 'none';
     } else {
-      redLightSending.style.display = "inline-block";
-      yellowLightSending.style.display = "none";
-      greenLightSending.style.display = "none";
+      redLightSending.style.display = 'inline-block';
+      yellowLightSending.style.display = 'none';
+      greenLightSending.style.display = 'none';
     }
   } else {
-    redLightConnected.style.display = "inline-block";
-    redLightSending.style.display = "inline-block";
-    greenLightConnected.style.display = "none";
-    greenLightSending.style.display = "none";
-    yellowLightSending.style.display = "none";
+    redLightConnected.style.display = 'inline-block';
+    redLightSending.style.display = 'inline-block';
+    greenLightConnected.style.display = 'none';
+    greenLightSending.style.display = 'none';
+    yellowLightSending.style.display = 'none';
   }
 }
-// Determine the closest track to the given coordinates. A maximum distance of
-// 10km is checked.
+/** Determine the closest track to the given coordinates. A maximum distance of
+ * 10km is checked.
+ *
+ * @private
+ * @param {{lat: number, lng: number}} coord The coordinates to determine the
+ * closest track to.
+ * @return {?TraX~Track} The track, or null if unable to determine track.
+ */
 function determineTrack(coord) {
-  if (!trackList || (!coord && !DataView.coordAverage.coord))
+  if (!trackList || (!coord && !DataView.coordAverage.coord)) {
     return null;
+  }
   if (!coord) coord = DataView.coordAverage.coord;
-  var closest = {dist: 10 * 1000, index: -1}; // 10km maximum
-  for (var i = 0; i < trackList.length; i++) {
-    var dist = TraX.Units.latLngToMeters(trackList[i].coord, coord);
+  let closest = {dist: 10 * 1000, index: -1}; // 10km maximum
+  for (let i = 0; i < trackList.length; i++) {
+    let dist = TraX.Units.latLngToMeters(trackList[i].coord, coord);
     if (dist < closest.dist) {
       closest.dist = dist;
       closest.index = i;
@@ -1108,51 +1334,68 @@ function determineTrack(coord) {
 
   if (closest.index >= 0) {
     console.log(
-        "Closest track to center of data:", trackList[closest.index]);
+        'Closest track to center of data:', trackList[closest.index]);
     return trackList[closest.index];
   } else {
-    if (TraX.debugMode)
-      console.log("Couldn't determine closest track to:", coord);
+    if (TraX.debugMode) {
+      console.log('Couldn\'t determine closest track to:', coord);
+    }
     return null;
   }
 }
-// Request the list of tracks from server.
+/**
+ * Request the list of tracks from server.
+ *
+ * @private
+ */
 function fetchTrackList() {
   if (waitingForTrackList) return;
   waitingForTrackList = true;
   trackList = [];
-  TraX.socket.emit('requesttracklist', "track");
-  TraX.socket.emit('requesttracklist', "track", "myself");
-  for (var i = 0; i < TraX.friendsList.length; i++) {
-    TraX.socket.emit('requesttracklist', "track", TraX.friendsList[i].id);
+  TraX.socket.emit('requesttracklist', 'track');
+  TraX.socket.emit('requesttracklist', 'track', 'myself');
+  for (let i = 0; i < TraX.friendsList.length; i++) {
+    TraX.socket.emit('requesttracklist', 'track', TraX.friendsList[i].id);
   }
 }
-// Request the list of configs from the server.
+/**
+ * Request the list of configs from the server.
+ *
+ * @private
+ * @param {TraX~Track} track The track to request the configs for.
+ */
 function fetchTrackConfigList(track) {
   TraX.socket.emit('requesttracklist', track.id, track.ownerId);
 }
-// New track or config data is received from server. Store it properly.
+/**
+ * New track or config data is received from server. Store it properly.
+ *
+ * @private
+ * @param {string|Array} data Received response data from server.
+ * @param {string} request The request sent that caused this data to be sent.
+ * @param {string} ownerId The id of the user who owns the received data.
+ */
 function handleNewTrackData(data, request, ownerId) {
   if (typeof data === 'string') {
     if (data !== 'readerror') {
       data = JSON.parse(data);
     } else {
-      console.warn("TrackData Readerr", data, request);
+      console.warn('TrackData Readerr', data, request);
       return;
     }
   }
   if (request == 'track') {
     if (ownerId == TraX.getDriverId()) {
       data = data.map(function(obj) {
-        obj.name = "You: " + obj.name;
+        obj.name = 'You: ' + obj.name;
         return obj;
       });
     } else if (ownerId) {
-      var prefix = "F: ";
-      for (var i = 0; i < TraX.friendsList.length; i++) {
+      let prefix = 'F: ';
+      for (let i = 0; i < TraX.friendsList.length; i++) {
         if (TraX.friendsList[i].id == ownerId) {
           prefix = TraX.friendsList[i].firstName[0] +
-              TraX.friendsList[i].lastName[0] + ": ";
+              TraX.friendsList[i].lastName[0] + ': ';
           break;
         }
       }
@@ -1166,27 +1409,33 @@ function handleNewTrackData(data, request, ownerId) {
     } else {
       trackList = data;
     }
-    if (TraX.debugMode) console.log("New track list:", trackList);
+    if (TraX.debugMode) console.log('New track list:', trackList);
     waitingForTrackList = false;
   } else {
-    configList[request + "," + (ownerId || "")] = data;
-    if (TraX.debugMode) console.log("New config list:", configList);
+    configList[request + ',' + (ownerId || '')] = data;
+    if (TraX.debugMode) console.log('New config list:', configList);
   }
   updateTrackSelection();
 }
-// Update dropdown menus for track and config based selected track and config
-// ids.
+/**
+ * Update dropdown menus for track and config based selected track and config
+ * ids.
+ *
+ * @private
+ * @param {boolean} [forceTrack=false] Force updating the track selection.
+ * @param {boolean} [forceConfig=false] Force updating the config selection.
+ */
 function updateTrackSelection(forceTrack, forceConfig) {
   if (forceTrack || trackNameSelectDom.options.length != trackList.length) {
-    var wasDisabled = trackNameSelectDom.disabled;
+    let wasDisabled = trackNameSelectDom.disabled;
     trackNameSelectDom.disabled = false;
-    for (var i = trackNameSelectDom.options.length - 1; i >= 0; i--) {
+    for (let i = trackNameSelectDom.options.length - 1; i >= 0; i--) {
       trackNameSelectDom.remove(i);
     }
-    for (var i = 0; i < (trackList.length || 0); i++) {
-      var newOpt = document.createElement("option");
+    for (let i = 0; i < (trackList.length || 0); i++) {
+      let newOpt = document.createElement('option');
       newOpt.text = trackList[i].name;
-      newOpt.value = trackList[i].id + "," + trackList[i].ownerId;
+      newOpt.value = trackList[i].id + ',' + trackList[i].ownerId;
 
       trackNameSelectDom.add(newOpt);
     }
@@ -1197,23 +1446,23 @@ function updateTrackSelection(forceTrack, forceConfig) {
   if (forceConfig ||
       configNameSelectDom.options.length !=
           (configList[trackNameSelectDom.value] || []).length) {
-    var wasDisabled = configNameSelectDom.disabled;
+    let wasDisabled = configNameSelectDom.disabled;
     configNameSelectDom.disabled = false;
-    var config = configList[trackNameSelectDom.value] || [];
-    for (var i = configNameSelectDom.options.length - 1; i >= 0; i--) {
+    let config = configList[trackNameSelectDom.value] || [];
+    for (let i = configNameSelectDom.options.length - 1; i >= 0; i--) {
       configNameSelectDom.remove(i);
     }
-    for (var i = 0; i < config.length; i++) {
-      var newOpt = document.createElement("option");
+    for (let i = 0; i < config.length; i++) {
+      let newOpt = document.createElement('option');
       newOpt.text = config[i].name;
-      newOpt.value = config[i].id /*+ "," + (config[i].ownerId || "")*/;
+      newOpt.value = config[i].id;
 
       configNameSelectDom.add(newOpt);
     }
     if (configNameSelectDom.options[configNameSelectDom.selectedIndex]) {
       timersTrackTitleDom.innerHTML =
           trackNameSelectDom.options[trackNameSelectDom.selectedIndex].text +
-          "/" +
+          '/' +
           configNameSelectDom.options[configNameSelectDom.selectedIndex].text;
       setTimeout(configNameSelectDom.onchange);
     } else {
@@ -1223,9 +1472,13 @@ function updateTrackSelection(forceTrack, forceConfig) {
     configNameSelectDom.disabled = wasDisabled;
   }
 }
-// Dropdown menu for track name changed.
+/**
+ * Dropdown menu for track name changed.
+ *
+ * @public
+ */
 TraX.sessionTrackNameChange = function() {
-  var splitId = trackNameSelectDom.value.split(',');
+  let splitId = trackNameSelectDom.value.split(',');
   trackId = splitId[0];
   trackOwnerId = splitId[1];
   if (!configList[trackNameSelectDom.value]) {
@@ -1233,19 +1486,28 @@ TraX.sessionTrackNameChange = function() {
   }
   updateTrackSelection(false, true);
 };
-// Dropdown menu for config name changed.
+/**
+ * Dropdown menu for config name changed.
+ *
+ * @public
+ */
 TraX.sessionConfigNameChange = function() {
   trackId = trackNameSelectDom.value.split(',')[0];
   trackOwnerId = trackNameSelectDom.value.split(',')[1];
-  configId = configNameSelectDom.value; /*.split(',')[0];
+  configId = configNameSelectDom.value; /* .split(',')[0];
   configOwnerId = configNameSelectDom.value.split(',')[1]; */
   timersTrackTitleDom.innerHTML =
-      trackNameSelectDom.options[trackNameSelectDom.selectedIndex].text + "/" +
+      trackNameSelectDom.options[trackNameSelectDom.selectedIndex].text + '/' +
       configNameSelectDom.options[configNameSelectDom.selectedIndex].text;
   requestConfigSummary();
 };
+/**
+ * Request the server's version number.
+ *
+ * @private
+ */
 function requestVersionNum() {
-  var xhr = new XMLHttpRequest();
+  let xhr = new XMLHttpRequest();
   xhr.open('GET', 'https://dev.campbellcrowley.com/trax/version.txt');
   xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
   xhr.onload = function() {
@@ -1253,38 +1515,50 @@ function requestVersionNum() {
       handleNewVersion(xhr.responseText);
     } else {
       console.warn(
-          "Failed to get current client version!", xhr.status, xhr.response);
+          'Failed to get current client version!', xhr.status, xhr.response);
     }
   };
   xhr.send();
 }
+/**
+ * Handle receiving new version number from server.
+ *
+ * @private
+ * @param {string} version Version number.
+ */
 function handleNewVersion(version) {
-  version = version.replaceAll("\n", "");
-  console.log("Version:", version);
-  var versHolder = document.getElementById("version");
+  version = version.replace(/\n/g, '');
+  console.log('Version:', version);
+  let versHolder = document.getElementById('version');
   if (versHolder) {
-    var htmlVer = versHolder.innerHTML;
-    if (versionNum == "Unknown") {
+    let htmlVer = versHolder.innerHTML;
+    if (versionNum == 'Unknown') {
       versionNum = htmlVer;
-      console.log("Reading version from HTML");
+      console.log('Reading version from HTML');
     }
   }
-  if (versionNum !== "Unknown" && version !== "Unknown" &&
+  if (versionNum !== 'Unknown' && version !== 'Unknown' &&
       version !== versionNum) {
-    if (isPaused)
+    if (isPaused) {
       TraX.showMessageBox(
           'Your page is a different version than the server! Please refresh ' +
               'the page to get the latest version.',
           30000, true);
+    }
     if (caches) caches.delete('TraX Offline');
-  } else if (versionNum === "Unknown" && version !== "Unknown") {
+  } else if (versionNum === 'Unknown' && version !== 'Unknown') {
     versionNum = version;
-    var versHolder = document.createElement('a');
-    versHolder.id = "version";
+    let versHolder = document.createElement('a');
+    versHolder.id = 'version';
     versHolder.innerHTML = version;
     document.body.appendChild(versHolder);
   }
 }
+/**
+ * Handle the UI rotating due to device rotation.
+ *
+ * @private
+ */
 function handleScreenRotate() {
   if (!screen) {
     currentScreenOrientation = {angle: 0};
@@ -1292,14 +1566,19 @@ function handleScreenRotate() {
   }
   currentScreenOrientation = screen.orientation;
 }
-// Handle phone rotated. (Gyro data)
+/**
+ * Handle phone rotated. (Gyro data)
+ *
+ * @private
+ * @param {Event} event Event storing updated orientation data.
+ */
 function handleOrientation(event) {
   heartbeat();
   absolute = event.absolute;
 
-  var nowAlpha = -event.alpha;
-  var nowBeta = event.beta;
-  var nowGamma = -event.gamma;
+  let nowAlpha = -event.alpha;
+  let nowBeta = event.beta;
+  let nowGamma = -event.gamma;
 
   nowAlpha /= 180.0 / Math.PI;
   nowBeta /= 180.0 / Math.PI;
@@ -1342,15 +1621,20 @@ function handleOrientation(event) {
     compassAlphaDom.innerHTML = compassAlpha / orientationCount;
     alphaDom.innerHTML = alpha;
     betaDom.innerHTML = beta;
-    gammaDom.innerHTML = gamma + "<br><br>Minus Down<br>" +
-        (alpha - TraX.downRotation.a) + "<br>" + (beta - TraX.downRotation.b) +
-        "<br>" + (gamma - TraX.downRotation.g);
+    gammaDom.innerHTML = gamma + '<br><br>Minus Down<br>' +
+        (alpha - TraX.downRotation.a) + '<br>' + (beta - TraX.downRotation.b) +
+        '<br>' + (gamma - TraX.downRotation.g);
   }
 }
-// Handle phone moved. (Accelerometer data)
+/**
+ * Handle phone moved. (Accelerometer data)
+ *
+ * @private
+ * @param {Event} event Event that fires on a motion update.
+ */
 function handleMotion(event) {
   heartbeat();
-  needIMUDom.style.display = "none";
+  needIMUDom.style.display = 'none';
   heartbeatCount++;
   if (isPaused) {
     resetData();
@@ -1370,19 +1654,19 @@ function handleMotion(event) {
   TraX.Canvases.drawAccel = [
     (xAxisFlipDom.checked ? -1 : 1) * event.accelerationIncludingGravity.x,
     (yAxisFlipDom.checked ? -1 : 1) * event.accelerationIncludingGravity.y,
-    (zAxisFlipDom.checked ? -1 : 1) * event.accelerationIncludingGravity.z
+    (zAxisFlipDom.checked ? -1 : 1) * event.accelerationIncludingGravity.z,
   ];
   TraX.Canvases.rotationRate = {
     a: event.rotationRate.alpha,
     b: event.rotationRate.beta,
-    g: event.rotationRate.gamma
+    g: event.rotationRate.gamma,
   };
   TraX.Canvases.renderAccel();
 
-  var magnitude =
+  let magnitude =
       Math.hypot(accelIncGrav[0], accelIncGrav[1], accelIncGrav[2]) /
       accelerationCount;
-  var rotMag = Math.hypot(rotationRate[0], rotationRate[1], rotationRate[2]) /
+  let rotMag = Math.hypot(rotationRate[0], rotationRate[1], rotationRate[2]) /
       accelerationCount;
   if (Math.abs(magnitude - Agrav) < 0.1 && Math.abs(rotMag) < 0.1) {
     resetDownCount++;
@@ -1397,25 +1681,29 @@ function handleMotion(event) {
 
   if (realtimeViewOpen) {
     realtimeSensorClockDom.innerHTML = formatRealtimeNow(event.timestamp);
-    // realtimeDumpDom.innerHTML = stringifiedChunk;
   }
 
   if (TraX.debugMode) {
-    accelerationDom.innerHTML = "<br>X: " + event.acceleration.x + "<br>Y: " +
-        event.acceleration.y + "<br>Z: " + event.acceleration.z;
-    accelIncGravDom.innerHTML = "<br>X: " +
-        event.accelerationIncludingGravity.x + "<br>Y: " +
-        event.accelerationIncludingGravity.y + "<br>Z: " +
-        event.accelerationIncludingGravity.z + "<br>Mag: " + magnitude +
-        "<br>No Grav Mag: " + (magnitude - Agrav);
-    rotationRateDom.innerHTML = "<br>A: " + event.rotationRate.alpha + "<br>B: " +
-        event.rotationRate.beta + "<br>G: " + event.rotationRate.gamma;
-    intervalDom.innerHTML = event.interval + "ms";
-    // preSendBufferDom.innerHTML = stringifiedChunk;
+    accelerationDom.innerHTML = '<br>X: ' + event.acceleration.x + '<br>Y: ' +
+        event.acceleration.y + '<br>Z: ' + event.acceleration.z;
+    accelIncGravDom.innerHTML = '<br>X: ' +
+        event.accelerationIncludingGravity.x + '<br>Y: ' +
+        event.accelerationIncludingGravity.y + '<br>Z: ' +
+        event.accelerationIncludingGravity.z + '<br>Mag: ' + magnitude +
+        '<br>No Grav Mag: ' + (magnitude - Agrav);
+    rotationRateDom.innerHTML = '<br>A: ' + event.rotationRate.alpha +
+        '<br>B: ' + event.rotationRate.beta + '<br>G: ' +
+        event.rotationRate.gamma;
+    intervalDom.innerHTML = event.interval + 'ms';
   }
 }
 
-// Handle new GPS/Position data.
+/**
+ * Handle new GPS/Position data.
+ *
+ * @private
+ * @param {Position} position Geolocation data object.
+ */
 function handleNewPosition(position) {
   gpsHeartbeat();
   longitude = position.coords.longitude;
@@ -1432,20 +1720,20 @@ function handleNewPosition(position) {
   if (TraX.debugMode) {
     longitudeDom.innerHTML = longitude;
     latitudeDom.innerHTML = latitude;
-    posInfoDom.innerHTML = "Altitude: " + altitude + "m<br>Pos Accuracy: " +
-        accuracy + "m<br>Alt Accuracy: " + altAccuracy + "m<br>Heading: " +
-        heading + "deg<br>Speed: " + speed + "m/s<br>Timestamp: " + timestamp;
+    posInfoDom.innerHTML = 'Altitude: ' + altitude + 'm<br>Pos Accuracy: ' +
+        accuracy + 'm<br>Alt Accuracy: ' + altAccuracy + 'm<br>Heading: ' +
+        heading + 'deg<br>Speed: ' + speed + 'm/s<br>Timestamp: ' + timestamp;
   }
   setTimeout(updateLapTimes);
   if (friendmapEnabled) updateMap();
   if (realtimeViewOpen) updateRealtimePos();
   TraX.socket.emit('updateposition', {lat: latitude, lng: longitude});
   if (!trackId && longitude && latitude) {
-    var track = determineTrack({lat: latitude, lng: longitude});
+    let track = determineTrack({lat: latitude, lng: longitude});
     if (track != null) {
-      var opts = trackNameSelectDom.options;
-      for (var i = 0; i < opts.length; i++) {
-        if (opts[i].value == track.id + "," + track.ownerId) {
+      let opts = trackNameSelectDom.options;
+      for (let i = 0; i < opts.length; i++) {
+        if (opts[i].value == track.id + ',' + track.ownerId) {
           trackNameSelectDom.selectedIndex = i;
           trackId = track.id;
           trackOwnerId = track.ownerId;
@@ -1457,10 +1745,15 @@ function handleNewPosition(position) {
     }
   }
 }
-// Triggered if error received while getting GPS data.
+/**
+ * Triggered if error received while getting GPS data.
+ *
+ * @private
+ * @param {Error} err The error information.
+ */
 function handlePosError(err) {
   console.log(err);
-  TraX.showMessageBox("GPS Error: " + err.message);
+  TraX.showMessageBox('GPS Error: ' + err.message);
   handleNewPosition({
     coords: {
       longitude: 0,
@@ -1469,31 +1762,46 @@ function handlePosError(err) {
       altitude: 0,
       altitudeAccuracy: -1,
       heading: -1,
-      speed: -1
+      speed: -1,
     },
-    timestamp: -1
+    timestamp: -1,
   });
-  messages.push("GPS ERROR: " + err.message);
-  if (TraX.debugMode)
-    posinfo.innerHTML = "POS ERROR " + err.code + ": " + err.message;
+  messages.push('GPS ERROR: ' + err.message);
+  if (TraX.debugMode) {
+    posinfo.innerHTML = 'POS ERROR ' + err.code + ': ' + err.message;
+  }
   if (err.code != PERMISSION_DENIED) {
     navigator.geolocation.clearWatch(wpid);
     wpid = navigator.geolocation.watchPosition(
         handleNewPosition, handlePosError, geoOptions);
   }
 }
-// Update track selection for current session.
+/**
+ * Update track selection for current session.
+ *
+ * @private
+ */
 function updateSession() {
   TraX.socket.emit(
-      "editsession", sessionInputDom.value, trackId, trackOwnerId, configId,
+      'editsession', sessionInputDom.value, trackId, trackOwnerId, configId,
       configOwnerId, sessionId);
 }
-// Update clock for realtime view.
+/**
+ * Update clock for realtime view.
+ *
+ * @private
+ */
 function updateRealtimeClock() {
   realtimeDeviceClockDom.innerHTML = formatRealtimeNow();
 }
-// Reset timers HUD to zero. If doMinimal, the UI will not be updated, but all
-// variables controlling the UI will be reset.
+/**
+ * Reset timers HUD to zero. If doMinimal, the UI will not be updated, but all
+ * variables controlling the UI will be reset.
+ *
+ * @private
+ * @param {boolean} [doMinimal=false] Disables updating the UI.
+ * @param {boolean} [skipVars=false] Disables resetting the variables
+ */
 function resetTimersHUD(doMinimal, skipVars) {
   if (!skipVars) {
     clearInterval(updateTimersInterval);
@@ -1503,78 +1811,89 @@ function resetTimersHUD(doMinimal, skipVars) {
     lapStartTime = 0;
     bestLapData = [];
     previousLapData = [];
-    currentLapData = []
+    currentLapData = [];
   }
   if (!doMinimal) {
-    bigTimerDom.getElementsByClassName("timerBody")[0].innerHTML =
+    bigTimerDom.getElementsByClassName('timerBody')[0].innerHTML =
         TraX.Common.formatMsec(0, false, 1);
-    littleTimerTopDom.getElementsByClassName("timerBody")[0].innerHTML =
+    littleTimerTopDom.getElementsByClassName('timerBody')[0].innerHTML =
         TraX.Common.formatMsec(0, false, 1);
-    littleTimerLeftDom.getElementsByClassName("timerBody")[0].innerHTML =
+    littleTimerLeftDom.getElementsByClassName('timerBody')[0].innerHTML =
         TraX.Common.formatMsec(0, false, 1);
-    littleTimerRightDom.getElementsByClassName("timerBody")[0].innerHTML =
+    littleTimerRightDom.getElementsByClassName('timerBody')[0].innerHTML =
         TraX.Common.formatMsec(0, false, 1);
 
-    littleTimerLeftTopDom.getElementsByClassName("timerBody")[0].innerHTML =
+    littleTimerLeftTopDom.getElementsByClassName('timerBody')[0].innerHTML =
         TraX.Common.formatMsec(0, false, 1);
-    littleTimerRightTopDom.getElementsByClassName("timerBody")[0].innerHTML =
+    littleTimerRightTopDom.getElementsByClassName('timerBody')[0].innerHTML =
         TraX.Common.formatMsec(0, true, 0);
   }
 }
-// Update the HUD with current times.
+/**
+ * Update the HUD with current times.
+ *
+ * @private
+ */
 function updateTimersHUD() {
   const now = Date.now();
   if (currentlyRacing) {
-    bigTimerDom.getElementsByClassName("timerBody")[0].innerHTML =
+    bigTimerDom.getElementsByClassName('timerBody')[0].innerHTML =
         TraX.Common.formatMsec(now - lapStartTime, false, 1);
   }
-  littleTimerTopDom.getElementsByClassName("timerBody")[0].innerHTML =
+  littleTimerTopDom.getElementsByClassName('timerBody')[0].innerHTML =
       TraX.Common.formatMsec(now - sessionStartTime, false, 1);
-  littleTimerLeftDom.getElementsByClassName("timerBody")[0].innerHTML =
+  littleTimerLeftDom.getElementsByClassName('timerBody')[0].innerHTML =
       TraX.Common.formatMsec(previousLapDuration, false, 1);
-  littleTimerRightDom.getElementsByClassName("timerBody")[0].innerHTML =
+  littleTimerRightDom.getElementsByClassName('timerBody')[0].innerHTML =
       TraX.Common.formatMsec(bestLapDuration, false, 1);
 
-  littleTimerLeftTopDom.getElementsByClassName("timerBody")[0].innerHTML =
+  littleTimerLeftTopDom.getElementsByClassName('timerBody')[0].innerHTML =
       TraX.Common.formatMsec(predictedLapDuration, false, 1);
-  if (predictedLapDuration > 0)
-    littleTimerRightTopDom.getElementsByClassName("timerBody")[0].innerHTML =
+  if (predictedLapDuration > 0) {
+    littleTimerRightTopDom.getElementsByClassName('timerBody')[0].innerHTML =
         TraX.Common.formatMsec(predictedLapDuration - bestLapDuration, true, 0);
+  }
   if (isPaused) sessionStartTime = 0;
 }
+/**
+ * Print stored lap data to console.
+ *
+ * @public
+ */
 TraX.PRINT = function() {
   console.log(currentLapData, bestLapData, previousLapData);
 };
-// Update calculations for realtime lap times based off new GPS data.
+/**
+ * Update calculations for realtime lap times based off new GPS data.
+ *
+ * @private
+ */
 function updateLapTimes() {
   if (!configList ||
-      typeof configList[trackNameSelectDom.value] ===
-          'undefined' ||
-      typeof configList[trackNameSelectDom.value]
-                                     [configNameSelectDom.value] ===
+      typeof configList[trackNameSelectDom.value] === 'undefined' ||
+      typeof configList[trackNameSelectDom.value][configNameSelectDom.value] ===
           'undefined') {
     return;
   }
-  var now = Date.now();
-  var coord = {lat: latitude, lng: longitude, time: now};
-  var config = configList[trackNameSelectDom.value]
-                                       [configNameSelectDom.value];
-  var start = config.start;
-  var finish = config.finish;
-  var distFinish = TraX.Common.coordDistance(coord, finish.coord);
-  var distStart = TraX.Common.coordDistance(coord, start.coord);
+  let now = Date.now();
+  let coord = {lat: latitude, lng: longitude, time: now};
+  let config = configList[trackNameSelectDom.value][configNameSelectDom.value];
+  let start = config.start;
+  let finish = config.finish;
+  let distFinish = TraX.Common.coordDistance(coord, finish.coord);
+  let distStart = TraX.Common.coordDistance(coord, start.coord);
 
-  var halfCoord = TraX.Common.interpolateCoord(coord, previousCoord, 0.5);
-  var halfDistStart = TraX.Common.coordDistance(halfCoord, start.coord);
-  var halfDistFinish = TraX.Common.coordDistance(halfCoord, finish.coord);
+  let halfCoord = TraX.Common.interpolateCoord(coord, previousCoord, 0.5);
+  let halfDistStart = TraX.Common.coordDistance(halfCoord, start.coord);
+  let halfDistFinish = TraX.Common.coordDistance(halfCoord, finish.coord);
 
-  var deltaPos = TraX.Units.latLngToMeters(coord, previousCoord);
+  let deltaPos = TraX.Units.latLngToMeters(coord, previousCoord);
   currentDistanceDriven += deltaPos;
 
-  var tempConfigId = configId || configNameSelectDom.value;
+  let tempConfigId = configId || configNameSelectDom.value;
   if (!bestLapData.length == 0 && TraX.summaryList.length > 0) {
-    var summarySearch =
-        [TraX.getDriverId(), trackOwnerId, trackId, tempConfigId].join(",");
+    let summarySearch =
+        [TraX.getDriverId(), trackOwnerId, trackId, tempConfigId].join(',');
     if (TraX.summaryList[summarySearch] &&
         TraX.summaryList[summarySearch].bestLapData) {
       bestLapData = TraX.summaryList[summarySearch].bestLapData;
@@ -1590,7 +1909,7 @@ function updateLapTimes() {
     // const increment = 0.05;
     const increment = 0.001;
 
-    var lookBack = true;
+    let lookBack = true;
 
     // Estimate finish line crossing time more accurately.
     if (TraX.Common.coordDistance(
@@ -1599,12 +1918,12 @@ function updateLapTimes() {
         TraX.Common.coordDistance(previousCoord, finish.coord)) {
       lookBack = false;
     }
-    var newClosest = {index: 0, dist: -1, time: 0};
-    for (var i = 0; i <= 1.0; i += increment) {
-      var intCoord = TraX.Common.interpolateCoord(
+    let newClosest = {index: 0, dist: -1, time: 0};
+    for (let i = 0; i <= 1.0; i += increment) {
+      let intCoord = TraX.Common.interpolateCoord(
           previousCoord, lookBack ? previousPreviousCoord : coord, i);
-      var dist = TraX.Common.coordDistance(intCoord, finish.coord);
-      var currentTime = TraX.Common.lerp(
+      let dist = TraX.Common.coordDistance(intCoord, finish.coord);
+      let currentTime = TraX.Common.lerp(
           previousCoord.time,
           lookBack ? previousPreviousCoord.time : coord.time, i);
       if (newClosest.dist < 0 || dist < newClosest.dist) {
@@ -1618,8 +1937,8 @@ function updateLapTimes() {
         }
         updateTimersHUD();
         console.log(
-            "New Predictive Data (prev/best):", previousLapData, bestLapData);
-        messages.push("New predictive lap data");
+            'New Predictive Data (prev/best):', previousLapData, bestLapData);
+        messages.push('New predictive lap data');
         updateConfigSummary();
         break;
       }
@@ -1636,8 +1955,8 @@ function updateLapTimes() {
     justFinishedRacing = true;
     previousLapData = currentLapData.splice(0);
     resetTimersHUD(false, true);
-    console.log("Lap", lapNum, "end!");
-    messages.push("Lap " + lapNum + " end!");
+    console.log('Lap', lapNum, 'end!');
+    messages.push('Lap ' + lapNum + ' end!');
   } else if (
       currentlyRacing && justStartedRacing &&
       distFinish > previousCoord.distFinish) {
@@ -1647,7 +1966,7 @@ function updateLapTimes() {
     // calculated data from the realtime session.
     // const increment = 0.05;
     const increment = 0.001;
-    var lookBack = true;
+    let lookBack = true;
 
     // Estimate start line cross time more accurately.
     if (TraX.Common.coordDistance(
@@ -1656,12 +1975,12 @@ function updateLapTimes() {
         TraX.Common.coordDistance(previousCoord, start.coord)) {
       lookBack = false;
     }
-    var newClosest = {index: 0, dist: -1, time: 0};
-    for (var i = 0; i < 1.0; i += increment) {
-      var intCoord = TraX.Common.interpolateCoord(
+    let newClosest = {index: 0, dist: -1, time: 0};
+    for (let i = 0; i < 1.0; i += increment) {
+      let intCoord = TraX.Common.interpolateCoord(
           previousCoord, lookBack ? previousPreviousCoord : coord, i);
-      var dist = TraX.Common.coordDistance(intCoord, start.coord);
-      var currentTime = TraX.Common.lerp(
+      let dist = TraX.Common.coordDistance(intCoord, start.coord);
+      let currentTime = TraX.Common.lerp(
           previousCoord.time,
           lookBack ? previousPreviousCoord.time : coord.time, i);
       if (newClosest.dist < 0 || dist < newClosest.dist) {
@@ -1689,8 +2008,8 @@ function updateLapTimes() {
     currentDistanceDriven = 0;
     currentLapData = [];
     lapNum++;
-    console.log("Lap", lapNum, "start!");
-    messages.push("Lap " + lapNum + " start!");
+    console.log('Lap', lapNum, 'start!');
+    messages.push('Lap ' + lapNum + ' start!');
     if (currentlyRacing == currentLapState) TraX.Video.lapChange(lapNum);
   }
 
@@ -1699,7 +2018,7 @@ function updateLapTimes() {
     currentLapData.push({
       distance: currentDistanceDriven,
       time: Date.now() - lapStartTime,
-      coord: coord
+      coord: coord,
     });
   }
 
@@ -1718,80 +2037,91 @@ function updateLapTimes() {
     lng: previousCoord.lng,
     time: previousCoord.time,
     distStart: previousCoord.distStart,
-    distFinish: previousCoord.distFinish
+    distFinish: previousCoord.distFinish,
   };
   previousCoord = {
     lat: coord.lat,
     lng: coord.lng,
     time: coord.time,
     distStart: distStart,
-    distFinish: distFinish
+    distFinish: distFinish,
   };
 
-  if (distFinish < finish.radius) messages.push("Within finish radius");
-  if (distStart < start.radius) messages.push("Within start radius");
+  if (distFinish < finish.radius) messages.push('Within finish radius');
+  if (distStart < start.radius) messages.push('Within start radius');
 
   // Predict lap time and split if we have a lap to base times off of.
   if (bestLapData.length > 0 && currentlyRacing && !justFinishedRacing) {
-    var predictedSplit = (Date.now() - lapStartTime) -
+    let predictedSplit = (Date.now() - lapStartTime) -
         getTimeAtDistance(bestLapData, currentDistanceDriven);
     predictedLapDuration = bestLapDuration + predictedSplit;
 
-    littleTimerLeftTopDom.getElementsByClassName("timerBody")[0].innerHTML =
+    littleTimerLeftTopDom.getElementsByClassName('timerBody')[0].innerHTML =
         TraX.Common.formatMsec(predictedLapDuration, false, 1);
-    var splitBody =
-        littleTimerRightTopDom.getElementsByClassName("timerBody")[0];
+    let splitBody =
+        littleTimerRightTopDom.getElementsByClassName('timerBody')[0];
     splitBody.innerHTML = TraX.Common.formatMsec(predictedSplit, true, 0);
     if (predictedSplit > 0) {
-      splitBody.classList.add("redText");
-      splitBody.classList.remove("greenText");
+      splitBody.classList.add('redText');
+      splitBody.classList.remove('greenText');
     } else if (predictedSplit < 0) {
-      splitBody.classList.remove("redText");
-      splitBody.classList.add("greenText");
+      splitBody.classList.remove('redText');
+      splitBody.classList.add('greenText');
     } else {
-      splitBody.classList.remove("redText");
-      splitBody.classList.remove("greenText");
+      splitBody.classList.remove('redText');
+      splitBody.classList.remove('greenText');
     }
   }
   currentLapState = currentlyRacing;
 }
-// Get time at a given distance through a lap from given data. Interpolates
-// between datapoints for more accurate value.
+/** Get time at a given distance through a lap from given data. Interpolates
+ * between datapoints for more accurate value.
+ *
+ * @private
+ * @param {Array} data Array of data to use to estimate time.
+ * @param {number} distance Distance in meters traveled.
+ * @return {number} Time at given distance.
+ */
 function getTimeAtDistance(data, distance) {
-  for (var i = 1; i < data.length; i++) {
+  for (let i = 1; i < data.length; i++) {
     if (data[i].distance >= distance && data[i - 1].distance < distance) {
-      var min = data[i - 1].distance;
-      var large = data[i].distance - min;
-      var intVal = (distance - min) / large;
+      let min = data[i - 1].distance;
+      let large = data[i].distance - min;
+      let intVal = (distance - min) / large;
       return TraX.Common.lerp(data[i - 1].time, data[i].time, intVal);
     }
   }
   if (distance < 100) return 0;
   else return data[data.length - 1].time;
 };
-// Toggle the live data view. If force is set to true or false it will force the
-// UI open or closed.
+/**
+ * Toggle the live data view. If force is set to true or false it will force the
+ * UI open or closed.
+ *
+ * @public
+ * @param {?boolean} [force=undefined] Set view state or toggle if undefined.
+ */
 TraX.toggleRealtimeView = function(force) {
   if (typeof force !== 'undefined') realtimeViewOpen = force;
   else realtimeViewOpen = !realtimeViewOpen;
 
   heartbeatCount = 0;
-  realtimeDataDom.style.display = realtimeViewOpen ? "block" : "none";
+  realtimeDataDom.style.display = realtimeViewOpen ? 'block' : 'none';
   if (realtimeViewOpen) {
     realtimeDataClockInterval =
         setInterval(updateRealtimeClock, realtimeClockUpdateFrequency);
-    realtimeDataToggleDom.classList.add("selected");
+    realtimeDataToggleDom.classList.add('selected');
     realtimeDataDom.scrollIntoView({behaviour: 'smooth'});
   } else {
     clearInterval(realtimeDataClockInterval);
-    realtimeDataToggleDom.classList.remove("selected");
+    realtimeDataToggleDom.classList.remove('selected');
   }
 
   if (realtimeViewOpen) {
     handleScreenRotate();
-    window.addEventListener("orientationchange", handleScreenRotate, false);
+    window.addEventListener('orientationchange', handleScreenRotate, false);
   } else {
-    window.removeEventListener("orientationchange", handleScreenRotate, false);
+    window.removeEventListener('orientationchange', handleScreenRotate, false);
   }
   // If paused, we need to start receiving data to show or stop if we started
   // the data streams.
@@ -1799,20 +2129,20 @@ TraX.toggleRealtimeView = function(force) {
     if (realtimeViewOpen) {
       // TODO: Use window.DeviceMotionEvent and window.DeviceOrientationEvent to
       // check if device is compatible.
-      window.addEventListener("deviceorientation", handleOrientation, true);
-      window.addEventListener("devicemotion", handleMotion, true);
+      window.addEventListener('deviceorientation', handleOrientation, true);
+      window.addEventListener('devicemotion', handleMotion, true);
       if (!friendmapEnabled) {
         if (!navigator.geolocation) {
           TraX.showMessageBox(
-              "Your current browser does not allow me to view geolocation.");
+              'Your current browser does not allow me to view geolocation.');
         } else {
           wpid = navigator.geolocation.watchPosition(
               handleNewPosition, handlePosError, geoOptions);
         }
       }
     } else {
-      window.removeEventListener("deviceorientation", handleOrientation, true);
-      window.removeEventListener("devicemotion", handleMotion, true);
+      window.removeEventListener('deviceorientation', handleOrientation, true);
+      window.removeEventListener('devicemotion', handleMotion, true);
       if (!friendmapEnabled) {
         if (navigator.geolocation) {
           navigator.geolocation.clearWatch(wpid);
@@ -1821,27 +2151,41 @@ TraX.toggleRealtimeView = function(force) {
     }
   }
 };
-// Toggle the debug menu open or closed.
+/**
+ * Toggle the debug menu open or closed.
+ *
+ * @public
+ * @param {?boolean} [isDebug=undefined] Sets debug mode, or toggles if
+ * undefined.
+ */
 TraX.toggleDebug = function(isDebug) {
-  var debug = TraX.debugMode ? 0 : 1;
+  let debug = TraX.debugMode ? 0 : 1;
   if (typeof isDebug !== 'undefined') {
     debug = isDebug;
   }
   TraX.debugMode = debug;
   if (debug) {
-    debugDom.style.display = "block";
-    toggleDebugDom.classList.add("selected");
+    debugDom.style.display = 'block';
+    toggleDebugDom.classList.add('selected');
   } else {
-    debugDom.style.display = "none";
-    toggleDebugDom.classList.remove("selected");
+    debugDom.style.display = 'none';
+    toggleDebugDom.classList.remove('selected');
   }
 };
-// Toggle the status light UI.
+/**
+ * Toggle the status light UI.
+ *
+ * @public
+ */
 TraX.toggleStatus = function() {
   statusLightsVisible = !statusLightsVisible;
-  statusLightListDom.style.display = statusLightsVisible ? "block" : "none";
+  statusLightListDom.style.display = statusLightsVisible ? 'block' : 'none';
 };
-// Update live data gps data view.
+/**
+ * Update live data gps data view.
+ *
+ * @private
+ */
 function updateRealtimePos() {
   realtimeLngDom.innerHTML = longitude;
   realtimeLatDom.innerHTML = latitude;
@@ -1850,24 +2194,38 @@ function updateRealtimePos() {
       TraX.Units.getSmallDistanceUnit();
   realtimeSpdDom.innerHTML =
       TraX.Units.speedToUnit(speed) + TraX.Units.getLargeSpeedUnit();
-  realtimeHedDom.innerHTML = heading + "&deg;";
+  realtimeHedDom.innerHTML = heading + '&deg;';
 
   realtimeGPSClockDom.innerHTML = formatRealtimeNow(timestamp);
 }
 
-// Returns a date as a formatted time.
+/**
+ * Returns a date as a formatted time.
+ *
+ * @private
+ * @param {?number|string} now Date in format accepted by `Date()`.
+ * @return {string} Date formatted in UTC time.
+ */
 function formatRealtimeNow(now) {
   if (typeof now === 'undefined') now = new Date();
   else now = new Date(now);
-  return nowFormatted = now.getUTCHours() + ":" + now.getUTCMinutes() + ";" +
-      now.getUTCSeconds() + "." + now.getUTCMilliseconds();
+  return nowFormatted = now.getUTCHours() + ':' + now.getUTCMinutes() + ';' +
+      now.getUTCSeconds() + '.' + now.getUTCMilliseconds();
 }
-// Called when user changes save frequency dropdown.
+/**
+ * Called when user changes save frequency dropdown.
+ *
+ * @public
+ */
 TraX.changeUpdateFreq = function() {
   updateFrequency = updateFrequencyDom.value;
 };
-// Triggered at an interval when data will be saved (updateFrequency), and moves
-// data into buffer to be sent to server.
+/**
+ * Triggered at an interval when data will be saved (updateFrequency), and moves
+ * data into buffer to be sent to server.
+ *
+ * @private
+ */
 function popPreSendBuffer() {
   const now = new Date();
   if (previousUpdateFrequency !== updateFrequency) {
@@ -1878,74 +2236,79 @@ function popPreSendBuffer() {
   } else {
     // If timing is 100% slow, we can assume data was lost.
     if (now.getTime() - previousUpdate > updateFrequency * 2.0) {
-      var hz = Math.round(1 / ((now.getTime() - previousUpdate) / 1000));
-      console.log("Client slowed to", hz, "Hz");
-      messages.push("Client slowed to " + hz + "Hz");
-      if (popMessageWarningCount < 3)
+      let hz = Math.round(1 / ((now.getTime() - previousUpdate) / 1000));
+      console.log('Client slowed to', hz, 'Hz');
+      messages.push('Client slowed to ' + hz + 'Hz');
+      if (popMessageWarningCount < 3) {
         TraX.showMessageBox(
-            "Oops! Your device is running a little slow!", 3000, false);
+            'Oops! Your device is running a little slow!', 3000, false);
+      }
       popMessageWarningCount++;
     }
   }
   previousUpdate = now.getTime();
-  var nextDataset = {
-    "clientTimestamp": now.getTime(),
-    "tzOffset": now.getTimezoneOffset(),
-    "longitude": longitude,
-    "latitude": latitude,
-    "accuracy": accuracy,
-    "altitude": altitude,
-    "altAccuracy": altAccuracy,
-    "heading": heading,
-    "gpsSpeed": speed,
-    "gpsTimestamp": timestamp,
-    "compass": compassAlpha / orientationCount,
-    "gyroAbsolute": absolute,
-    "gyro": [alpha, beta, gamma],
-    "estimatedDownRotation":
+  let nextDataset = {
+    'clientTimestamp': now.getTime(),
+    'tzOffset': now.getTimezoneOffset(),
+    'longitude': longitude,
+    'latitude': latitude,
+    'accuracy': accuracy,
+    'altitude': altitude,
+    'altAccuracy': altAccuracy,
+    'heading': heading,
+    'gpsSpeed': speed,
+    'gpsTimestamp': timestamp,
+    'compass': compassAlpha / orientationCount,
+    'gyroAbsolute': absolute,
+    'gyro': [alpha, beta, gamma],
+    'estimatedDownRotation':
         [TraX.downRotation.a, TraX.downRotation.b, TraX.downRotation.g],
-    "acceleration": [
-      acceleration[0] / accelerationCount, acceleration[1] / accelerationCount,
-      acceleration[2] / accelerationCount
+    'acceleration': [
+      acceleration[0] / accelerationCount,
+      acceleration[1] / accelerationCount,
+      acceleration[2] / accelerationCount,
     ],
-    "accelIncGrav": [
-      accelIncGrav[0] / accelerationCount, accelIncGrav[1] / accelerationCount,
-      accelIncGrav[2] / accelerationCount
+    'accelIncGrav': [
+      accelIncGrav[0] / accelerationCount,
+      accelIncGrav[1] / accelerationCount,
+      accelIncGrav[2] / accelerationCount,
     ],
-    "rotationRate": [
-      rotationRate[0] / accelerationCount, rotationRate[1] / accelerationCount,
-      rotationRate[2] / accelerationCount
+    'rotationRate': [
+      rotationRate[0] / accelerationCount,
+      rotationRate[1] / accelerationCount,
+      rotationRate[2] / accelerationCount,
     ],
-    "selectedTrack": trackNameSelectDom.value,
-    "selectedConfig": configNameSelectDom.value,
-    "sessionId": sessionId,
-    "driverName": driverName,
-    "peripherals": [],
-    "videoUrl": "",
-    "userAgent": userAgent,
-    "traxVersion": TraX.getVersion(),
-    "sessionStartTime": sessionStartTime,
-    "bestLapSession": bestLapDuration,
-    "lapStartTime": lapStartTime,
-    "lapNum": (currentlyRacing ? lapNum : -nonLapNum),
-    "predictedLapDuration": predictedLapDuration,
-    "[NODECOMPRESS]": !doCompressionDom.checked
+    'reportedSensorInterval': interval,
+    'selectedTrack': trackNameSelectDom.value,
+    'selectedConfig': configNameSelectDom.value,
+    'sessionId': sessionId,
+    'driverName': driverName,
+    'peripherals': [],
+    'videoUrl': '',
+    'userAgent': userAgent,
+    'traxVersion': TraX.getVersion(),
+    'sessionStartTime': sessionStartTime,
+    'bestLapSession': bestLapDuration,
+    'lapStartTime': lapStartTime,
+    'lapNum': (currentlyRacing ? lapNum : -nonLapNum),
+    'predictedLapDuration': predictedLapDuration,
+    '[NODECOMPRESS]': !doCompressionDom.checked,
   };
   if (TraX.Canvases) {
-    nextDataset["estimatedForwardVector"] = TraX.Canvases.forwardVector;
-    nextDataset["headingOffset"] = TraX.Canvases.headingOffset;
+    nextDataset['estimatedForwardVector'] = TraX.Canvases.forwardVector;
+    nextDataset['headingOffset'] = TraX.Canvases.headingOffset;
   }
   if (extraDataDom.checked) {
     nextDataset.extra = {
-      "previousLapStartTime": previousLapStartTime,
-      "previousLapDuration": previousLapDuration,
-      "justFinishedRacing": justFinishedRacing,
-      "justStartedRacing": justStartedRacing,
-      "currentlyRacing": currentlyRacing,
-      "inTransition": inTransition,
-      "messages": messages,
-      "lapNum": lapNum,
-      "nonLapNum": nonLapNum /*,
+      'previousLapStartTime': previousLapStartTime,
+      'previousLapDuration': previousLapDuration,
+      'justFinishedRacing': justFinishedRacing,
+      'justStartedRacing': justStartedRacing,
+      'currentlyRacing': currentlyRacing,
+      'inTransition': inTransition,
+      'messages': messages,
+      'lapNum': lapNum,
+      'nonLapNum': nonLapNum, /* ,
       "bestLapData": bestLapData,
       "currentLapData": currentLapData */
     };
@@ -1954,110 +2317,146 @@ function popPreSendBuffer() {
   resetData();
   sendBuffer.push(nextDataset);
   sendChunk(now.getTime());
-  if (TraX.debugMode)
-    sendBufferDom.innerHTML = "Chunks Buffered: " + sendBuffer.length;
+  if (TraX.debugMode) {
+    sendBufferDom.innerHTML = 'Chunks Buffered: ' + sendBuffer.length;
+  }
   updateServerLights();
 }
-// Check for data that the server did not confirm was sent, and resend it.
+/**
+ * Check for data that the server did not confirm was sent, and resend it.
+ *
+ * @private
+ */
 function flushStaleData() {
   const now = Date.now();
-  var count = 0;
-  for (var i = 0; i < sendBuffer.length; i++) {
-    if (now - sendBuffer[i]["sendTimestamp"] > successTimeout) {
-      if (!sendChunk(sendBuffer[i]["clientTimestamp"])) return;
+  let count = 0;
+  for (let i = 0; i < sendBuffer.length; i++) {
+    if (now - sendBuffer[i]['sendTimestamp'] > successTimeout) {
+      if (!sendChunk(sendBuffer[i]['clientTimestamp'])) return;
       count++;
     }
   }
   if (count > 0) {
     if (preventSend) {
-      console.log("Cancelling flush of chunks due to 'nosend' href flag");
+      console.log('Cancelling flush of chunks due to \'nosend\' href flag');
     } else {
-      console.log("Flushed", count, "stale chunks to server.");
+      console.log('Flushed', count, 'stale chunks to server.');
     }
   }
 }
-// Send chunk to server.
+/**
+ * Send chunk to server.
+ *
+ * @private
+ * @param {string} chunkid The id of the chunk to attempt to send.
+ * @return {boolean} True of successfully sent chunk, false otherwise.
+ */
 function sendChunk(chunkid) {
   const now = Date.now();
-  for (var i = 0; i < sendBuffer.length; i++) {
-    if (sendBuffer[i]["clientTimestamp"] == chunkid) {
+  for (let i = 0; i < sendBuffer.length; i++) {
+    if (sendBuffer[i]['clientTimestamp'] == chunkid) {
       if (!TraX.isSignedIn && !tokenSent) {
-        sendBuffer[i]["sendTimestamp"] = 0;
-        console.log("UserID is unknown, can't send data.");
+        sendBuffer[i]['sendTimestamp'] = 0;
+        console.log('UserID is unknown, can\'t send data.');
         return false;
       } else if (!isConnected) {
-        sendBuffer[i]["sendTimestamp"] = 0;
-        console.log("Not connected to server, can't send data.");
+        sendBuffer[i]['sendTimestamp'] = 0;
+        console.log('Not connected to server, can\'t send data.');
         return false;
       } else if (
-          sessionId.length <= 0 && sendBuffer[i]["sessionId"].length <= 0) {
-        if (!preventSend) console.log("No sessionId, delaying chunk send.");
+          sessionId.length <= 0 && sendBuffer[i]['sessionId'].length <= 0) {
+        if (!preventSend) console.log('No sessionId, delaying chunk send.');
         return;
       } else {
-        if (sendBuffer[i]["sessionId"].length <= 0)
-          sendBuffer[i]["sessionId"] = sessionId;
-        sendBuffer[i]["sendTimestamp"] = now;
-        var finalData = JSON.stringify(sendBuffer[i]);
+        if (sendBuffer[i]['sessionId'].length <= 0) {
+          sendBuffer[i]['sessionId'] = sessionId;
+        }
+        sendBuffer[i]['sendTimestamp'] = now;
+        let finalData = JSON.stringify(sendBuffer[i]);
 
-        if (!sendBuffer[i]["[NODECOMPRESS]"])
+        if (!sendBuffer[i]['[NODECOMPRESS]']) {
           finalData = LZString.compressToUTF16(finalData);
+        }
 
-        if (!preventSend)
+        if (!preventSend) {
           TraX.socket.emit(
-              'appendsession', sendBuffer[i]["sessionId"], chunkid,
-              finalData + "[CHUNKEND]");
+              'appendsession', sendBuffer[i]['sessionId'], chunkid,
+              finalData + '[CHUNKEND]');
+        }
         return true;
       }
     }
   }
-  console.log("FAILED TO FIND CHUNK TO SEND", chunkid);
+  console.log('FAILED TO FIND CHUNK TO SEND', chunkid);
   return false;
 }
-// Remove chunk from buffer to send to server if the server confirmed it was
-// sent.
+/**
+ * Remove chunk from buffer to send to server if the server confirmed it was
+ * sent.
+ *
+ * @private
+ * @param {string} chunkid The id of the chunk to pop from the buffer.
+ */
 function popSendBuffer(chunkid) {
-  for (var i = 0; i < sendBuffer.length; i++) {
+  for (let i = 0; i < sendBuffer.length; i++) {
     if (sendBuffer[i]['clientTimestamp'] === chunkid) {
       sendBuffer.splice(i, 1);
       if (sendBuffer.length === 0) updateServerLights();
-      if (TraX.debugMode)
-        sendBufferDom.innerHTML = "Chunks Buffered: " + sendBuffer.length;
+      if (TraX.debugMode) {
+        sendBufferDom.innerHTML = 'Chunks Buffered: ' + sendBuffer.length;
+      }
       return;
     }
   }
-  console.log("FAILED TO POP", chunkid, "FROM SENDBUFFER!");
+  console.log('FAILED TO POP', chunkid, 'FROM SENDBUFFER!');
 }
-// Check if user is signed in.
-function signedIn() {
-  token = getToken();
-  return token && String(token).length > 0;
-}
-// Gets signed in user's token.
-function getToken() {
-  return gapi.auth2.getAuthInstance()
-      .currentUser.get()
-      .getAuthResponse()
-      .id_token;
-}
-// Update friendmap markers and zoom.
+/**
+ * Check if user is signed in.
+ *
+ * @private
+ * @return {?boolean} True if signed in, false otherwise.
+ */
+// function signedIn() {
+//   token = getToken();
+//   return token && String(token).length > 0;
+// }
+
+/**
+ * Gets signed in user's token.
+ *
+ * @private
+ * @return {string} Token of current signed in user.
+ */
+// function getToken() {
+//   return gapi.auth2.getAuthInstance()
+//       .currentUser.get()
+//       .getAuthResponse()
+//       .id_token;
+// }
+
+/**
+ * Update friendmap markers and zoom.
+ *
+ * @private
+ */
 function updateMap() {
-  var bounds = {
+  let bounds = {
     sw: {lat: latitude, lng: longitude},
-    ne: {lat: latitude, lng: longitude}
+    ne: {lat: latitude, lng: longitude},
   };
   if (friendMarkers.length != friendPositions.length + 1) {
     friendMarkerCluster.clearMarkers();
     friendMarkers = [new google.maps.Marker(
-        {position: {lat: latitude, lng: longitude}, label: "1"})];
-    friendMarkers[0].userId = "myself";
+        {position: {lat: latitude, lng: longitude}, label: '1'})];
+    friendMarkers[0].userId = 'myself';
 
-    var numMe = 1;
-    for (var i = 0; i < friendPositions.length; i++) {
-      var label = "?";
+    let numMe = 1;
+    for (let i = 0; i < friendPositions.length; i++) {
+      let label = '?';
       if (friendPositions[i].userId == TraX.getDriverId()) {
-        label = (++numMe) % 10 + "";
+        label = (++numMe) % 10 + '';
       } else {
-        for (var j = 0; j < TraX.friendsList.length; j++) {
+        for (let j = 0; j < TraX.friendsList.length; j++) {
           if (friendPositions[i].userId == TraX.friendsList[j].id) {
             label = friendsList[j].firstName[0];
             break;
@@ -2068,31 +2467,39 @@ function updateMap() {
           new google.maps.Marker({position: friendPositions[i], label: label}));
       friendMarkers[i].userId = friendPositions[i].userId;
 
-      if (bounds.sw["lat"] > friendPositions[i].lat)
-        bounds.sw["lat"] = friendPositions[i].lat;
-      if (bounds.sw["lng"] > friendPositions[i].lng)
-        bounds.sw["lng"] = friendPositions[i].lng;
-      if (bounds.ne["lat"] < friendPositions[i].lat)
-        bounds.ne["lat"] = friendPositions[i].lat;
-      if (bounds.ne["lng"] < friendPositions[i].lng)
-        bounds.ne["lng"] = friendPositions[i].lng;
+      if (bounds.sw['lat'] > friendPositions[i].lat) {
+        bounds.sw['lat'] = friendPositions[i].lat;
+      }
+      if (bounds.sw['lng'] > friendPositions[i].lng) {
+        bounds.sw['lng'] = friendPositions[i].lng;
+      }
+      if (bounds.ne['lat'] < friendPositions[i].lat) {
+        bounds.ne['lat'] = friendPositions[i].lat;
+      }
+      if (bounds.ne['lng'] < friendPositions[i].lng) {
+        bounds.ne['lng'] = friendPositions[i].lng;
+      }
     }
     friendMarkerCluster.addMarkers(friendMarkers);
   } else {
     friendMarkers[0].setPosition({lat: latitude, lng: longitude});
-    for (var i = 1; i < friendMarkers.length; i++) {
-      for (var j = 0; j < friendPositions.length; j++) {
+    for (let i = 1; i < friendMarkers.length; i++) {
+      for (let j = 0; j < friendPositions.length; j++) {
         if (friendMarkers[i].userId == friendPositions[j].userId) {
           friendMarkers[i].setPosition(friendPositions[j]);
         }
-        if (bounds.sw["lat"] > friendPositions[j].lat)
-          bounds.sw["lat"] = friendPositions[j].lat;
-        if (bounds.sw["lng"] > friendPositions[j].lng)
-          bounds.sw["lng"] = friendPositions[j].lng;
-        if (bounds.ne["lat"] < friendPositions[j].lat)
-          bounds.ne["lat"] = friendPositions[j].lat;
-        if (bounds.ne["lng"] < friendPositions[j].lng)
-          bounds.ne["lng"] = friendPositions[j].lng;
+        if (bounds.sw['lat'] > friendPositions[j].lat) {
+          bounds.sw['lat'] = friendPositions[j].lat;
+        }
+        if (bounds.sw['lng'] > friendPositions[j].lng) {
+          bounds.sw['lng'] = friendPositions[j].lng;
+        }
+        if (bounds.ne['lat'] < friendPositions[j].lat) {
+          bounds.ne['lat'] = friendPositions[j].lat;
+        }
+        if (bounds.ne['lng'] < friendPositions[j].lng) {
+          bounds.ne['lng'] = friendPositions[j].lng;
+        }
       }
     }
   }
@@ -2101,17 +2508,21 @@ function updateMap() {
   friendmap.panToBounds(new google.maps.LatLngBounds(bounds.sw, bounds.ne));
   if (friendmap.getZoom() > 15) friendmap.setZoom(15);
 }
-// Toggle the friendmap visibility.
+/**
+ * Toggle the friendmap visibility.
+ *
+ * @public
+ */
 TraX.toggleMap = function() {
   friendmapEnabled = !friendmapEnabled;
   if (friendmapEnabled) {
-    friendmapDom.parentElement.style.display = "block";
-    friendmapToggleDom.classList.add("selected");
+    friendmapDom.parentElement.style.display = 'block';
+    friendmapToggleDom.classList.add('selected');
     google.maps.event.trigger(friendmap, 'resize');
     if (isPaused && !realtimeViewOpen) {
       if (!navigator.geolocation) {
         TraX.showMessageBox(
-            "Your current browser does not allow me to view geolocation.");
+            'Your current browser does not allow me to view geolocation.');
       } else {
         wpid = navigator.geolocation.watchPosition(
             handleNewPosition, handlePosError, geoOptions);
@@ -2122,8 +2533,8 @@ TraX.toggleMap = function() {
       friendmapDom.scrollIntoView({behaviour: 'smooth'});
     }
   } else {
-    friendmapDom.parentElement.style.display = "none";
-    friendmapToggleDom.classList.remove("selected");
+    friendmapDom.parentElement.style.display = 'none';
+    friendmapToggleDom.classList.remove('selected');
     if (isPaused && !realtimeViewOpen) {
       if (navigator.geolocation) {
         navigator.geolocation.clearWatch(wpid);
@@ -2131,7 +2542,12 @@ TraX.toggleMap = function() {
     }
   }
 };
-// Toggle the options menu visibility.
+/**
+ * Toggle the options menu visibility.
+ *
+ * @public
+ * @param {?boolean} [force=undefined] Force menu state or undefined to toggle.
+ */
 TraX.toggleOptionsMenu = function(force) {
   if (!isPaused) return;
   if (typeof force === 'undefined') {
@@ -2140,15 +2556,21 @@ TraX.toggleOptionsMenu = function(force) {
     optionsMenuOpen = force;
   }
   if (optionsMenuOpen) {
-    optionsMenuDom.style.display = "block";
-    optionsToggleDom.classList.add("selected");
+    optionsMenuDom.style.display = 'block';
+    optionsToggleDom.classList.add('selected');
     optionsMenuDom.scrollIntoView({behaviour: 'smooth'});
   } else {
-    optionsMenuDom.style.display = "none";
-    optionsToggleDom.classList.remove("selected");
+    optionsMenuDom.style.display = 'none';
+    optionsToggleDom.classList.remove('selected');
   }
 };
-// Toggle the friends view/manager visibility.
+/**
+ * Toggle the friends view/manager visibility.
+ *
+ * @public
+ * @param {?boolean} [force=undefined] Force view to state, or undefined to
+ * toggle.
+ */
 TraX.toggleFriendsView = function(force) {
   if (!isPaused) return;
   if (typeof force === 'undefined') {
@@ -2158,63 +2580,63 @@ TraX.toggleFriendsView = function(force) {
   }
   if (friendViewOpen) {
     TraX.requestFriendsList();
-    friendsViewDom.classList.remove("hidden");
-    friendsViewToggleDom.classList.add("selected");
+    friendsViewDom.classList.remove('hidden');
+    friendsViewToggleDom.classList.add('selected');
     if (Sidebar) Sidebar.toggleOpen(false);
   } else {
-    friendsViewDom.classList.add("hidden");
-    friendsViewToggleDom.classList.remove("selected");
-    if (Sidebar) Sidebar.toggleOpen("default");
+    friendsViewDom.classList.add('hidden');
+    friendsViewToggleDom.classList.remove('selected');
+    if (Sidebar) Sidebar.toggleOpen('default');
   }
 };
-// Session name changed in input box.
+/**
+ * Session name changed in input box.
+ *
+ * @public
+ */
 TraX.sessionInputChange = function() {
-  var newVal = sessionInputDom.value/*.replaceAll(" ", "_")*/;
+  let newVal = sessionInputDom.value;
   if (newVal !== sessionInputDom.value) {
-    var start = sessionInputDom.selectionStart;
-    var end = sessionInputDom.selectionEnd;
+    let start = sessionInputDom.selectionStart;
+    let end = sessionInputDom.selectionEnd;
     sessionInputDom.value = newVal;
     sessionInputDom.setSelectionRange(start, end);
   }
-
-  /*
-  filesizeDom.innerHTML = newVal;
-
-  clearInterval(filesizeCheckInterval);
-  clearTimeout(filesizeCheckTimeout);
-  if (newVal.length > 0) {
-    filesizeCheckInterval =
-        setInterval(TraX.requestFilesize, filesizeCheckFrequency);
-    filesizeCheckTimeout = setInterval(TraX.requestFilesize, 1000);
-  } else {
-    // updateFilesize(-1, getSessionId());
-  } */
 };
-// Returns current recording session ID.
+/**
+ * Returns current recording session ID.
+ *
+ * @private
+ * @return {string} Id of current session being recorded.
+ */
 function getSessionId() {
   return sessionId;
 }
-// Received new filesize from server, update UI.
+/**
+ * Received new filesize from server, update UI.
+ *
+ * @private
+ */
 function updateFilesize() {
   if (TraX.debugMode) {
-    console.log("User is using", datasize, "bytes on server, of", datalimit);
+    console.log('User is using', datasize, 'bytes on server, of', datalimit);
   }
-  var HRFilesize = datasize + 'B';
-  var dividedFilesize = datasize;
-  var numDivide = 0;
+  let HRFilesize = datasize + 'B';
+  let dividedFilesize = datasize;
+  let numDivide = 0;
   const fileLetters = 'B kBMBGBTBPBEB';
   while (dividedFilesize > 1000) {
     numDivide++;
     dividedFilesize /= 1000;
   }
   if (datasize <= 0) {
-    HRFilesize = "0B";
+    HRFilesize = '0B';
   } else {
     HRFilesize = Math.round(dividedFilesize * 10) / 10 +
         fileLetters.substr(numDivide * 2, 2);
   }
 
-  var HRFilelimit = datalimit + 'B';
+  let HRFilelimit = datalimit + 'B';
   dividedFilesize = datalimit;
   numDivide = 0;
   while (dividedFilesize > 1000) {
@@ -2227,80 +2649,100 @@ function updateFilesize() {
     HRFilelimit = ' / ' + Math.round(dividedFilesize * 10) / 10 +
         fileLetters.substr(numDivide * 2, 2);
   }
-  filesizeDom.innerHTML = "Data on server: " + HRFilesize + HRFilelimit;
+  filesizeDom.innerHTML = 'Data on server: ' + HRFilesize + HRFilelimit;
 }
-// User chose HUD 0, big button.
+/**
+ * User chose HUD 0, big button.
+ *
+ * @public
+ */
 TraX.handleClickBigButton = function() {
   visibleHUD = 0;
   bigButtonModeButton.classList.add('selected');
   timerModeButton.classList.remove('selected');
   // customModeButton.classList.remove('selected');
-  bigButtonHUDDom.classList.add("visibleHUD");
-  bigButtonHUDDom.classList.remove("hiddenHUD");
-  timersHUDDom.classList.add("hiddenHUD");
-  timersHUDDom.classList.remove("visibleHUD");
+  bigButtonHUDDom.classList.add('visibleHUD');
+  bigButtonHUDDom.classList.remove('hiddenHUD');
+  timersHUDDom.classList.add('hiddenHUD');
+  timersHUDDom.classList.remove('visibleHUD');
   // customHUDDom.classList.add("hiddenHUD");
   // customHUDDom.classList.remove("visibleHUD");
-  TraX.setURLOption("hud");
+  TraX.setURLOption('hud');
 };
-// User chose HUD 1, realtime timers.
+/**
+ * User chose HUD 1, realtime timers.
+ *
+ * @public
+ */
 TraX.handleClickTimers = function() {
   visibleHUD = 1;
   bigButtonModeButton.classList.remove('selected');
   timerModeButton.classList.add('selected');
   // customModeButton.classList.remove('selected');
-  bigButtonHUDDom.classList.add("hiddenHUD");
-  bigButtonHUDDom.classList.remove("visibleHUD");
-  timersHUDDom.classList.add("visibleHUD");
-  timersHUDDom.classList.remove("hiddenHUD");
+  bigButtonHUDDom.classList.add('hiddenHUD');
+  bigButtonHUDDom.classList.remove('visibleHUD');
+  timersHUDDom.classList.add('visibleHUD');
+  timersHUDDom.classList.remove('hiddenHUD');
   // customHUDDom.classList.add("hiddenHUD");
   // customHUDDom.classList.remove("visibleHUD");
-  TraX.setURLOption("hud", 1);
+  TraX.setURLOption('hud', 1);
 };
-// User chose HUD 2, custom.
+/**
+ * User chose HUD 2, custom.
+ *
+ * @public
+ */
 TraX.handleClickCustom = function() {
   visibleHUD = 2;
   bigButtonModeButton.classList.remove('selected');
   timerModeButton.classList.remove('selected');
   // customModeButton.classList.add('selected');
-  bigButtonHUDDom.classList.add("hiddenHUD");
-  bigButtonHUDDom.classList.remove("visibleHUD");
-  timersHUDDom.classList.add("hiddenHUD");
-  timersHUDDom.classList.remove("visibleHUD");
+  bigButtonHUDDom.classList.add('hiddenHUD');
+  bigButtonHUDDom.classList.remove('visibleHUD');
+  timersHUDDom.classList.add('hiddenHUD');
+  timersHUDDom.classList.remove('visibleHUD');
   // customHUDDom.classList.add("visibleHUD");
   // customHUDDom.classList.remove("hiddenHUD");
   if (TraX.CustomHUD) TraX.CustomHUD.handleOpening();
-  TraX.setURLOption("hud", 2);
+  TraX.setURLOption('hud', 2);
 };
 
-// Bring HUD to fullscreen to remove distractions.
+/**
+ * Bring HUD to fullscreen to remove distractions.
+ *
+ * @public
+ */
 TraX.triggerHUDFullscreen = function() {
   TraX.releaseHUDFullscreen();
-  var dom;
+  let dom;
   if (visibleHUD == 0) {
     dom = bigButtonHUDDom;
   } else if (visibleHUD == 1) {
     dom = timersHUDDom;
   }
-  var requestMethod = dom.requestFullScreen ||
+  let requestMethod = dom.requestFullScreen ||
       dom.webkitRequestFullScreen || dom.mozRequestFullScreen ||
       dom.msRequestFullScreen;
   if (requestMethod) {
     requestMethod.call(dom);
-    dom.classList.add("fsHUD");
+    dom.classList.add('fsHUD');
   }
 };
-// Exit fullscreen
+/**
+ * Exit fullscreen.
+ *
+ * @public
+ */
 TraX.releaseHUDFullscreen = function() {
   if (document.fullscreenElement || document.webkitFullscreenElement ||
       document.mozFullScreenElement || document.msFullscreenElement) {
-    var dom;
+    let dom;
     if (visibleHUD == 0) {
       dom = bigButtonHUDDom;
     } else if (visibleHUD == 1) {
       dom = timersHUDDom;
     }
-    dom.classList.remove("fsHUD");
+    dom.classList.remove('fsHUD');
     if (document.exitFullscreen) {
       document.exitFullscreen();
     } else if (document.webkitCancelFullscreen) {
@@ -2314,6 +2756,11 @@ TraX.releaseHUDFullscreen = function() {
     }
   }
 };
+/**
+ * Toggle fullscreen HUD state.
+ *
+ * @public
+ */
 TraX.toggleHUDFullscreen = function() {
   if (document.fullscreenElement || document.webkitFullscreenElement ||
       document.mozFullScreenElement || document.msFullscreenElement) {
@@ -2322,37 +2769,41 @@ TraX.toggleHUDFullscreen = function() {
     TraX.triggerHUDFullscreen();
   }
 };
-// New list of friends received from server, update UI.
+/**
+ * New list of friends received from server, update UI.
+ *
+ * @private
+ */
 function updateFriendsList() {
   // Requests list
-  friendsRequestListDom.innerHTML = "";
-  var outgoing = document.createElement("ol")
-  var incoming = document.createElement("ol")
-  for (var i = 0; i < allRelations.length; i++) {
+  friendsRequestListDom.innerHTML = '';
+  let outgoing = document.createElement('ol');
+  let incoming = document.createElement('ol');
+  for (let i = 0; i < allRelations.length; i++) {
     if (allRelations[i].relation != oneRequestStatus &&
         allRelations[i].relation != twoRequestStatus) {
       continue;
     }
-    var newItem = document.createElement("li");
-    newItem.innerHTML = "<strong>" + (allRelations[i].firstName || '') + " " +
+    let newItem = document.createElement('li');
+    newItem.innerHTML = '<strong>' + (allRelations[i].firstName || '') + ' ' +
         (allRelations[i].lastName || '') +
-        "</strong> <a class=\"friendListId\">" + allRelations[i].id + "</a>";
+        '</strong> <a class="friendListId">' + allRelations[i].id + '</a>';
 
-    var cancel = document.createElement('button');
-    cancel.innerHTML = "<span>Cancel</span>";
-    cancel.className = "links mini nohover";
+    let cancel = document.createElement('button');
+    cancel.innerHTML = '<span>Cancel</span>';
+    cancel.className = 'links mini nohover';
     cancel.setAttribute(
-        "onclick", "TraX.removeFriend(" + allRelations[i].id + ");");
-    var accept = document.createElement('button');
-    accept.innerHTML = "<span>Accept</span>";
-    accept.className = "links mini nohover";
+        'onclick', 'TraX.removeFriend(' + allRelations[i].id + ');');
+    let accept = document.createElement('button');
+    accept.innerHTML = '<span>Accept</span>';
+    accept.className = 'links mini nohover';
     accept.setAttribute(
-        "onclick", "TraX.acceptFriend(" + allRelations[i].id + ");");
-    var decline = document.createElement('button');
-    decline.innerHTML = "<span>Decline</span>";
-    decline.className = "links mini nohover";
+        'onclick', 'TraX.acceptFriend(' + allRelations[i].id + ');');
+    let decline = document.createElement('button');
+    decline.innerHTML = '<span>Decline</span>';
+    decline.className = 'links mini nohover';
     decline.setAttribute(
-        "onclick", "TraX.declineFriend(" + allRelations[i].id + ");");
+        'onclick', 'TraX.declineFriend(' + allRelations[i].id + ');');
 
     if (allRelations[i].usernum == 1) {
       if (allRelations[i].relation == oneRequestStatus) {
@@ -2382,41 +2833,44 @@ function updateFriendsList() {
   }
   friendsRequestListDom.appendChild(incoming);
   friendsRequestListDom.appendChild(outgoing);
-  if (incoming.innerHTML.length > 0)
-    incoming.outerHTML = "Incoming requests" + incoming.outerHTML;
-  if (outgoing.innerHTML.length > 0)
-    outgoing.outerHTML = "Outgoing requests" + outgoing.outerHTML;
-  if (outgoing.innerHTML.length == 0 && incoming.innerHTML.length == 0)
-    incoming.outerHTML = "None";
+  if (incoming.innerHTML.length > 0) {
+    incoming.outerHTML = 'Incoming requests' + incoming.outerHTML;
+  }
+  if (outgoing.innerHTML.length > 0) {
+    outgoing.outerHTML = 'Outgoing requests' + outgoing.outerHTML;
+  }
+  if (outgoing.innerHTML.length == 0 && incoming.innerHTML.length == 0) {
+    incoming.outerHTML = 'None';
+  }
 
   // Friend list
-  friendsListDom.innerHTML = "";
-  for (var i = 0; i < TraX.friendsList.length; i++) {
-    var newItem = document.createElement("li");
+  friendsListDom.innerHTML = '';
+  for (let i = 0; i < TraX.friendsList.length; i++) {
+    let newItem = document.createElement('li');
 
-    var name = document.createElement('strong');
+    let name = document.createElement('strong');
     name.appendChild(
         document.createTextNode(
-            TraX.friendsList[i].firstName + " " +
+            TraX.friendsList[i].firstName + ' ' +
             TraX.friendsList[i].lastName));
 
     newItem.appendChild(name);
 
-    var remove = document.createElement('button');
-    remove.innerHTML = "<span>Remove</span>";
-    remove.className = "links mini nohover";
+    let remove = document.createElement('button');
+    remove.innerHTML = '<span>Remove</span>';
+    remove.className = 'links mini nohover';
     remove.setAttribute(
-        "onclick", "TraX.removeFriend(" + TraX.friendsList[i].id + ");");
+        'onclick', 'TraX.removeFriend(' + TraX.friendsList[i].id + ');');
 
-    var block = document.createElement('button');
-    block.innerHTML = "<span>Block</span>";
-    block.className = "links mini nohover";
+    let block = document.createElement('button');
+    block.innerHTML = '<span>Block</span>';
+    block.className = 'links mini nohover';
     block.setAttribute(
-        "onclick", "TraX.blockFriend(" + TraX.friendsList[i].id + ");");
+        'onclick', 'TraX.blockFriend(' + TraX.friendsList[i].id + ');');
     newItem.appendChild(remove);
     newItem.appendChild(block);
 
-    var newId = document.createElement('a');
+    let newId = document.createElement('a');
     newId.classList.add('friendListId');
     newId.innerHTML = TraX.friendsList[i].id;
     newItem.appendChild(newId);
@@ -2424,46 +2878,46 @@ function updateFriendsList() {
     friendsListDom.appendChild(newItem);
   }
   if (TraX.friendsList.length == 0) {
-    var newItem = document.createElement("li");
+    let newItem = document.createElement('li');
     if (TraX.isSignedIn) {
-      newItem.innerHTML = "It looks like you don't have any friends :(<br>" +
-          "Send a request below to make some!";
+      newItem.innerHTML = 'It looks like you don\'t have any friends :(<br>' +
+          'Send a request below to make some!';
     } else {
-      newItem.innerHTML = "I don't know who you are!<br>" +
-          "You must be signed in for me to find your friends!";
+      newItem.innerHTML = 'I don\'t know who you are!<br>' +
+          'You must be signed in for me to find your friends!';
     }
     friendsListDom.appendChild(newItem);
   }
 
   // Blocked list
-  blockedListDom.innerHTML = "";
-  var outgoing = document.createElement("ol")
-  var incoming = document.createElement("ol")
-  for (var i = 0; i < allRelations.length; i++) {
+  blockedListDom.innerHTML = '';
+  let outgoing2 = document.createElement('ol');
+  let incoming2 = document.createElement('ol');
+  for (let i = 0; i < allRelations.length; i++) {
     if (allRelations[i].relation != oneBlockedStatus &&
         allRelations[i].relation != twoBlockedStatus &&
         allRelations[i].relation != bothBlockedStatus) {
       continue;
     }
-    var newItem = document.createElement("li");
-    newItem.innerHTML = "<strong>" + allRelations[i].firstName + " " +
-        allRelations[i].lastName + "</strong> <a class=\"friendListId\">" +
-        allRelations[i].id + "</a>";
+    let newItem = document.createElement('li');
+    newItem.innerHTML = '<strong>' + allRelations[i].firstName + ' ' +
+        allRelations[i].lastName + '</strong> <a class="friendListId">' +
+        allRelations[i].id + '</a>';
 
-    var cancel = document.createElement('button');
-    cancel.innerHTML = "<span>Unblock</span>";
-    cancel.className = "links mini nohover";
+    let cancel = document.createElement('button');
+    cancel.innerHTML = '<span>Unblock</span>';
+    cancel.className = 'links mini nohover';
     cancel.setAttribute(
-        "onclick", "TraX.unblockUser(" + allRelations[i].id + ");");
+        'onclick', 'TraX.unblockUser(' + allRelations[i].id + ');');
 
     if (allRelations[i].usernum == 1) {
       if (allRelations[i].relation == oneBlockedStatus ||
           allRelations[i].relation == bothBlockedStatus) {
         newItem.appendChild(cancel);
-        outgoing.appendChild(newItem);
+        outgoing2.appendChild(newItem);
       } else if (allRelations[i].relation == twoBlockedStatus) {
         // newItem.appendChild(cancel);
-        incoming.appendChild(newItem);
+        incoming2.appendChild(newItem);
       } else {
         continue;
       }
@@ -2471,57 +2925,96 @@ function updateFriendsList() {
       if (allRelations[i].relation == twoBlockedStatus ||
           allRelations[i].relation == bothBlockedStatus) {
         newItem.appendChild(cancel);
-        outgoing.appendChild(newItem);
+        outgoing2.appendChild(newItem);
       } else if (allRelations[i].relation == oneBlockedStatus) {
         // newItem.appendChild(cancel);
-        incoming.appendChild(newItem);
+        incoming2.appendChild(newItem);
       } else {
         continue;
       }
     }
   }
-  blockedListDom.appendChild(incoming);
-  blockedListDom.appendChild(outgoing);
-  if (incoming.innerHTML.length > 0)
-    incoming.outerHTML = "Blocked you" + incoming.outerHTML;
-  if (outgoing.innerHTML.length > 0)
-    outgoing.outerHTML = "You've blocked" + outgoing.outerHTML;
-  if (outgoing.innerHTML.length == 0 && incoming.innerHTML.length == 0)
-    incoming.outerHTML = "Nobody";
+  blockedListDom.appendChild(incoming2);
+  blockedListDom.appendChild(outgoing2);
+  if (incoming2.innerHTML.length > 0) {
+    incoming2.outerHTML = 'Blocked you' + incoming2.outerHTML;
+  }
+  if (outgoing2.innerHTML.length > 0) {
+    outgoing2.outerHTML = 'You\'ve blocked' + outgoing2.outerHTML;
+  }
+  if (outgoing2.innerHTML.length == 0 && incoming2.innerHTML.length == 0) {
+    incoming2.outerHTML = 'Nobody';
+  }
 }
-// Add friend button clicked.
+/**
+ * Add friend button clicked.
+ *
+ * @public
+ */
 TraX.addFriend = function() {
-  console.log("Adding friend", friendsIdInputDom.value);
+  console.log('Adding friend', friendsIdInputDom.value);
   TraX.socket.emit('addfriend', friendsIdInputDom.value);
 };
-// Remove friend button clicked.
+/**
+ * Remove friend button clicked.
+ *
+ * @public
+ * @param {string} id Id of friend to remove as friend.
+ */
 TraX.removeFriend = function(id) {
-  console.log("Removing friend", id);
+  console.log('Removing friend', id);
   TraX.socket.emit('removefriend', id);
 };
-// Decline friend request button clicked.
+/**
+ * Decline friend request button clicked.
+ *
+ * @public
+ * @param {string} id Id of user to decline friend request.
+ */
 TraX.declineFriend = function(id) {
-  console.log("Denying friend", id);
+  console.log('Denying friend', id);
   TraX.socket.emit('denyrequest', id);
 };
-// Accept friend request button clicked.
+/**
+ * Accept friend request button clicked.
+ *
+ * @public
+ * @param {string} id Id of user to accept friend request.
+ */
 TraX.acceptFriend = function(id) {
-  console.log("Accepting friend", id);
+  console.log('Accepting friend', id);
   TraX.socket.emit('acceptrequest', id);
 };
-// Block user button clicked.
+/**
+ * Block user button clicked.
+ *
+ * @public
+ * @param {string} id Id of friend to block.
+ */
 TraX.blockFriend = function(id) {
-  console.log("Blocking friend", id);
+  console.log('Blocking friend', id);
   TraX.socket.emit('blockrequest', id);
 };
-// Unblock user button clicked.
+/**
+ * Unblock user button clicked.
+ *
+ * @public
+ * @param {string} id Id of user to unblock.
+ */
 TraX.unblockUser = function(id) {
-  console.log("Unblocking user", id);
+  console.log('Unblocking user', id);
   TraX.socket.emit('unblockuser', id);
 };
-// Friend position received from server, update map.
+/**
+ * Friend position received from server, update map.
+ *
+ * @private
+ * @param {string} friendId The id of the friend we are updating the position
+ * of.
+ * @param {{lat: number, lng: number}} pos Friend's position.
+ */
 function updateFriendPos(friendId, pos) {
-  for (var i = 0; i < friendPositions.length; i++) {
+  for (let i = 0; i < friendPositions.length; i++) {
     if (friendPositions[i].userId == friendId) {
       friendPositions[i].lat = pos.lat;
       friendPositions[i].lng = pos.lng;
@@ -2531,107 +3024,115 @@ function updateFriendPos(friendId, pos) {
     }
   }
   if (TraX.debugMode > 1) {
-    console.log("FriendPos:", friendId, pos);
+    console.log('FriendPos:', friendId, pos);
   }
   if (!pos) return;
   friendPositions.push(
       {lat: pos.lat, lng: pos.lng, userId: friendId, time: Date.now()});
   updateMap();
 }
-// Clicked copy link button on account for sharing.
+/**
+ * Clicked copy link button on account for sharing.
+ *
+ * @public
+ */
 TraX.copyFriendLink = function() {
   if (TraX.isSignedIn) {
-    var text = document.createElement('input');
-    text.type = "text";
-    text.value = "https://" + location.hostname + location.pathname +
-        "?friendId=" + TraX.getDriverId();
+    let text = document.createElement('input');
+    text.type = 'text';
+    text.value = 'https://' + location.hostname + location.pathname +
+        '?friendId=' + TraX.getDriverId();
     document.body.appendChild(text);
     copy = function() {
       text.select();
-      document.execCommand("copy");
-      TraX.showMessageBox("Copied link!");
-      text.outerHTML = "";
+      document.execCommand('copy');
+      TraX.showMessageBox('Copied link!');
+      text.outerHTML = '';
     };
     setTimeout(copy);
   } else {
-    TraX.showMessageBox("Must be signed in to share your id.");
+    TraX.showMessageBox('Must be signed in to share your id.');
   }
 };
-// Click add bluetooth device.
+/**
+ * Click add bluetooth device.
+ *
+ * @public
+ */
 TraX.handleClickBluetoothRefresh = function() {
   const serviceUUID = 0xe47c8027;
   const allServiceUUIDs = [
-    serviceUUID, "b2e7d564-c077-404e-9d29-b547f4512dce",
-    "e47c8027-cca1-4e3b-981f-bdc47abeb5b5"
+    serviceUUID, 'b2e7d564-c077-404e-9d29-b547f4512dce',
+    'e47c8027-cca1-4e3b-981f-bdc47abeb5b5',
   ];
   if (navigator.bluetooth) {
-    /*const characteristicUUID = 0xcacc07ff;
+    /* const characteristicUUID = 0xcacc07ff;
     console.log(
         "BT Request with service:", serviceUUID, "characteristic:",
         characteristicUUID); */
     navigator.bluetooth
         .requestDevice({
           acceptAllDevices: true,
-          optionalServices: allServiceUUIDs
-        } /*{filters: [{services: [serviceUUID]}]}*/)
-        .then(device => {
+          optionalServices: allServiceUUIDs,
+        } /* {filters: [{services: [serviceUUID]}]}*/)
+        .then((device) => {
           device.addEventListener('gattserverdisconnected', btDisconnect);
-          var newSection = document.createElement("p");
-          newSection.innerHTML = device.name + "(" + device.id + ")";
-          newSection.id = "debugBTList" + device.name;
+          let newSection = document.createElement('p');
+          newSection.innerHTML = device.name + '(' + device.id + ')';
+          newSection.id = 'debugBTList' + device.name;
           debugBluetoothDom.appendChild(newSection);
 
-          console.log("BT Device", device);
+          console.log('BT Device', device);
 
           // TODO: Implement auto-reconnect
           return device.gatt.connect();
         })
-        .then(server => {
-          console.log("BT Server", server);
+        .then((server) => {
+          console.log('BT Server', server);
           return server.getPrimaryServices();
         })
-        .then(services => {
-          console.log("BT Services", services);
-          var queue = Promise.resolve();
-          services.forEach(service => {
+        .then((services) => {
+          console.log('BT Services', services);
+          let queue = Promise.resolve();
+          services.forEach((service) => {
             queue = queue.then(
-                _ => service.getCharacteristics().then(characteristics => {
-                  console.log("BT Service", service);
-                  var newService = document.createElement("p");
-                  newService.innerHTML = ">Service:" + service.uuid;
-                  var btDeviceDom = document.getElementById(
-                      "debugBTList" + service.device.name);
+                (_) => service.getCharacteristics().then((characteristics) => {
+                  console.log('BT Service', service);
+                  let newService = document.createElement('p');
+                  newService.innerHTML = '>Service:' + service.uuid;
+                  let btDeviceDom = document.getElementById(
+                      'debugBTList' + service.device.name);
                   btDeviceDom.appendChild(newService);
-                  characteristics.forEach(characteristic => {
-                    console.log("BT Characteristic", characteristic);
-                    var newCharacteristic = document.createElement("p");
+                  characteristics.forEach((characteristic) => {
+                    console.log('BT Characteristic', characteristic);
+                    let newCharacteristic = document.createElement('p');
                     newCharacteristic.innerHTML =
-                        ">>Characteristic:" + service.uuid;
+                        '>>Characteristic:' + service.uuid;
                     btDeviceDom.appendChild(newCharacteristic);
                   });
                 }));
           });
           return queue;
         })
-        .catch(error => { console.log(error);
-          var errDom = document.createElement("p");
-          errDom.innerHTML = "Error:" + error;
+        .catch((error) => {
+          console.log(error);
+          let errDom = document.createElement('p');
+          errDom.innerHTML = 'Error:' + error;
           debugBluetoothDom.appendChild(errDom);
         });
   } else {
-    TraX.showMessageBox("This browser does not support bluetooth devices.");
+    TraX.showMessageBox('This browser does not support bluetooth devices.');
   }
 };
-// Bluetooth device disconnected.
+/**
+ * Bluetooth device disconnected.
+ *
+ * @private
+ * @param {Event} event The event that triggered this.
+ */
 function btDisconnect(event) {
-  var device = event.target;
-  console.log("BT Disconnect", device);
-  document.getElementById("debugBTList" + device.name).outerHTML = "";
+  let device = event.target;
+  console.log('BT Disconnect', device);
+  document.getElementById('debugBTList' + device.name).outerHTML = '';
 }
-
 }(window.TraX = window.TraX || {}));
-
-String.prototype.replaceAll = function(search, replacement) {
-  var target = this;
-  return target.replace(new RegExp(search, 'g'), replacement);
-};
