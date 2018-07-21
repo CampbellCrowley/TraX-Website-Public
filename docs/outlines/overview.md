@@ -5,6 +5,10 @@ This document is mostly a guideline and is open for discussion, and is subject t
 Features with `(F)` are less important, or intended to be added later in the future.  
 Features with `(?)` are undecided on whether they should be implemented/important.
 
+* Features
+* Development Limits / Financially Defined Limits
+* Website style
+
 ## Features
 * Record interesting data about a driver and their car while driving on a track.
   - View the data later in a useful user-friendly format.
@@ -29,10 +33,10 @@ Features with `(?)` are undecided on whether they should be implemented/importan
   - Only researched Android. The below is possible on Android, but iPhones are unknown.
   - Allows video recording or live streaming.
     * From smartphone cameras.
-  - Allows for bluetooth/usb/other peripheral devices.
+  - Allows for Bluetooth/USB/other peripheral devices.
     * More accurate GPS.
     * More accurate IMU.
-    * Heartrate monitor.
+    * Heart rate monitor.
     * Additional cameras(?).
     * OBD-II Data
       - Throttle position.
@@ -43,10 +47,15 @@ Features with `(?)` are undecided on whether they should be implemented/importan
       - Barometric pressure.
       - Error codes.
       - Other data available over OBD-II.
-    * Companion app is purchasable? or free?
+  - Companion app is purchasable? or free?
 * Branding
   - Ability to place own brand on private version.
   - Purchasable.
+
+## Style
+* All pages look similar.
+* Same font used on all pages.
+* All pages have visible link back to Recording page.
 
 ---
 
