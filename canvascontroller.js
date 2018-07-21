@@ -31,7 +31,10 @@ Canvases.rotationRate = {a: 0, b: 0, g: 0};
 // The distance the sphere is away from front of page. (Depth into screen)
 let distance = 100;
 // Dimensions of canvases.
-let gyroWidth; let gyroHeight; let accelWidth; let accelHeight;
+let gyroWidth;
+let gyroHeight;
+let accelWidth;
+let accelHeight;
 
 // Initialize
 Canvases.init = function() {
