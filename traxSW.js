@@ -1,19 +1,20 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 
-const URL = "https://dev.campbellcrowley.com/trax";
-const indexURLs = [
-  '', '/', '?hud=1', '/?hud=1', '?video=1', '/?video=1', '?hud=1&video=1',
-  '?video=1&hud=1', '/?hud=1&video=1', '/?video=1&hud=1' /*, '/live', '/live/',
-   '/live/index.html'*/
-];
+// const URL = 'https://dev.campbellcrowley.com/trax';
+// const indexURLs = [
+//   '', '/', '?hud=1', '/?hud=1', '?video=1', '/?video=1', '?hud=1&video=1',
+//   '?video=1&hud=1', '/?hud=1&video=1',
+//   '/?video=1&hud=1', /* , '/live', '/live/', '/live/index.html'*/
+// ];
 
 self.addEventListener('install', function(event) {
   // if (caches) {
   //   if (location.hostname.indexOf('dev') == 0) {
   //     caches.delete('TraX Offline');
   //     console.warn(
-  //         "DEVELOPMENT PAGE DETECTED. NOT ENABLING OFFLINE MODE AND CLEARING CACHE.");
+  //         "DEVELOPMENT PAGE DETECTED. NOT ENABLING OFFLINE MODE AND CLEARING
+  //         CACHE.");
   //     return;
   //   }
   //   event.waitUntil(caches.open('TraX Offline').then(function(cache) {
@@ -53,7 +54,7 @@ self.addEventListener('install', function(event) {
   // } else {
   //   console.warn("traxSW Caching not supported.");
   // }
-  console.log("traxSW.js Installed!");
+  console.log('traxSW.js Installed!');
 });
 
 // self.addEventListener('fetch', function(event) {
