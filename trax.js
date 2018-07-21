@@ -1,6 +1,8 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 
+/* eslint-env node, es6, browser:false */
+
 const auth = require('/var/www/servers/auth.js');
 const CLIENT_ID = auth.gClientTokenAuthId;
 const common = require('/var/www/servers/common.js');
