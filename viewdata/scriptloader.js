@@ -23,7 +23,7 @@ const additionalScripts = [
   },
   {url: 'https://dev.campbellcrowley.com/trax/lz-string.min.js'},
   {url: 'https://dev.campbellcrowley.com/trax/viewdata/xml2json.min.js'},
-  {url: 'https://dev.campbellcrowley.com/trax/viewdata/Blob.js'},
+  {url: 'https://dev.campbellcrowley.com/trax/viewdata/Blob.min.js'},
   {url: 'https://dev.campbellcrowley.com/socket.io.js'},
   {url: 'https://dev.campbellcrowley.com/trax/viewdata/importexport.js'},
 ];
