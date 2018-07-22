@@ -327,7 +327,7 @@ io.on('connection', function(socket) {
       configOwnerId: configOwnerId,
     });
     checkFilePerms(filename, userId, undefined, function(err2, perms) {
-      mkdirp(mydir, {mode: 0700}, function(err3) {
+      mkdirp(mydir, {mode: 700}, function(err3) {
         if (err3) {
           socket.emit('fail', 'writeerror');
           common.error(
@@ -890,7 +890,7 @@ io.on('connection', function(socket) {
         nextId: 0,
         ownerId: userId + '',
       });
-      mkdirp(mydir, {mode: 0700}, function(err2) {
+      mkdirp(mydir, {mode: 700}, function(err2) {
         if (err2) {
           socket.emit('fail', 'writeerror');
           common.error(
@@ -995,7 +995,7 @@ io.on('connection', function(socket) {
           finish: finish,
           sectors: sectors,
         });
-        mkdirp(mydir, {mode: 0700}, function(err3) {
+        mkdirp(mydir, {mode: 700}, function(err3) {
           if (err3) {
             socket.emit('fail', 'writeerror');
             common.error(
@@ -1378,7 +1378,7 @@ io.on('connection', function(socket) {
         socket.emit('fail', 'badsummaryids');
         return;
       }
-      mkdirp(mydir, {mode: 0700}, function(err3) {
+      mkdirp(mydir, {mode: 700}, function(err3) {
         if (err3) {
           socket.emit('fail', 'writeerror');
           common.error(
@@ -1625,7 +1625,7 @@ function checkFriendFilePerms(filename, userId, otherId, callback) {
         console.log(err);
         socket.emit('fail', 'writeerror', chunkId);
       } else if (attempts == 1) {
-        mkdirp(dirname, {mode: 0700}, function(err2) {
+        mkdirp(dirname, {mode: 700}, function(err2) {
           if (err2) {
             attempts = 0;
             common.error('Failed to create dir: ' + dirname, socket.id);
