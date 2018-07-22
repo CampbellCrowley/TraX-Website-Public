@@ -1,5 +1,9 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
+/**
+ * Controls live data viewing page.
+ * TraX~Live
+ */
 (function(TraX, undefined) {
 (function(Live, undefined) {
 // Constants //
