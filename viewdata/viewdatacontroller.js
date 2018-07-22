@@ -2,9 +2,6 @@
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
 (function(DataView, undefined) {
-
-// const updateListFrequency = 7000; // Milliseconds
-
 // Folders to show user for organizing sessions. "#friends#" shows list of all
 // friends.
 const sessionFolders = ['All', 'Only Me', '#friends#'];
@@ -12,27 +9,47 @@ const sessionFolders = ['All', 'Only Me', '#friends#'];
 const sessionSorts = ['Name', 'Date', 'Track', 'User'];
 
 // DOM elements.
-var mymapDom, sessionsListDom, loadBarDom, dataLoadingDom, dataTitleDom,
-    dataViewChartDom, trackNameDom, trackConfigDom, timeDom, numLapsDom,
-    fastLapDom, slowLapDom, avgLapDom, topSpeedDom, avgSpeedDom, maxGForceDom,
-    lapListDom, sessionsListTextInput, sessionsListConfirmButton,
-    sessionsListTextDom, sessionsListCancelButton, sessionsListOverlay,
-    dataViewOverlay, trackListDom, configListDom, carListDom,
-    trackListTitlesDom, downloadOverlayDom, folderListDom;
+let sessionsListDom;
+let loadBarDom;
+let dataLoadingDom;
+let dataTitleDom;
+let dataViewChartDom;
+let trackNameDom;
+let trackConfigDom;
+let timeDom;
+let numLapsDom;
+let fastLapDom;
+let slowLapDom;
+let avgLapDom;
+let topSpeedDom;
+let avgSpeedDom;
+let maxGForceDom;
+let lapListDom;
+let sessionsListTextInput;
+let sessionsListConfirmButton;
+let sessionsListTextDom;
+let sessionsListOverlay;
+let dataViewOverlay;
+let trackListDom;
+let configListDom;
+let carListDom;
+let trackListTitlesDom;
+let downloadOverlayDom;
+let folderListDom;
 
 // List of all sessions.
-var fileList = [];
-var currentSession = {};
+let fileList = [];
+let currentSession = {};
 // Currently loaded session list of data.
-var sessionData;
+let sessionData;
 // Buffer of chunks received from server.
-var chunkReceiveBuffer;
+let chunkReceiveBuffer;
 // Number of bytes received from server.
-var bytesreceived;
+let bytesreceived;
 // Array of list of bytes missing that we need to re-request from server.
-var missingBytesList;
+let missingBytesList;
 // Currently displayed session name on UI.
-var HRTitle;
+let HRTitle;
 // Average of all coordinates received for session.
 DataView.coordAverage = {};
 // Data about a track and it's configuration.
@@ -42,116 +59,168 @@ DataView.trackList = [];
 // List of configs arranged by track id and user id in object.
 DataView.configList = {};
 // Summary of session.
-var sessionSummary = {};
+let sessionSummary = {};
 // Previous requested sort mode.
-var sortMode = "None";
+let sortMode = 'None';
 
 // State where we are trying to get track and config data.
-var fetchState = 0;
+let fetchState = 0;
 // Number of times picktrack has run without any updates. If this get's too high
 // pick track times out and continues.
-var pickTrackCount = 0;
+let pickTrackCount = 0;
 // Last fetch state for checking if pick track has made progress.
-var lastFetchState = 0;
+let lastFetchState = 0;
 // Should pick track determine which track the current session is on after
 // getting list of tracks?
-var shouldDetermineTrack = false;
+let shouldDetermineTrack = false;
 
 // Currently visible users.
-var folderUsers = [];
+let folderUsers = [];
 
-var viewOpeningTimeout, updateListInterval, pickTrackTimeout;
+let viewOpeningTimeout;
+let updateListInterval;
+let pickTrackTimeout;
 
-// Class for necessary info about a track.
+/**
+ * @classdesc Class for necessary info about a track.
+ * @class
+ *
+ * @public
+ * @param {string} name The name of the track.
+ * @param {string|number} id The id of the track.
+ * @param {string} ownerId The id of the owner of the track data.
+ * @property {string} name The name of the track.
+ * @property {string|number} id The id of the track.
+ * @property {string} ownerId The id of the owner of the track data.
+ */
 DataView.Track = function(name, id, ownerId) {
-  this.name = "";
-  this.id = "";
-  this.ownerId = "";
-  if (typeof name === "string") this.name = name;
-  if (typeof id === "number" || typeof id === "string") this.id = id;
-  if (typeof ownerId === "string") this.ownerId = ownerId;
+  this.name = '';
+  this.id = '';
+  this.ownerId = '';
+  if (typeof name === 'string') this.name = name;
+  if (typeof id === 'number' || typeof id === 'string') this.id = id;
+  if (typeof ownerId === 'string') this.ownerId = ownerId;
 };
-// Class for necessary info about a config.
+/**
+ * @classdesc Class for necessary info about a config.
+ * @class
+ *
+ * @public
+ * @param {string} name The name of the config.
+ * @param {number|string} id The id of the config.
+ * @param {TraX~DataView~Track} track The track this config is a child of.
+ * @param {string} ownerId The id of the owner of this config.
+ * @property {string} name The name of the config.
+ * @property {number|string} id The id of the config.
+ * @property {TraX~DataView~Track} track The track this config is a child of.
+ * @property {string} ownerId The id of the owner of this config.
+ */
 DataView.Config = function(name, id, track, ownerId) {
-  this.track = DataView.Track;
-  this.name = "";
-  this.id = "";
-  this.ownerId = "";
-  if (typeof name === "string") this.name = name;
-  if (typeof id === "number" || typeof id === "string") this.id = id;
-  if (typeof track === "DataView.Track") this.track = track;
-  if (typeof ownerId === "string") this.ownerId = ownerId;
-}
+  this.track = new DataView.Track();
+  this.name = '';
+  this.id = '';
+  this.ownerId = '';
+  if (typeof name === 'string') this.name = name;
+  if (typeof id === 'number' || typeof id === 'string') this.id = id;
+  if (typeof track === 'DataView.Track') this.track = track;
+  if (typeof ownerId === 'string') this.ownerId = ownerId;
+};
 
-// Initialize
+/**
+ * Initialize TraX~DataView
+ *
+ * @public
+ */
 DataView.init = function() {
-  sessionsListDom = document.getElementById("sessionsList");
-  loadBarDom = document.getElementById("loadBar");
-  dataLoadingDom = document.getElementById("dataLoading");
-  dataTitleDom = document.getElementById("dataTitle");
-  dataViewChartDom = document.getElementById("dataViewChart");
-  trackNameDom = document.getElementById("dataViewTrackName");
-  trackConfigDom = document.getElementById("dataViewTrackConfig");
-  timeDom = document.getElementById("dataViewTime");
-  numLapsDom = document.getElementById("dataViewNumLaps");
-  fastLapDom = document.getElementById("dataViewFastLap");
-  slowLapDom = document.getElementById("dataViewSlowLap");
-  avgLapDom = document.getElementById("dataViewAvgLap");
-  topSpeedDom = document.getElementById("dataViewTopSpeed");
-  avgSpeedDom = document.getElementById("dataViewAvgSpeed");
-  lowestSpeedDom = document.getElementById("dataViewLowestSpeed");
-  maxGForceDom = document.getElementById("dataViewMaxGForce");
-  lapListDom = document.getElementById("lapList");
-  dataViewMapButtonDom = document.getElementById("trackSummaryMapButton");
-  sessionsListTextInput = document.getElementById("sessionsListRenameInput");
-  sessionsListConfirmButton = document.getElementById("sessionsListConfirmButton");
-  sessionsListTextDom = document.getElementById("sessionsListConfirmMessage");
-  sessionsListCancelButton = document.getElementById("sessionsListCancelButton");
-  sessionsListOverlay = document.getElementById("sessionsListOverlay");
-  dataViewOverlay = document.getElementById("dataViewTrackListOverlay");
-  trackListDom = document.getElementById("trackList");
-  configListDom = document.getElementById("configList");
-  carListDom = document.getElementById("carList");
-  trackListTitlesDom = document.getElementById("trackTitles");
-  downloadOverlayDom = document.getElementById("dataViewDownloadOverlay");
-  folderListDom = document.getElementById("folderList");
+  sessionsListDom = document.getElementById('sessionsList');
+  loadBarDom = document.getElementById('loadBar');
+  dataLoadingDom = document.getElementById('dataLoading');
+  dataTitleDom = document.getElementById('dataTitle');
+  dataViewChartDom = document.getElementById('dataViewChart');
+  trackNameDom = document.getElementById('dataViewTrackName');
+  trackConfigDom = document.getElementById('dataViewTrackConfig');
+  timeDom = document.getElementById('dataViewTime');
+  numLapsDom = document.getElementById('dataViewNumLaps');
+  fastLapDom = document.getElementById('dataViewFastLap');
+  slowLapDom = document.getElementById('dataViewSlowLap');
+  avgLapDom = document.getElementById('dataViewAvgLap');
+  topSpeedDom = document.getElementById('dataViewTopSpeed');
+  avgSpeedDom = document.getElementById('dataViewAvgSpeed');
+  lowestSpeedDom = document.getElementById('dataViewLowestSpeed');
+  maxGForceDom = document.getElementById('dataViewMaxGForce');
+  lapListDom = document.getElementById('lapList');
+  dataViewMapButtonDom = document.getElementById('trackSummaryMapButton');
+  sessionsListTextInput = document.getElementById('sessionsListRenameInput');
+  sessionsListConfirmButton =
+      document.getElementById('sessionsListConfirmButton');
+  sessionsListTextDom = document.getElementById('sessionsListConfirmMessage');
+  sessionsListOverlay = document.getElementById('sessionsListOverlay');
+  dataViewOverlay = document.getElementById('dataViewTrackListOverlay');
+  trackListDom = document.getElementById('trackList');
+  configListDom = document.getElementById('configList');
+  carListDom = document.getElementById('carList');
+  trackListTitlesDom = document.getElementById('trackTitles');
+  downloadOverlayDom = document.getElementById('dataViewDownloadOverlay');
+  folderListDom = document.getElementById('folderList');
 
   // Show sort mode buttons.
-  var sortModes = document.createElement("div");
-  sortModes.innerHTML = "&nbsp;Sort:<br>";
-  for (var i=0; i< sessionSorts.length; i++) {
-    var newItem = document.createElement("input");
-    newItem.type = "button";
-    newItem.className = "links smaller nohover";
+  let sortModes = document.createElement('div');
+  sortModes.innerHTML = '&nbsp;Sort:<br>';
+  for (let i=0; i< sessionSorts.length; i++) {
+    let newItem = document.createElement('input');
+    newItem.type = 'button';
+    newItem.className = 'links smaller nohover';
     newItem.value = sessionSorts[i];
     newItem.setAttribute(
-        'onclick', "TraX.DataView.sortSessions('" + sessionSorts[i] + "');");
+        'onclick', 'TraX.DataView.sortSessions(\'' + sessionSorts[i] + '\');');
     sortModes.appendChild(newItem);
   }
-  sortModes.style.display = "block";
+  sortModes.style.display = 'block';
   sessionsListDom.parentNode.insertBefore(sortModes, sessionsListDom);
 
-  TraX.socket.on("sessionlist", handleNewFiles);
-  TraX.socket.on("streamresponse", newChunk);
-  TraX.socket.on("tracklist", handleNewTrackData);
-  TraX.socket.on("friendslist", refreshFriendData);
+  TraX.socket.on('sessionlist', handleNewFiles);
+  TraX.socket.on('streamresponse', newChunk);
+  TraX.socket.on('tracklist', handleNewTrackData);
+  TraX.socket.on('friendslist', refreshFriendData);
 
   resetSessionData();
 
   setTimeout(postInit);
 };
+/**
+ * Fired event loop after init.
+ *
+ * @private
+ */
 function postInit() {
   enterDataView();
 }
+/**
+ * Cause Data View to open.
+ *
+ * @private
+ */
 function enterDataView() {
   DataView.handleOpening();
-  var currPane = Panes.getPane();
+  let currPane = Panes.getPane();
   Panes.handleOpening();
   Panes.setCurrent(currPane);
   DataView.MyMap.handleOpening();
 }
-TraX.leaveDataView = function() { TraX.goBack(); };
-// Reset all data about current session in preparation for new session data.
+/**
+ * Go to previous page.
+ *
+ * @public
+ */
+TraX.leaveDataView = function() {
+ TraX.goBack();
+};
+/**
+ * Reset all data about current session in preparation for new session data.
+ *
+ * @private
+ * @param {boolean} [sameSession=false] Prevent resetting currentSession.
+ */
 function resetSessionData(sameSession) {
   bytesreceived = 0;
   missingBytesList = [];
@@ -163,9 +232,14 @@ function resetSessionData(sameSession) {
     currentSession = {};
   }
 }
-// The view just opened.
+/**
+ * The view just opened.
+ *
+ * @public
+ */
 DataView.handleOpening = function() {
-  // updateListInterval = setInterval(DataView.requestList, updateListFrequency);
+  // updateListInterval = setInterval(DataView.requestList,
+  // updateListFrequency);
   // setTimeout(DataView.requestList, updateListFrequency / 3.0);
   DataView.requestList();
   if (!TraX.isSignedIn) {
@@ -173,65 +247,83 @@ DataView.handleOpening = function() {
     clearTimeout(viewOpeningTimeout);
     viewOpeningTimeout = setTimeout(DataView.handleOpening, 1000);
 
-    sessionsListDom.innerHTML = "";
-    var newList = document.createElement("ul");
-    var newItem = document.createElement("li");
-    newItem.innerHTML = "Please sign in to view your data.";
+    sessionsListDom.innerHTML = '';
+    let newList = document.createElement('ul');
+    let newItem = document.createElement('li');
+    newItem.innerHTML = 'Please sign in to view your data.';
     newList.appendChild(newItem);
     sessionsListDom.appendChild(newList);
   }
 };
-// The view is closing.
+/**
+ * The view is closing.
+ *
+ * @public
+ */
 DataView.handleClosing = function() {
   clearInterval(updateListInterval);
 };
-// Received new friends list from server.
+/**
+ * Received new friends list from server.
+ *
+ * @private
+ */
 function refreshFriendData() {
   setTimeout(function() {
     DataView.requestList();
     DataView.fetchTrackList();
   });
 }
-// Request list of sessions.
+/**
+ * Request list of sessions.
+ *
+ * @public
+ */
 DataView.requestList = function() {
   fileList = [];
-  TraX.socket.emit("requestsessionlist");
-  for (var i = 0; i < TraX.friendsList.length; i++) {
-    TraX.socket.emit("requestsessionlist", TraX.friendsList[i].id);
+  TraX.socket.emit('requestsessionlist');
+  for (let i = 0; i < TraX.friendsList.length; i++) {
+    TraX.socket.emit('requestsessionlist', TraX.friendsList[i].id);
   }
 };
-// Received new list of sessions from server.
+/**
+ * Received new list of sessions from server.
+ *
+ * @private
+ * @param {string|Array} files Received list of files or error message.
+ */
 function handleNewFiles(files) {
   if (typeof files === 'string') {
-    console.warn("Getting file list failed", files);
+    console.warn('Getting file list failed', files);
     if (fileList.length == 0) {
-      sessionsListDom.innerHTML = "";
+      sessionsListDom.innerHTML = '';
       switch (files) {
-        case "noperm":
-          TraX.showMessageBox("You don't have permission to view that data.");
+        case 'noperm':
+          TraX.showMessageBox('You don\'t have permission to view that data.');
           break;
-        case "readerror":
-          /*TraX.showMessageBox(
+        case 'readerror':
+          /* TraX.showMessageBox(
               "The server got confused and had trouble finding your data. Maybe
              you don't have any?");*/
           // console.warn("handleNewFiles:", files);
           break;
-        case "deleteerror":
+        case 'deleteerror':
           TraX.showMessageBox(
-              "The server seems sentimental and has refused to delete your data. Try again?");
+              'The server seems sentimental and has refused to delete your ' +
+              'data. Try again?');
           break;
         default:
-          var additional = "";
-          if (files.length < 100) additional = " (Server said: " + files + ")";
+          let additional = '';
+          if (files.length < 100) additional = ' (Server said: ' + files + ')';
           TraX.showMessageBox(
-              "An unknown thing happened. Sorry, that's all I know." +
+              'An unknown thing happened. Sorry, that\'s all I know.' +
               additional);
           break;
       }
-      var newList = document.createElement("ul");
-      var newItem = document.createElement("li");
+      let newList = document.createElement('ul');
+      let newItem = document.createElement('li');
       newItem.innerHTML =
-          "Such empty... Session will appear here as we can find them.";
+          'Such empty... Sessions will appear here as we can find them.';
       newList.appendChild(newItem);
       sessionsListDom.appendChild(newList);
     }
@@ -240,37 +332,41 @@ function handleNewFiles(files) {
   if (!files || fileArraysEqual(fileList, files)) return;
   // console.log("New files list", files);
   fileList = fileList.concat(files);
-  if (TraX.debugMode) console.log("Current session list", fileList);
+  if (TraX.debugMode) console.log('Current session list', fileList);
   DataView.sortSessions(sortMode);
 }
-// Update UI of session list.
+/**
+ * Update UI of session list.
+ *
+ * @private
+ */
 function showSessionList() {
   // Update folder list.
-  folderListDom.innerHTML = "";
-  var folderList = document.createElement("ul");
-  for (var i = 0, j = -1; i < sessionFolders.length; i++) {
-    var text = sessionFolders[i];
-    var id = text;
-    if (text == "#friends#") {
+  folderListDom.innerHTML = '';
+  let folderList = document.createElement('ul');
+  for (let i = 0, j = -1; i < sessionFolders.length; i++) {
+    let text = sessionFolders[i];
+    let id = text;
+    if (text == '#friends#') {
       if (j == -1) {
-        text = "All Friends";
+        text = 'All Friends';
         id = text;
       } else if (j >= TraX.friendsList.length) {
         j = -1;
         continue;
       } else {
         text =
-            TraX.friendsList[j].firstName + " " + TraX.friendsList[j].lastName;
-        id = "id:" + TraX.friendsList[j].id;
+            TraX.friendsList[j].firstName + ' ' + TraX.friendsList[j].lastName;
+        id = 'id:' + TraX.friendsList[j].id;
       }
       i--;
       j++;
     }
-    var newItem = document.createElement("li");
-    var newButton = document.createElement("input");
-    newButton.type = "button";
+    let newItem = document.createElement('li');
+    let newButton = document.createElement('input');
+    newButton.type = 'button';
     newButton.setAttribute(
-        "onclick", "TraX.DataView.showSessions('" + id + "');");
+        'onclick', 'TraX.DataView.showSessions(\'' + id + '\');');
     newButton.value = text;
     newItem.appendChild(newButton);
     folderList.appendChild(newItem);
@@ -278,16 +374,16 @@ function showSessionList() {
   folderListDom.appendChild(folderList);
 
   // Update sessions list.
-  sessionsListDom.innerHTML = "";
-  var newList = document.createElement("ul");
-  var visibleSessions = 0;
-  var prevTrack, prevTrackOwner;
-  for (var i = 0; i < fileList.length; i++) {
-    var ownerId = fileList[i]["ownerId"];
-    var sessionId = fileList[i]["id"];
+  sessionsListDom.innerHTML = '';
+  let newList = document.createElement('ul');
+  let visibleSessions = 0;
+  let prevTrack; let prevTrackOwner;
+  for (let i = 0; i < fileList.length; i++) {
+    let ownerId = fileList[i]['ownerId'];
+    let sessionId = fileList[i]['id'];
     if (folderUsers && folderUsers.length > 0) {
-      var match = false;
-      for (var j = 0; j < folderUsers.length; j++) {
+      let match = false;
+      for (let j = 0; j < folderUsers.length; j++) {
         if (ownerId == folderUsers[j]) {
           match = true;
           break;
@@ -298,47 +394,47 @@ function showSessionList() {
     visibleSessions++;
 
     addTitle = function(title) {
-      var newItem = document.createElement("li");
+      let newItem = document.createElement('li');
       newItem.appendChild(document.createTextNode(title));
-      newItem.style.height = "22px";
-      newItem.style.padding = "4px";
-      newItem.style.fontSize = "1.2em";
+      newItem.style.height = '22px';
+      newItem.style.padding = '4px';
+      newItem.style.fontSize = '1.2em';
       newList.appendChild(newItem);
     };
 
-    if (sortMode == "Track" &&
-        (fileList[i]["trackId"] != prevTrack ||
-         fileList[i]["trackOwnerId"] != prevTrackOwner)) {
+    if (sortMode == 'Track' &&
+        (fileList[i]['trackId'] != prevTrack ||
+         fileList[i]['trackOwnerId'] != prevTrackOwner)) {
       addTitle(
           getTrackName(
               new DataView.Track(
-                  "", fileList[i]["trackId"], fileList[i]["trackOwnerId"]),
+                  '', fileList[i]['trackId'], fileList[i]['trackOwnerId']),
               true) ||
-          "Unknown");
-      prevTrack = fileList[i]["trackId"];
-      prevTrackOwner = fileList[i]["trackOwnerId"];
-    } else if (sortMode == "Name") {
-      var name = (fileList[i]["HRtitle"] || " ")[0].toUpperCase();
+          'Unknown');
+      prevTrack = fileList[i]['trackId'];
+      prevTrackOwner = fileList[i]['trackOwnerId'];
+    } else if (sortMode == 'Name') {
+      let name = (fileList[i]['HRtitle'] || ' ')[0].toUpperCase();
       if (name != prevTrack) {
         addTitle(name);
         prevTrack = name;
       }
-    } else if (sortMode == "Date") {
-      var date = new Date(fileList[i]["date"]).toDateString();
+    } else if (sortMode == 'Date') {
+      let date = new Date(fileList[i]['date']).toDateString();
       if (date != prevTrack) {
         addTitle(date);
         prevTrack = date;
       }
-    } else if (sortMode == "User") {
-      var user = fileList[i]["ownerId"];
+    } else if (sortMode == 'User') {
+      let user = fileList[i]['ownerId'];
       if (user != prevTrack) {
-        var userName = user;
+        let userName = user;
         if (user == TraX.getDriverId()) {
-          userName = "Your sessions";
+          userName = 'Your sessions';
         } else {
-          for (var j = 0; j < TraX.friendsList.length; j++) {
+          for (let j = 0; j < TraX.friendsList.length; j++) {
             if (TraX.friendsList[j].id == user) {
-              userName = TraX.friendsList[j].firstName + " " +
+              userName = TraX.friendsList[j].firstName + ' ' +
                   TraX.friendsList[j].lastName;
               break;
             }
@@ -349,47 +445,47 @@ function showSessionList() {
       }
     }
 
-    var newItem = document.createElement("li");
-    var newButton = document.createElement("input");
-    newButton.type = "button";
+    let newItem = document.createElement('li');
+    let newButton = document.createElement('input');
+    newButton.type = 'button';
 
     newButton.setAttribute(
-        "onclick",
-        "TraX.DataView.sessionClick('" + sessionId + "','" + ownerId + "');");
+        'onclick', 'TraX.DataView.sessionClick(\'' + sessionId + '\',\'' +
+            ownerId + '\');');
 
-    newButton.value = "";
-    var splitName = fileList[i].name.match(/%(.*?)%/) || [fileList[i].name];
-    var dateToParse = splitName[1];
-    var stringDate = "";
+    newButton.value = '';
+    let splitName = fileList[i].name.match(/%(.*?)%/) || [fileList[i].name];
+    let dateToParse = splitName[1];
+    let stringDate = '';
     if (typeof dateToParse !== 'undefined' && dateToParse.length > 0) {
       try {
-        splitName[0] = fileList[i].name.replace("%" + dateToParse + "%", "");
-        var date = new Date(Number(dateToParse));
-        stringDate = date.toDateString() + " at " +
+        splitName[0] = fileList[i].name.replace('%' + dateToParse + '%', '');
+        let date = new Date(Number(dateToParse));
+        stringDate = date.toDateString() + ' at ' +
             TraX.Common.formatTime(date.getTime());
       } catch (err) {
-        console.log("Failed to parse", fileList[i], "date");
-        TraX.showMessageBox("Date error", 2000);
+        console.log('Failed to parse', fileList[i], 'date');
+        TraX.showMessageBox('Date error', 2000);
       }
     }
-    if (stringDate == "" && fileList[i].date) {
-      for (var j = 0; j < fileList.length; j++) {
+    if (stringDate == '' && fileList[i].date) {
+      for (let j = 0; j < fileList.length; j++) {
         if (i == j) continue;
         if (fileList[j].name == fileList[i].name) {
-          var date = new Date(Number(fileList[i].date));
-          stringDate = date.toDateString() + " at " +
+          let date = new Date(Number(fileList[i].date));
+          stringDate = date.toDateString() + ' at ' +
               TraX.Common.formatTime(date.getTime(), true);
           break;
         }
       }
     }
-    var seperator = "";
-    if (splitName[0] && stringDate) seperator = " on ";
-    var newName = splitName[0] + seperator + stringDate;
-    if (newName == "") {
-      var date = new Date(Number(fileList[i].date));
+    let seperator = '';
+    if (splitName[0] && stringDate) seperator = ' on ';
+    let newName = splitName[0] + seperator + stringDate;
+    if (newName == '') {
+      let date = new Date(Number(fileList[i].date));
       newName =
-          date.toDateString() + " at " + TraX.Common.formatTime(date.getTime());
+          date.toDateString() + ' at ' + TraX.Common.formatTime(date.getTime());
     }
     newButton.value = newName;
 
@@ -398,74 +494,87 @@ function showSessionList() {
     fileList[i].HRtitle = newButton.value;
     newItem.appendChild(newButton);
 
-    var editable = TraX.getDriverId() == ownerId;
+    let editable = TraX.getDriverId() == ownerId;
 
-    var deleteButton = document.createElement("button");
-    var deleteIcon = document.createElement("img");
-    deleteIcon.src = "https://dev.campbellcrowley.com/trax/images/trash.png";
+    let deleteButton = document.createElement('button');
+    let deleteIcon = document.createElement('img');
+    deleteIcon.src = 'https://dev.campbellcrowley.com/trax/images/trash.png';
     deleteButton.appendChild(deleteIcon);
     deleteButton.setAttribute(
-        "onclick",
-        "TraX.DataView.deleteSession('" + sessionId + "','" + ownerId + "')");
+        'onclick', 'TraX.DataView.deleteSession(\'' + sessionId + '\',\'' +
+            ownerId + '\')');
     deleteButton.disabled = !editable;
     newItem.appendChild(deleteButton);
 
-    var editButton = document.createElement("button");
-    var editIcon = document.createElement("img");
-    editIcon.src = "https://dev.campbellcrowley.com/trax/images/pencil.png";
+    let editButton = document.createElement('button');
+    let editIcon = document.createElement('img');
+    editIcon.src = 'https://dev.campbellcrowley.com/trax/images/pencil.png';
     editButton.appendChild(editIcon);
     editButton.setAttribute(
-        "onclick",
-        "TraX.DataView.editSession('" + sessionId + "','" + ownerId + "')");
+        'onclick',
+        'TraX.DataView.editSession(\'' + sessionId + '\',\'' + ownerId + '\')');
     editButton.disabled = !editable;
     newItem.appendChild(editButton);
 
     newList.appendChild(newItem);
   }
   if (visibleSessions == 0) {
-    var newItem = document.createElement("li");
-    newItem.innerHTML = "There appears to be nothing here...";
+    let newItem = document.createElement('li');
+    newItem.innerHTML = 'There appears to be nothing here...';
     newList.appendChild(newItem);
   }
   sessionsListDom.appendChild(newList);
 }
-// Folder selected by user.
+/**
+ * Folder selected by user.
+ *
+ * @public
+ * @param {string} setting Sessions to show.
+ */
 DataView.showSessions = function(setting) {
-  if (setting == "All") {
+  if (setting == 'All') {
     folderUsers = [];
-  } else if (setting == "Only Me") {
+  } else if (setting == 'Only Me') {
     folderUsers = [TraX.getDriverId()];
-  } else if (setting == "All Friends") {
-    folderUsers = TraX.friendsList.map(function(obj) { return obj.id; });
-  } else if (setting.indexOf("id:") == 0) {
+  } else if (setting == 'All Friends') {
+    folderUsers = TraX.friendsList.map(function(obj) {
+      return obj.id;
+    });
+  } else if (setting.indexOf('id:') == 0) {
     folderUsers = [setting.replace('id:', '')];
   } else {
-    console.log("Unknown folder setting:", setting);
+    console.log('Unknown folder setting:', setting);
     return;
   }
   Panes.nextPane();
   showSessionList();
 };
-// Sort sessions based on user input.
+/**
+ * Sort sessions based on user input.
+ *
+ * @public
+ * @param {string} setting Sorting mode to use.
+ */
 DataView.sortSessions = function(setting) {
   sortMode = setting;
   if (setting == 'Name') {
-    var before = fileList;
     fileList.sort(function(a, b) {
-      var A = (a.HRtitle || "").toLowerCase();
-      var B = (b.HRtitle || "").toLowerCase();
+      let A = (a.HRtitle || '').toLowerCase();
+      let B = (b.HRtitle || '').toLowerCase();
       if (A < B) return -1;
       else if (A > B) return 1;
       else return 0;
     });
   } else if (setting == 'Date') {
-    fileList.sort(function(a, b) { return b.date - a.date; });
+    fileList.sort(function(a, b) {
+      return b.date - a.date;
+    });
   } else if (setting == 'Track') {
     fileList.sort(function(a, b) {
       if (a.trackOwnerId == b.trackOwnerId && a.trackId == b.trackId) {
         // Sort alphabetically within same track.
-        var A = a.HRtitle.toLowerCase();
-        var B = b.HRtitle.toLowerCase();
+        let A = a.HRtitle.toLowerCase();
+        let B = b.HRtitle.toLowerCase();
         if (A < B) return -1;
         else if (A > B) return 1;
         else return 0;
@@ -483,18 +592,20 @@ DataView.sortSessions = function(setting) {
       if (a.trackOwnerId == b.trackOwnerId) {
         if (a.trackId === null || typeof a.trackId === 'undefined') return 1;
         if (b.trackId === null || typeof b.trackId === 'undefined') return -1;
-        var A = (a.trackId + '').toLowerCase();
-        var B = (b.trackId + '').toLowerCase();
+        let A = (a.trackId + '').toLowerCase();
+        let B = (b.trackId + '').toLowerCase();
         if (A < B) return -1;
         else if (A > B) return 1;
         else return 0;
       } else {
-        if (a.trackOwnerId === null || typeof a.trackOwnerId === 'undefined')
+        if (a.trackOwnerId === null || typeof a.trackOwnerId === 'undefined') {
           return 1;
-        if (b.trackOwnerId === null || typeof b.trackOwnerId === 'undefined')
+        }
+        if (b.trackOwnerId === null || typeof b.trackOwnerId === 'undefined') {
           return -1;
-        var A = a.trackOwnerId.toLowerCase();
-        var B = b.trackOwnerId.toLowerCase();
+        }
+        let A = a.trackOwnerId.toLowerCase();
+        let B = b.trackOwnerId.toLowerCase();
         if (A < B) return -1;
         else if (A > B) return 1;
         else return 0;
@@ -504,8 +615,8 @@ DataView.sortSessions = function(setting) {
     fileList.sort(function(a, b) {
       if (a.ownerId == b.ownerId) {
         // Sort alphabetically within same user.
-        var A = (a.HRtitle || "").toLowerCase();
-        var B = (b.HRtitle || "").toLowerCase();
+        let A = (a.HRtitle || '').toLowerCase();
+        let B = (b.HRtitle || '').toLowerCase();
         if (A < B) return -1;
         else if (A > B) return 1;
         else return 0;
@@ -525,47 +636,70 @@ DataView.sortSessions = function(setting) {
     });
   } else if (setting == 'None') {
   } else {
-    console.warn("Unknown sort setting:", setting);
+    console.warn('Unknown sort setting:', setting);
   }
   showSessionList();
 };
-// Check if arrays of sessions are equivalent.
+/**
+ * Check if arrays of sessions are equivalent.
+ *
+ * @private
+ * @param {Array} one Array of file data.
+ * @param {Array} two Array of file data.
+ * @return {boolean} Of both arrays have same files in same order.
+ */
 function fileArraysEqual(one, two) {
   if (one == null || two == null) {
     return (one == null && two == null);
   }
   if (one.length != two.length) return false;
-  for (var i = 0; i < one.length; i++) {
+  for (let i = 0; i < one.length; i++) {
     if (one[i].id != two[i].id) return false;
     if (one[i].name != two[i].name) return false;
   }
   return true;
 }
-// Check if two generic arrays are equivalent.
-function arraysEqual(one, two) {
-  if (one === two) return true;
-  if (one == null || two == null) return false;
-  if (one.length != two.length) return false;
-  for (var i = 0; i < one.length; i++) {
-    if (one[i] !== two[i]) return false;
-  }
-  return true;
-}
+/**
+ * Check if two generic arrays are equivalent.
+ *
+ * @private
+ * @param {Array} one Array of values.
+ * @param {Array} two Array of values.
+ * @return {boolean} True if equal, false otherwise.
+ */
+// function arraysEqual(one, two) {
+//   if (one === two) return true;
+//   if (one == null || two == null) return false;
+//   if (one.length != two.length) return false;
+//   for (let i = 0; i < one.length; i++) {
+//     if (one[i] !== two[i]) return false;
+//   }
+//   return true;
+// }
 
-// TODO: Decompress/parse chunks asynchronously while receiving data.
-// Received chunk of session from server.
+/**
+ * Received chunk of session from server.
+ * TODO: Decompress/parse chunks asynchronously while receiving data.
+ *
+ * @private
+ * @param {number} size Number of bytes this chunk size is.
+ * @param {string} chunk The stringified chunk or error message.
+ * @param {string} sessionid The id of the session this chunk is from.
+ * @param {number} bytessent Total number of bytes the server has sent.
+ * @param {number} totalbytes Total number of bytes the session filesize is.
+ */
 function newChunk(size, chunk, sessionid, bytessent, totalbytes) {
   if (bytessent === size) resetSessionData(true);
   bytesreceived += size;
   if (size < 0) {
-    if (chunk === "readerr") {
-      console.log("Server replied with readerr for", sessionid);
-      sessionData = ["No Data, does this session exist?"];
-      dataTitleDom.innerHTML = "Error...";
+    if (chunk === 'readerr') {
+      console.log('Server replied with readerr for', sessionid);
+      sessionData = ['No Data, does this session exist?'];
+      dataTitleDom.innerHTML = 'Error...';
       updateProgress(false, bytessent, totalbytes);
       pickTrack();
     } else {
-      dataTitleDom.innerHTML = "Processing...";
+      dataTitleDom.innerHTML = 'Processing...';
       finalizeData(function() {
         updateProgress(false, 0, 0);
         shouldDetermineTrack = true;
@@ -573,40 +707,47 @@ function newChunk(size, chunk, sessionid, bytessent, totalbytes) {
       });
     }
   } else {
-    dataTitleDom.innerHTML = "Downloading...";
+    dataTitleDom.innerHTML = 'Downloading...';
     chunkReceiveBuffer.push(chunk);
     updateProgress(true, bytesreceived, totalbytes);
     if (bytesreceived != bytessent) {
       missingBytesList.push([bytesreceived - size, bytessent - size]);
       console.log(
-          "Skipped chunk", missingBytesList[missingBytesList.length - 1],
+          'Skipped chunk', missingBytesList[missingBytesList.length - 1],
           bytesreceived - bytessent);
       bytesreceived = bytessent;
+      // TODO: This.
       TraX.showMessageBox(
-          "Some data was not received. In the future this will attempt to redownload these chunks.");
+          'Some data was not received. In the future this will attempt to' +
+          ' redownload these chunks.');
     }
   }
 }
-// All data from server has been received, and we are ready to process the data.
+/**
+ * All data from server has been received, and we are ready to process the data.
+ *
+ * @private
+ * @param {emptyCB} mainCB Callback once finalizing data is done. No arguments.
+ */
 function finalizeData(mainCB) {
-  var shouldDecompress = true;
+  let shouldDecompress = true;
   if (TraX.debugMode >= 2) console.log(chunkReceiveBuffer);
   try {
-    chunkReceiveBuffer = chunkReceiveBuffer.join("");
-    shouldDecompress = chunkReceiveBuffer.indexOf("[NODECOMPRESS]") < 0;
-    chunkReceiveBuffer = chunkReceiveBuffer.split("[CHUNKEND]");
+    chunkReceiveBuffer = chunkReceiveBuffer.join('');
+    shouldDecompress = chunkReceiveBuffer.indexOf('[NODECOMPRESS]') < 0;
+    chunkReceiveBuffer = chunkReceiveBuffer.split('[CHUNKEND]');
   } catch (err) {
-    console.log("Failed to split chunks", err);
-    TraX.showMessageBox("This session appears to be corrupt. :(");
+    console.log('Failed to split chunks', err);
+    TraX.showMessageBox('This session appears to be corrupt. :(');
     return;
   }
   processChunk = function(chunkReceiveBuffer, shouldDecompress, cb) {
-    var decompressedChunk;
+    let decompressedChunk;
     if (shouldDecompress) {
       try {
         decompressedChunk = LZString.decompressFromUTF16(chunkReceiveBuffer);
       } catch (err) {
-        console.log("Failed to decompress chunk", err);
+        console.log('Failed to decompress chunk', err);
         console.log(chunkReceiveBuffer);
         cb();
         return;
@@ -614,26 +755,31 @@ function finalizeData(mainCB) {
     } else {
       decompressedChunk = chunkReceiveBuffer;
     }
-    var parsedChunk;
+    let parsedChunk;
     try {
       parsedChunk = JSON.parse(decompressedChunk);
     } catch (err) {
-      console.warn("Failed to parse chunk", err);
+      console.warn('Failed to parse chunk', err);
       cb();
       return;
     }
     if (parsedChunk != null) {
       sessionData.push(parsedChunk);
-      if (parsedChunk["latitude"] != 0 && parsedChunk["longitude"] != 0) {
-        DataView.coordAverage.lat += parsedChunk["latitude"];
-        DataView.coordAverage.lng += parsedChunk["longitude"];
+      if (parsedChunk['latitude'] != 0 && parsedChunk['longitude'] != 0) {
+        DataView.coordAverage.lat += parsedChunk['latitude'];
+        DataView.coordAverage.lng += parsedChunk['longitude'];
         DataView.coordAverage.count++;
       }
     }
     cb();
   };
-  var numComplete = 0;
-  var numTotal = chunkReceiveBuffer.length;
+  let numComplete = 0;
+  let numTotal = chunkReceiveBuffer.length;
+  /**
+   * Fired after all chunks have been processed.
+   *
+   * @private
+   */
   function chunkProcessCB() {
     updateProgress(true, numComplete, numTotal);
     if (++numComplete == numTotal) {
@@ -642,7 +788,7 @@ function finalizeData(mainCB) {
       DataView.coordAverage.coord.lng =
           DataView.coordAverage.lng / DataView.coordAverage.count;
       sortData(sessionData);
-      if (TraX.debugMode) console.log("SESSION DATA:", sessionData);
+      if (TraX.debugMode) console.log('SESSION DATA:', sessionData);
       mainCB();
     }
   }
@@ -654,72 +800,95 @@ function finalizeData(mainCB) {
     chunkReceiveBuffer.splice(0, 1);
   }
 }
-// Update progress bar.
+/**
+ * Update progress bar.
+ *
+ * @private
+ * @param {boolean} visible Is the bar visible.
+ * @param {number} bytessent Number of bytes sent from server.
+ * @param {number} totalbytes Total number of bytes the server will send.
+ */
 function updateProgress(visible, bytessent, totalbytes) {
   if (typeof bytessent !== 'undefined') loadBarDom.value = bytessent;
   if (typeof totalbytes !== 'undefined') loadBarDom.max = totalbytes;
-  dataLoadingDom.style.display = visible ? "block" : "none";
-  dataViewChartDom.style.display = visible ? "none" : "inline-block";
-  lapListDom.parentNode.style.display = visible ? "none" : "inline-block";
+  dataLoadingDom.style.display = visible ? 'block' : 'none';
+  dataViewChartDom.style.display = visible ? 'none' : 'inline-block';
+  lapListDom.parentNode.style.display = visible ? 'none' : 'inline-block';
 }
-// Sort sessionData based off timestamp when data was recorded to ensure all
-// data is in order regardless of when the server received it.
+/**
+ * Sort sessionData based off timestamp when data was recorded to ensure all
+ * data is in order regardless of when the server received it.
+ *
+ * @private
+ * @param {Array} sessionData The data to sort.
+ */
 function sortData(sessionData) {
   sessionData.sort(function(a, b) {
-    return (a["clientTimestamp"] == b["clientTimestamp"]) ?
+    return (a['clientTimestamp'] == b['clientTimestamp']) ?
         0 :
-        ((a["clientTimestamp"] < b["clientTimestamp"]) ? -1 : 1);
+        ((a['clientTimestamp'] < b['clientTimestamp']) ? -1 : 1);
   });
-  for (var i = 1; i < sessionData.length; i++) {
-    if (sessionData[i]["clientTimestamp"] ==
-        sessionData[i - 1]["clientTimestamp"]) {
+  for (let i = 1; i < sessionData.length; i++) {
+    if (sessionData[i]['clientTimestamp'] ==
+        sessionData[i - 1]['clientTimestamp']) {
       sessionData.splice(i, 1);
       i--;
     }
   }
 }
-// Update data and summary from newly collected session.
+/**
+ * Update data and summary from newly collected session.
+ *
+ * @public
+ */
 DataView.updateSessionData = function() {
-  dataTitleDom.innerHTML = "";
-  if (HRTitle) dataTitleDom.appendChild(document.createTextNode(HRTitle));
-  else dataTitleDom.innerHTML = "Please select a session from the previous pane.";
+  dataTitleDom.innerHTML = '';
+  if (HRTitle) {
+    dataTitleDom.appendChild(document.createTextNode(HRTitle));
+  } else {
+    dataTitleDom.innerHTML = 'Please select a session from the previous pane.';
+  }
   if (sessionData.length < 1) {
     TraX.DataView.MyMap.resetPolyLine();
-    lapListDom.innerHTML = "";
+    lapListDom.innerHTML = '';
   } else {
-    var times = getDurations(sessionData);
-    var laps = getLaps(sessionData);
+    let times = getDurations(sessionData);
+    let laps = getLaps(sessionData);
 
-    var speeds = {
+    let speeds = {
       topSpeed: {val: 0, lap: 0, index: 0},
       avgSpeed: 0,
-      lowestSpeed: {val: 0, lap: 0, index: 0}
+      lowestSpeed: {val: 0, lap: 0, index: 0},
     };
-    var speedSum = 0;
-    var speedCount = 0;
-    var maxGForce = {val: 0, lap: 0, index: 0};
-    var maxAlt = {val: 0, lap: 0};
-    var minAlt = {val: 0, lap: 0};
-    for (var i = 0; i < laps.length; i++) {
+    let speedSum = 0;
+    let speedCount = 0;
+    let maxGForce = {val: 0, lap: 0, index: 0};
+    let maxAlt = {val: 0, lap: 0};
+    let minAlt = {val: 0, lap: 0};
+    for (let i = 0; i < laps.length; i++) {
       if (laps[i].topSpeed.val > speeds.topSpeed.val) {
         speeds.topSpeed = {
           val: laps[i].topSpeed.val,
           lap: i,
-          index: laps[i].topSpeed.index
+          index: laps[i].topSpeed.index,
         };
       }
       if (laps[i].lowestSpeed.val > speeds.lowestSpeed.val) {
         speeds.lowestSpeed = {
           val: laps[i].lowestSpeed.val,
           lap: i,
-          index: laps[i].lowestSpeed.index
+          index: laps[i].lowestSpeed.index,
         };
       }
       speedSum += laps[i].avgSpeed;
       speedCount++;
 
       if (laps[i].maxGForce.val > maxGForce.val) {
-        maxGForce = {val: laps[i].maxGForce.val, lap: i, index: laps[i].maxGForce.index};
+        maxGForce = {
+          val: laps[i].maxGForce.val,
+          lap: i,
+          index: laps[i].maxGForce.index,
+        };
       }
       if (!maxAlt.val || laps[i].maxAlt > maxAlt.val) {
         maxAlt = {val: laps[i].maxAltitude, lap: i};
@@ -731,12 +900,12 @@ DataView.updateSessionData = function() {
     if (speedCount > 0) speeds.avgSpeed = speedSum / speedCount;
     else speeds.avgSpeed = 0;
 
-    var numLaps = laps.length;
-    var slowLap = {val: 0, lap: 0};
-    var avgLap = 0;
-    var fastLap = {val: 365 * 24 * 60 * 60 * 1000, lap: 0};
-    for (var i = 0; i < numLaps; i++) {
-      var lapDur = laps[i].duration;
+    let numLaps = laps.length;
+    let slowLap = {val: 0, lap: 0};
+    let avgLap = 0;
+    let fastLap = {val: 365 * 24 * 60 * 60 * 1000, lap: 0};
+    for (let i = 0; i < numLaps; i++) {
+      let lapDur = laps[i].duration;
       if (lapDur > slowLap.val) {
         slowLap = {val: lapDur, lap: i};
       }
@@ -758,56 +927,60 @@ DataView.updateSessionData = function() {
       speeds: speeds,
       maxGForce: maxGForce,
       maxAltitude: maxAlt,
-      minAltitude: minAlt
+      minAltitude: minAlt,
     };
 
-    if (TraX.debugMode) console.log("SUMMARY:", sessionSummary);
+    if (TraX.debugMode) console.log('SUMMARY:', sessionSummary);
 
     showSessionData();
 
     DataView.MyMap.updateMyMap();
   }
 };
-// Show data from updateSessionData() to the user.
+/**
+ * Show data from updateSessionData() to the user.
+ *
+ * @private
+ */
 function showSessionData() {
   showTrackNames();
 
   // TODO: Convert timezones. Timestamps are msecs since UTC epoch.
-  timeDom.innerHTML = "";
+  timeDom.innerHTML = '';
   if (isMultiSession(sessionData)) {
-    timeDom.innerHTML += "(Multi-Session)";
+    timeDom.innerHTML += '(Multi-Session)';
   }
-  var lastDay = -1;
-  for (var i = 0; sessionSummary.times && i < sessionSummary.times.length;
+  let lastDay = -1;
+  for (let i = 0; sessionSummary.times && i < sessionSummary.times.length;
        i++) {
-    for (var j = 0; j < sessionSummary.times[i].length; j++) {
-      var date = new Date(sessionSummary.times[i][j]);
+    for (let j = 0; j < sessionSummary.times[i].length; j++) {
+      let date = new Date(sessionSummary.times[i][j]);
       if (date.getDay() != lastDay) {
         lastDay = date.getDay();
-        timeDom.innerHTML += "<br>" + date.toDateString() + "<br>";
+        timeDom.innerHTML += '<br>' + date.toDateString() + '<br>';
       }
-      timeDom.innerHTML += TraX.Common.pad(date.getHours(), 2) + ":" +
+      timeDom.innerHTML += TraX.Common.pad(date.getHours(), 2) + ':' +
           TraX.Common.pad(date.getMinutes(), 2);
       if (j == sessionSummary.times[i].length-1) {
-        timeDom.innerHTML += "<br>";
+        timeDom.innerHTML += '<br>';
       } else {
-        timeDom.innerHTML += " - ";
+        timeDom.innerHTML += ' - ';
       }
     }
   };
 
-  var numLaps = (sessionSummary.laps || []).length;
-  var numNonLaps = -(sessionSummary.laps || []).neglength;
-  var showNonLapInfo = numNonLaps == 1 && numLaps == 0;
+  let numLaps = (sessionSummary.laps || []).length;
+  let numNonLaps = -(sessionSummary.laps || []).neglength;
+  let showNonLapInfo = numNonLaps == 1 && numLaps == 0;
 
   numLapsDom.innerHTML =
-      numLaps /* + " (" + -sessionSummary.laps.neglength + ") "*/;
+      numLaps;
   if (numLaps == 0 && numNonLaps > 1) {
     numLapsDom.innerHTML +=
-        "<a class=\"tip\">Is the selected configuration correct?</a>";
+        '<a class="tip">Is the selected configuration correct?</a>';
   } else if (numLaps == 0) {
     numLapsDom.innerHTML +=
-        "<a class=\"tip\">Is the selected track correct?</a>";
+        '<a class="tip">Is the selected track correct?</a>';
   }
 
   if (!sessionSummary.laps ||
@@ -818,14 +991,14 @@ function showSessionData() {
   }
 
   // Times
-  fastLapDom.parentNode.style.display = numLaps <= 1 ? "none" : "block";
-  avgLapDom.parentNode.style.display = numLaps <= 1 ? "none" : "block";
-  slowLapDom.parentNode.style.display = numLaps <= 1 ? "none" : "block";
+  fastLapDom.parentNode.style.display = numLaps <= 1 ? 'none' : 'block';
+  avgLapDom.parentNode.style.display = numLaps <= 1 ? 'none' : 'block';
+  slowLapDom.parentNode.style.display = numLaps <= 1 ? 'none' : 'block';
 
-  fastLapDom.innerHTML = "<strong>#" + (sessionSummary.fastestLap.lap + 1) +
-      "</strong>: " + TraX.Common.formatMsec(sessionSummary.fastestLap.val);
-  slowLapDom.innerHTML = "<strong>#" + (sessionSummary.slowestLap.lap + 1) +
-      "</strong>: " + TraX.Common.formatMsec(sessionSummary.slowestLap.val);
+  fastLapDom.innerHTML = '<strong>#' + (sessionSummary.fastestLap.lap + 1) +
+      '</strong>: ' + TraX.Common.formatMsec(sessionSummary.fastestLap.val);
+  slowLapDom.innerHTML = '<strong>#' + (sessionSummary.slowestLap.lap + 1) +
+      '</strong>: ' + TraX.Common.formatMsec(sessionSummary.slowestLap.val);
   avgLapDom.innerHTML = TraX.Common.formatMsec(sessionSummary.avgLap);
 
   // Speeds / Acceleration
@@ -844,18 +1017,18 @@ function showSessionData() {
         TraX.Units.speedToUnit(sessionSummary.laps[-1].avgSpeed) +
         TraX.Units.getLargeSpeedUnit();
 
-    maxGForceDom.innerHTML = sessionSummary.laps[-1].maxGForce.val + "G";
+    maxGForceDom.innerHTML = sessionSummary.laps[-1].maxGForce.val + 'G';
     addClickIndexCallback(
         maxGForceDom.parentNode, sessionSummary.laps[-1].maxGForce.index);
   } else {
-    topSpeedDom.innerHTML = "<strong>#" +
-        (sessionSummary.speeds.topSpeed.lap + 1) + "</strong>: " +
+    topSpeedDom.innerHTML = '<strong>#' +
+        (sessionSummary.speeds.topSpeed.lap + 1) + '</strong>: ' +
         TraX.Units.speedToUnit(sessionSummary.speeds.topSpeed.val) +
         TraX.Units.getLargeSpeedUnit();
     addClickIndexCallback(
         topSpeedDom.parentNode, sessionSummary.speeds.topSpeed.index);
-    lowestSpeedDom.innerHTML = "<strong>#" +
-        (sessionSummary.speeds.lowestSpeed.lap + 1) + "</strong>: " +
+    lowestSpeedDom.innerHTML = '<strong>#' +
+        (sessionSummary.speeds.lowestSpeed.lap + 1) + '</strong>: ' +
         TraX.Units.speedToUnit(sessionSummary.speeds.lowestSpeed.val) +
         TraX.Units.getLargeSpeedUnit();
     addClickIndexCallback(
@@ -864,243 +1037,290 @@ function showSessionData() {
         TraX.Units.speedToUnit(sessionSummary.speeds.avgSpeed) +
         TraX.Units.getLargeSpeedUnit();
 
-    maxGForceDom.innerHTML = "<strong>#" + (sessionSummary.maxGForce.lap + 1) +
-        "</strong>: " + sessionSummary.maxGForce.val + "G";
+    maxGForceDom.innerHTML = '<strong>#' + (sessionSummary.maxGForce.lap + 1) +
+        '</strong>: ' + sessionSummary.maxGForce.val + 'G';
     addClickIndexCallback(
         maxGForceDom.parentNode, sessionSummary.maxGForce.index);
   }
 
-  var showMoreInfo = numLaps > 0 || showNonLapInfo;
-  topSpeedDom.parentNode.style.display = showMoreInfo ? "block" : "none";
-  avgSpeedDom.parentNode.style.display = showMoreInfo ? "block" : "none";
-  lowestSpeedDom.parentNode.style.display = showMoreInfo ? "block" : "none";
-  maxGForceDom.parentNode.style.display = showMoreInfo ? "block" : "none";
+  let showMoreInfo = numLaps > 0 || showNonLapInfo;
+  topSpeedDom.parentNode.style.display = showMoreInfo ? 'block' : 'none';
+  avgSpeedDom.parentNode.style.display = showMoreInfo ? 'block' : 'none';
+  lowestSpeedDom.parentNode.style.display = showMoreInfo ? 'block' : 'none';
+  maxGForceDom.parentNode.style.display = showMoreInfo ? 'block' : 'none';
 
   showLapList(sessionData);
 }
-// Show list of laps to user. Called by showSessionData().
+/**
+ * Show list of laps to user. Called by showSessionData().
+ *
+ * @private
+ * @param {Array} sessionData The data to process.
+ */
 function showLapList(sessionData) {
-  lapListDom.innerHTML = "";
+  lapListDom.innerHTML = '';
   const neglength = sessionSummary.laps.neglength;
   const length = sessionSummary.laps.length;
-  for (var j = neglength; j < length; j++) {
-    var i = j - neglength;
+  for (let j = neglength; j < length; j++) {
+    let i = j - neglength;
     if (i >= length) i = length - i - 1;
 
-    var newRow = document.createElement('li');
+    let newRow = document.createElement('li');
     if (i >= 0) {
       newRow.style.zIndex = length - i;
     } else {
       newRow.style.zIndex = -neglength + i;
     }
     if (i == -1) {
-      var seperator = document.createElement('li');
-      seperator.style.padding = "1em";
-      seperator.style.marginTop = "1px";
-      seperator.style.textAlign = "center";
+      let seperator = document.createElement('li');
+      seperator.style.padding = '1em';
+      seperator.style.marginTop = '1px';
+      seperator.style.textAlign = 'center';
       seperator.innerHTML =
-          "Negative laps are durations that are not between a start and finish line. (e.g. Driving off track, driving onto track.)";
+          'Negative laps are durations that are not between a start and ' +
+          'finish line. (e.g. Driving off track, driving onto track.)';
       lapListDom.appendChild(seperator);
     }
-    var header = document.createElement('button');
-    header.classList.add("lapListHeader");
-    header.setAttribute("onclick", "TraX.DataView.lapListClick(" + i + ");");
+    let header = document.createElement('button');
+    header.classList.add('lapListHeader');
+    header.setAttribute('onclick', 'TraX.DataView.lapListClick(' + i + ');');
 
-    var title = document.createElement('p');
-    title.classList.add("lapNum");
-    title.id = "lapNum" + i;
-    title.innerHTML = "#" + (i < 0 ? i : (i + 1));
+    let title = document.createElement('p');
+    title.classList.add('lapNum');
+    title.id = 'lapNum' + i;
+    title.innerHTML = '#' + (i < 0 ? i : (i + 1));
     header.appendChild(title);
 
-    var time = document.createElement('a');
-    time.classList.add("lapListSubHeader");
-    time.id = "lapListSubHeader" + i;
+    let time = document.createElement('a');
+    time.classList.add('lapListSubHeader');
+    time.id = 'lapListSubHeader' + i;
     time.innerHTML =
         TraX.Common.formatMsec(sessionSummary.laps[i].duration);
     if (length > 1) {
       if (sessionSummary.fastestLap.lap == i) {
-        time.classList.add("greenText");
+        time.classList.add('greenText');
       } else if (sessionSummary.slowestLap.lap == i) {
-        time.classList.add("redText");
+        time.classList.add('redText');
       }
     }
     header.appendChild(time);
     newRow.appendChild(header);
 
-    var mapButton = document.createElement('button');
-    mapButton.classList.add("lapListMapButton");
-    mapButton.classList.add("links");
-    mapButton.classList.add("nohover");
-    mapButton.id = "lapListMapButton" + i;
+    let mapButton = document.createElement('button');
+    mapButton.classList.add('lapListMapButton');
+    mapButton.classList.add('links');
+    mapButton.classList.add('nohover');
+    mapButton.id = 'lapListMapButton' + i;
     mapButton.setAttribute(
-        "onclick", "TraX.DataView.MyMap.showMap(" +
-            sessionSummary.laps[i].startIndex + ", " +
-            sessionSummary.laps[i].endIndex + ");");
-    mapButton.innerHTML = "Map";
+        'onclick', 'TraX.DataView.MyMap.showMap(' +
+            sessionSummary.laps[i].startIndex + ', ' +
+            sessionSummary.laps[i].endIndex + ');');
+    mapButton.innerHTML = 'Map';
     newRow.appendChild(mapButton);
 
     // Main Body
-    var info = document.createElement('div');
-    info.classList.add("lapListBody");
-    info.id = "lapListBody" + i;
+    let info = document.createElement('div');
+    info.classList.add('lapListBody');
+    info.id = 'lapListBody' + i;
 
     // Times
     info.appendChild(
         createRow(
-            "listBodyRowTitle", "listBodyRowVal", "Start: ",
+            'listBodyRowTitle', 'listBodyRowVal', 'Start: ',
             TraX.Common.formatMsec(
-                sessionData[sessionSummary.laps[i].startIndex]
-                           ["clientTimestamp"] -
-                sessionData[0]["clientTimestamp"]) +
-                " " +
+               sessionData[sessionSummary.laps[i].startIndex]['clientTimestamp']
+                - sessionData[0]['clientTimestamp']) +
+                ' ' +
                 TraX.Common.formatTime(
-                    sessionData[sessionSummary.laps[i].startIndex]
-                               ["clientTimestamp"])));
+               sessionData[sessionSummary.laps[i].startIndex]['clientTimestamp']
+                )));
     info.appendChild(
         createRow(
-            "listBodyRowTitle", "listBodyRowVal", i < 0 ? "Length: " : "Lap: ",
+            'listBodyRowTitle', 'listBodyRowVal', i < 0 ? 'Length: ' : 'Lap: ',
             TraX.Common.formatMsec(sessionSummary.laps[i].duration)));
     if (i >= 0 && length > 1) {
-      var fastColor = sessionSummary.fastestLap.lap == i ?
-          " greenText" :
-          " redText";
+      let fastColor = sessionSummary.fastestLap.lap == i ?
+          ' greenText' :
+          ' redText';
       info.appendChild(
           createRow(
-              "listBodyRowTitle", "listBodyRowVal" + fastColor, "Split: ",
+              'listBodyRowTitle', 'listBodyRowVal' + fastColor, 'Split: ',
               TraX.Common.formatMsec(
                   sessionSummary.laps[i].duration -
                       sessionSummary.fastestLap.val,
                   true)));
     }
     // Speeds
-    var fastColor =
-        sessionSummary.speeds.topSpeed.lap == i ? " greenText" : "";
+    let fastColor =
+        sessionSummary.speeds.topSpeed.lap == i ? ' greenText' : '';
     info.appendChild(
         createRow(
-            "listBodyRowTitle", "listBodyRowVal" + fastColor, "Top Speed: ",
+            'listBodyRowTitle', 'listBodyRowVal' + fastColor, 'Top Speed: ',
             TraX.Units.speedToUnit(sessionSummary.laps[i].topSpeed.val) +
                 TraX.Units.getLargeSpeedUnit(),
             sessionSummary.laps[i].topSpeed.index));
     info.appendChild(
         createRow(
-            "listBodyRowTitle", "listBodyRowVal", "Avg Speed: ",
+            'listBodyRowTitle', 'listBodyRowVal', 'Avg Speed: ',
             TraX.Units.speedToUnit(sessionSummary.laps[i].avgSpeed) +
                 TraX.Units.getLargeSpeedUnit()));
     fastColor =
-        sessionSummary.speeds.lowestSpeed.lap == i ? " redText" : "";
+        sessionSummary.speeds.lowestSpeed.lap == i ? ' redText' : '';
     info.appendChild(
         createRow(
-            "listBodyRowTitle", "listBodyRowVal" + fastColor, "Lowest Speed: ",
+            'listBodyRowTitle', 'listBodyRowVal' + fastColor, 'Lowest Speed: ',
             TraX.Units.speedToUnit(sessionSummary.laps[i].lowestSpeed.val) +
                 TraX.Units.getLargeSpeedUnit(),
             sessionSummary.laps[i].lowestSpeed.index));
 
     // G-Force
-    fastColor = sessionSummary.maxGForce.lap == i ? " greenText" : "";
+    fastColor = sessionSummary.maxGForce.lap == i ? ' greenText' : '';
     info.appendChild(
         createRow(
-            "listBodyRowTitle", "listBodyRowVal" + fastColor, "Max G-Force: ",
-            sessionSummary.laps[i].maxGForce.val + "G",
+            'listBodyRowTitle', 'listBodyRowVal' + fastColor, 'Max G-Force: ',
+            sessionSummary.laps[i].maxGForce.val + 'G',
             sessionSummary.laps[i].maxGForce.index));
 
     newRow.appendChild(info);
     lapListDom.appendChild(newRow);
   }
 }
-// Creates a row with the given classes and text for the elements. Called in
-// showLapList().
+/**
+ * Creates a row with the given classes and text for the elements. Called in
+ * showLapList().
+ *
+ * @private
+ * @param {string} titleClass The name of the class to add to the title.
+ * @param {string} valClass The name of the class to add to the row value.
+ * @param {string} title The text to show in the title.
+ * @param {string} val The text to show in the value of the row.
+ * @param {number} clickIndex The sessionData index to show the data of when
+ * clicked.
+ * @return {Element} Created row element.
+ */
 function createRow(titleClass, valClass, title, val, clickIndex) {
-  var row = document.createElement('p');
-  var title_ = document.createElement('a');
-  var classes = titleClass.split(" ").filter(obj => obj.length > 0);
-  for (var i = 0; i < classes.length; i++) title_.classList.add(classes[i]);
+  let row = document.createElement('p');
+  let title_ = document.createElement('a');
+  let classes = titleClass.split(' ').filter((obj) => obj.length > 0);
+  for (let i = 0; i < classes.length; i++) title_.classList.add(classes[i]);
   title_.appendChild(document.createTextNode(title));
   row.appendChild(title_);
 
-  var val_ = document.createElement('a');
-  classes = valClass.split(" ");
-  for (var i = 0; i < classes.length; i++) val_.classList.add(classes[i]);
+  let val_ = document.createElement('a');
+  classes = valClass.split(' ');
+  for (let i = 0; i < classes.length; i++) val_.classList.add(classes[i]);
   val_.appendChild(document.createTextNode(val));
   row.appendChild(val_);
 
   if (clickIndex) addClickIndexCallback(row, clickIndex);
   return row;
 }
+/**
+ * Add a listener to an Element that shows a message window when clicked.
+ *
+ * @private
+ * @param {Element} div The div to add the click event listener to.
+ * @param {number} index The index of the data to show.
+ */
 function addClickIndexCallback(div, index) {
-  div.style.cursor = "pointer";
-  div.href = "#";
+  div.style.cursor = 'pointer';
+  div.href = '#';
   div.onclick = function() {
     DataView.MyMap.showMessageWindowIndex(index);
   };
 }
-// A lap was clicked in the lap list. It should be expanded or collapsed.
+/**
+ * A lap was clicked in the lap list. It should be expanded or collapsed.
+ *
+ * @public
+ * @param {number} num The lap number that was selected.
+ */
 DataView.lapListClick = function(num) {
-  document.getElementById("lapNum" + num).classList.toggle("expanded");
-  document.getElementById("lapListSubHeader" + num).classList.toggle("expanded");
-  document.getElementById("lapListMapButton" + num).classList.toggle("expanded");
-  document.getElementById("lapListBody" + num).classList.toggle("expanded");
+  document.getElementById('lapNum' + num).classList.toggle('expanded');
+  document.getElementById('lapListSubHeader' + num)
+      .classList.toggle('expanded');
+  document.getElementById('lapListMapButton' + num)
+      .classList.toggle('expanded');
+  document.getElementById('lapListBody' + num).classList.toggle('expanded');
 };
-// If there is a gap larger than maxGapInSession in the session data, then this
-// can be considered a multi-session.
+/**
+ * If there is a gap larger than maxGapInSession in the session data, then this
+ * can be considered a multi-session.
+ *
+ * @private
+ * @param {Array} sessionData The data to process.
+ * @return {boolean} Whether the given data has multiple durations.
+ */
 function isMultiSession(sessionData) {
-  for (var i = 1; i < sessionData.length; i++) {
-    if (sessionData[i]["clientTimestamp"] -
-            sessionData[i - 1]["clientTimestamp"] >
+  for (let i = 1; i < sessionData.length; i++) {
+    if (sessionData[i]['clientTimestamp'] -
+            sessionData[i - 1]['clientTimestamp'] >
         maxGapInSession) {
       return true;
     }
   }
   return false;
 }
-// Calculates start and end times of each session if this is a multi session, or
-// just the start and end of the only session.
+/**
+ * Calculates start and end times of each session if this is a multi session, or
+ * just the start and end of the only session.
+ *
+ * @private
+ * @param {Array} sessionData The data to process.
+ * @return {Array.<Array>} Array of sections of sessionData.
+ */
 function getDurations(sessionData) {
-  var numDurations = 0;
-  var durations = [[]];
-  var start = sessionData[0]["clientTimestamp"];
-  for (var i = 1; i < sessionData.length; i++) {
-    if (sessionData[i]["clientTimestamp"] -
-            sessionData[i - 1]["clientTimestamp"] >
+  let numDurations = 0;
+  let durations = [[]];
+  let start = sessionData[0]['clientTimestamp'];
+  for (let i = 1; i < sessionData.length; i++) {
+    if (sessionData[i]['clientTimestamp'] -
+            sessionData[i - 1]['clientTimestamp'] >
         maxGapInSession) {
-      durations[numDurations] = [start, sessionData[i - 1]["clientTimestamp"]];
+      durations[numDurations] = [start, sessionData[i - 1]['clientTimestamp']];
       numDurations++;
-      start = sessionData[i]["clientTimestamp"];
+      start = sessionData[i]['clientTimestamp'];
     }
   }
   durations[numDurations] =
-      [start, sessionData[sessionData.length - 1]["clientTimestamp"]];
+      [start, sessionData[sessionData.length - 1]['clientTimestamp']];
 
   return durations;
 }
-// Assumes there is data before crossing the start line for the first time and
-// data after crossing the finish line for the final time. Gets summary for each
-// lap and calculates lap times.
+/**
+ * Assumes there is data before crossing the start line for the first time and
+ * data after crossing the finish line for the final time. Gets summary for each
+ * lap and calculates lap times.
+ *
+ * @private
+ * @param {Array} sessionData The data to get the laps from.
+ * @return {Object} Lap summaries organized by lap number.
+ */
 function getLaps(sessionData) {
-  var laps = {};
-  var numLap = 0;
-  var numNonLap = 1;
-  var startTime = sessionData[0]["clientTimestamp"];
-  var endTime = sessionData[sessionData.length - 1]["clientTimestamp"];
-  var startPoint = DataView.getStartLine();
-  var endPoint = DataView.getFinishLine();
+  let laps = {};
+  let numLap = 0;
+  let numNonLap = 1;
+  let startTime = sessionData[0]['clientTimestamp'];
+  let startPoint = DataView.getStartLine();
+  let endPoint = DataView.getFinishLine();
 
   // TODO: Skip gap between multi-session?
   // TODO: Pick last time to cross start instead of first if crossed multiple
   // times?
-  var previousIndex = 0;
-  var previousTime = 0;
+  let previousIndex = 0;
+  let previousTime = 0;
   while (previousIndex < sessionData.length - 1) {
-    if (TraX.debugMode >= 2) console.log("Next Lap");
-    var lapStart = getTimeAtPosition(
+    if (TraX.debugMode >= 2) console.log('Next Lap');
+    let lapStart = getTimeAtPosition(
         startPoint.coord, previousTime - 2, startPoint.radius, false,
         sessionData);
-    var startIndex = getIndexAtTime(lapStart, undefined, sessionData);
+    let startIndex = getIndexAtTime(lapStart, undefined, sessionData);
 
-    var lapEnd = getTimeAfterPosition(
+    let lapEnd = getTimeAfterPosition(
         startPoint.coord, lapStart, startPoint.radius, sessionData);
-    var newLapEnd = getTimeAtPosition(
+    let newLapEnd = getTimeAtPosition(
         endPoint.coord, lapEnd, endPoint.radius, false, sessionData);
-    var endIndex = getIndexAtTime(newLapEnd, undefined, sessionData);
+    let endIndex = getIndexAtTime(newLapEnd, undefined, sessionData);
 
     // Duration between end of previous and start of this lap
     if (startIndex != previousIndex) {
@@ -1108,7 +1328,7 @@ function getLaps(sessionData) {
           previousIndex, startIndex,
           {lap: -numNonLap, lapStart: lapStart, sessionStart: startTime},
           sessionData);
-      laps[-numNonLap].color = "#000000";
+      laps[-numNonLap].color = '#000000';
       laps[-numNonLap++].duration = lapStart - previousTime;
     }
 
@@ -1121,7 +1341,7 @@ function getLaps(sessionData) {
           startIndex, endIndex,
           {lap: -numNonLap, lapStart: lapStart, sessionStart: startTime},
           sessionData);
-      laps[-numNonLap].color = "#000000";
+      laps[-numNonLap].color = '#000000';
       laps[-numNonLap++].duration = newLapEnd - lapStart;
       break;
     }
@@ -1141,28 +1361,36 @@ function getLaps(sessionData) {
         sessionData);
     laps[numLap].color = DataView.MyMap.getColor(numLap + numNonLap);
     laps[numLap++].duration = newLapEnd - lapStart;
-    sessionData[startIndex]["lap"] = numLap;
+    sessionData[startIndex]['lap'] = numLap;
   }
   laps.length = numLap;
   laps.neglength = -numNonLap + 1;
   return laps;
 }
-// Gets summary for given section between start and end indexes. setData will
-// set the given object of data in every datapoint in sessionData between the
-// given indexes.
+/** Gets summary for given section between start and end indexes. setData will
+ * set the given object of data in every datapoint in sessionData between the
+ * given indexes.
+ *
+ * @private
+ * @param {number} startIndex The first index to start from.
+ * @param {number} endIndex The last index to include.
+ * @param {Object} [setData] Data to add into all of the chunks.
+ * @param {Array} sessionData The data to process.
+ * @return {Object} Summary of section of data.
+ */
 function getSectionSummary(startIndex, endIndex, setData, sessionData) {
-  var duration = sessionData[endIndex]["clientTimestamp"] -
-      sessionData[startIndex]["clientTimestamp"];
-  var speedTotal = 0;
-  var speedCount = 0;
-  var topSpeed = {val: 0, index: 0};
-  var lowestSpeed = {val: 10000, index: 0};
-  var maxGForce = {val: 0, index: 0};
-  var maxAlt = 0;
-  var minAlt = 0;
-  for (var i = startIndex; i <= endIndex; i++) {
-    if (sessionData[i]["gpsSpeed"] != "null") {
-      var speed = sessionData[i]["gpsSpeed"];
+  let duration = sessionData[endIndex]['clientTimestamp'] -
+      sessionData[startIndex]['clientTimestamp'];
+  let speedTotal = 0;
+  let speedCount = 0;
+  let topSpeed = {val: 0, index: 0};
+  let lowestSpeed = {val: 10000, index: 0};
+  let maxGForce = {val: 0, index: 0};
+  let maxAlt = 0;
+  let minAlt = 0;
+  for (let i = startIndex; i <= endIndex; i++) {
+    if (sessionData[i]['gpsSpeed'] != 'null') {
+      let speed = sessionData[i]['gpsSpeed'];
       if (speed > 0) {
         if (speed > topSpeed.val) {
           topSpeed.val = speed;
@@ -1175,14 +1403,14 @@ function getSectionSummary(startIndex, endIndex, setData, sessionData) {
         speedTotal += speed;
         speedCount++;
       }
-      if (sessionData[i]["altitude"] != "null" && sessionData[i]["altitude"]) {
-        var alt = sessionData[i]["altitude"];
+      if (sessionData[i]['altitude'] != 'null' && sessionData[i]['altitude']) {
+        let alt = sessionData[i]['altitude'];
         if (!maxAlt || alt > maxAlt) maxAlt = alt;
         if (!minAlt || alt < minAlt) minAlt = alt;
       }
     }
 
-    var gForce = DataView.sensorsToGForce(i);
+    let gForce = DataView.sensorsToGForce(i);
     if (gForce > maxGForce.val) {
       maxGForce.val = gForce;
       maxGForce.index = i;
@@ -1190,7 +1418,7 @@ function getSectionSummary(startIndex, endIndex, setData, sessionData) {
 
     if (setData) sessionData[i] = Object.assign(sessionData[i], setData);
   }
-  var avgSpeed;
+  let avgSpeed;
   if (speedCount > 0) avgSpeed = speedTotal / speedCount;
   else avgSpeed = 0;
   if (lowestSpeed == 10000) lowestSpeed = 0;
@@ -1200,63 +1428,93 @@ function getSectionSummary(startIndex, endIndex, setData, sessionData) {
   return {
     startIndex: startIndex,
     endIndex: endIndex,
-    startTime: sessionData[startIndex]["clientTimestamp"],
-    endTime: sessionData[endIndex]["clientTimestamp"],
+    startTime: sessionData[startIndex]['clientTimestamp'],
+    endTime: sessionData[endIndex]['clientTimestamp'],
     duration: duration,
     topSpeed: topSpeed,
     lowestSpeed: lowestSpeed,
     avgSpeed: avgSpeed,
     maxGForce: maxGForce,
     maxAltitude: maxAlt,
-    minAltitude: minAlt
+    minAltitude: minAlt,
   };
 }
+/**
+ * Convert an array of numbers from degrees to radians.
+ *
+ * @private
+ * @param {Array.<number>} arr Array of numbers in degrees.
+ * @return {Array.<number>} Array of numbers in radians.
+ */
 function arrayToRad(arr) {
-  var newArr = [];
-  for (var i = 0; i < arr.length; i++) {
+  let newArr = [];
+  for (let i = 0; i < arr.length; i++) {
     newArr.push(arr[i] / 180.0 * Math.PI);
   }
   return newArr;
 }
-// Given raw sensor data, rectify to be correctly rotated relative to the
-// vehicle. Also removes Agrav.
+/**
+ * Given raw sensor data, rectify to be correctly rotated relative to the
+ * vehicle. Also removes Agrav.
+ *
+ * @public
+ * @param {Object} data Chunk of session data to rotate the sensors to
+ * vehicle-relative coordinate system.
+ * @return {{x: number, y: number, z: number}} Acceleration relative to vehicle.
+ */
 DataView.transformSensors = function(data) {
-  var gyro = data["gyro"];
-  var accelIncGrav = data["accelIncGrav"];
-  var browserType = TraX.getBrowser(data["userAgent"]);
-  var isOld = typeof data["traxVersion"] === 'undefined';
+  let gyro = data['gyro'];
+  let accelIncGrav = data['accelIncGrav'];
+  let browserType = TraX.getBrowser(data['userAgent']);
+  let isOld = typeof data['traxVersion'] === 'undefined';
 
   // TODO: Rotate gyro by offset from forwards in all versions.
   if (isOld) gyro = arrayToRad(gyro);
 
   accelIncGrav = [-accelIncGrav[0], accelIncGrav[1], accelIncGrav[2]];
-  if (browserType == "Chrome") {
-    for (var i = 0; i < accelIncGrav.length; i++) accelIncGrav[i] *= -1;
+  if (browserType == 'Chrome') {
+    for (let i = 0; i < accelIncGrav.length; i++) accelIncGrav[i] *= -1;
   }
-  var rotatedAccel = TraX.Common.rotateVector(accelIncGrav, gyro, true);
+  let rotatedAccel = TraX.Common.rotateVector(accelIncGrav, gyro, true);
   rotatedAccel.z += Agrav;
   return rotatedAccel;
 };
-// Given an index or datapoint, calculate the magnitude of G-force at the
-// instant.
+/**
+ * Given an index or datapoint, calculate the magnitude of G-force at the
+ * instant.
+ *
+ * @public
+ * @param {number|Object} data The index of sessionData to use, or a chunk
+ * object.
+ * @return {number} The sensor values transformed into GForce magnitude.
+ */
 DataView.sensorsToGForce = function(data) {
-  if (typeof data === "number") data = sessionData[data];
-  var rotatedAccel = DataView.transformSensors(data);
+  if (typeof data === 'number') data = sessionData[data];
+  let rotatedAccel = DataView.transformSensors(data);
   return Math.hypot(rotatedAccel.x, rotatedAccel.y, rotatedAccel.z);
 };
-// Request the list of tracks from server.
+/**
+ * Request the list of tracks from server.
+ *
+ * @public
+ */
 DataView.fetchTrackList = function() {
   DataView.trackList = [];
-  TraX.socket.emit('requesttracklist', "track");
-  TraX.socket.emit('requesttracklist', "track", "myself");
-  for (var i = 0; i < TraX.friendsList.length; i++) {
-    TraX.socket.emit('requesttracklist', "track", TraX.friendsList[i].id);
+  TraX.socket.emit('requesttracklist', 'track');
+  TraX.socket.emit('requesttracklist', 'track', 'myself');
+  for (let i = 0; i < TraX.friendsList.length; i++) {
+    TraX.socket.emit('requesttracklist', 'track', TraX.friendsList[i].id);
   }
 };
-// Request the list of configs from the server.
+/**
+ * Request the list of configs from the server.
+ *
+ * @public
+ * @param {Track} track The track to fetch the config list of from the server.
+ */
 DataView.fetchTrackConfigList = function(track) {
-  var req;
-  var userId = "";
+  let req;
+  let userId = '';
   if (!track) {
     req = DataView.trackData.trackId;
     userId =
@@ -1267,9 +1525,13 @@ DataView.fetchTrackConfigList = function(track) {
   }
   TraX.socket.emit('requesttracklist', req, userId);
 };
-// Set current track data to match requested params.
+/**
+ * Set current track data to match requested params.
+ *
+ * @private
+ */
 function fetchTrackData() {
-  for (var i = 0; i < DataView.trackList.length; i++) {
+  for (let i = 0; i < DataView.trackList.length; i++) {
     if (DataView.trackList[i].id == DataView.trackData.trackId &&
         DataView.trackList[i].ownerId == DataView.trackData.trackOwnerId) {
       DataView.trackData.track = DataView.trackList[i];
@@ -1278,9 +1540,13 @@ function fetchTrackData() {
   }
   if (trackList.length > 0) DataView.trackData.track = DataView.trackList[0];
 }
-// Set current config data to match requested params.
+/**
+ * Set current config data to match requested params.
+ *
+ * @private
+ */
 function fetchTrackConfigData() {
-  for (var i = 0; i < DataView.getConfigList().length; i++) {
+  for (let i = 0; i < DataView.getConfigList().length; i++) {
     if (DataView.getConfigList()[i].id == DataView.trackData.configId &&
         DataView.getConfigList()[i].ownerId ==
             DataView.trackData.configOwnerId) {
@@ -1288,17 +1554,22 @@ function fetchTrackConfigData() {
       return;
     }
   }
-  if (DataView.getConfigList().length > 0)
+  if (DataView.getConfigList().length > 0) {
     DataView.trackData.config = DataView.getConfigList()[0];
+  }
 }
-// Ensure all track data and config data required is received for current
-// selections.
+/**
+ * Ensure all track data and config data required is received for current
+ * selections.
+ *
+ * @private
+ */
 function pickTrack() {
   if (lastFetchState == fetchState) pickTrackCount++;
   else pickTrackCount = 0;
   lastFetchState = fetchState;
   if (pickTrackCount > 300) {
-    console.warn("PICK TRACK STUCK AT FETCH STATE:", fetchState);
+    console.warn('PICK TRACK STUCK AT FETCH STATE:', fetchState);
     fetchState++;
   }
   if (fetchState <= 2 && DataView.trackList.length == 0) {
@@ -1346,24 +1617,30 @@ function pickTrack() {
   }
   if (TraX.debugMode) {
     console.log(
-        "Ending fetchState:", fetchState, "TrackData:", DataView.trackData);
+        'Ending fetchState:', fetchState, 'TrackData:', DataView.trackData);
   }
 
   showTrackNames();
   fetchState = 0;
-  dataTitleDom.innerHTML = "Refreshing...";
+  dataTitleDom.innerHTML = 'Refreshing...';
   if (shouldDetermineTrack) {
     shouldDetermineTrack = false;
     DataView.autoPickTrack();
   }
   DataView.updateSessionData();
 }
-// Automatically determine the closest track to data, then change selected track
-// to the closest track if it can be determined.
+/**
+ * Automatically determine the closest track to data, then change selected track
+ * to the closest track if it can be determined.
+ *
+ * @public
+ * @param {boolean} [forceUseCoord=false] Disregard track selected in session
+ * data, and only use GPS data to determine track.
+ */
 DataView.autoPickTrack = function(forceUseCoord) {
-  var newTrack;
+  let newTrack;
   if (!forceUseCoord) {
-    for (var i = 0; i < DataView.trackList.length; i++) {
+    for (let i = 0; i < DataView.trackList.length; i++) {
       if (currentSession.trackId == DataView.trackList[i].id &&
           currentSession.trackOwnerId == DataView.trackList[i].ownerId) {
         newTrack = DataView.trackList[i];
@@ -1371,21 +1648,29 @@ DataView.autoPickTrack = function(forceUseCoord) {
     }
   }
   if (newTrack) {
-    console.log("Determining track via sessionData");
+    console.log('Determining track via sessionData');
   } else {
     newTrack = DataView.determineTrack();
   }
   if (newTrack) DataView.changeTrack(newTrack);
 };
-// Determine the closest track to the given coordinates. A maximum distance of
-// 10km is checked.
+/**
+ * Determine the closest track to the given coordinates. A maximum distance of
+ * 10km is checked.
+ *
+ * @public
+ * @param {{lat: number, lng: number}} coord The coordinates to determine the
+ * closest track to.
+ * @return {?Track} The track data of the track or null if no track found.
+ */
 DataView.determineTrack = function(coord) {
-  if (!DataView.trackList || (!coord && !DataView.coordAverage.coord))
+  if (!DataView.trackList || (!coord && !DataView.coordAverage.coord)) {
     return null;
+  }
   if (!coord) coord = DataView.coordAverage.coord;
-  var closest = {dist: 10 * 1000, index: -1}; // 10km maximum
-  for (var i = 0; i < DataView.trackList.length; i++) {
-    var dist = TraX.Units.latLngToMeters(DataView.trackList[i].coord, coord);
+  let closest = {dist: 10 * 1000, index: -1}; // 10km maximum
+  for (let i = 0; i < DataView.trackList.length; i++) {
+    let dist = TraX.Units.latLngToMeters(DataView.trackList[i].coord, coord);
     if (dist < closest.dist) {
       closest.dist = dist;
       closest.index = i;
@@ -1394,106 +1679,148 @@ DataView.determineTrack = function(coord) {
 
   if (closest.index >= 0) {
     console.log(
-        "Closest track to center of data:", DataView.trackList[closest.index]);
+        'Closest track to center of data:', DataView.trackList[closest.index]);
     return DataView.trackList[closest.index];
   } else {
-    if (TraX.debugMode)
-      console.log("Couldn't determine closest track to:", coord);
+    if (TraX.debugMode) {
+      console.log('Couldn\'t determine closest track to:', coord);
+    }
     return null;
   }
 };
-// A new track has been selected. Change relevant information to request
-// necessary data.
+/**
+ * A new track has been selected. Change relevant information to request
+ * necessary data.
+ *
+ * @public
+ * @param {Track} newTrack The new track to select.
+ */
 DataView.changeTrack = function(newTrack) {
-  if (TraX.debugMode) console.log("Changing track to", newTrack);
+  if (TraX.debugMode) console.log('Changing track to', newTrack);
   DataView.trackData.trackName = newTrack.name;
   DataView.trackData.trackId = newTrack.id;
   DataView.trackData.trackOwnerId = newTrack.ownerId;
-  DataView.trackData.configName = "";
-  trackNameDom.innerHTML = "";
+  DataView.trackData.configName = '';
+  trackNameDom.innerHTML = '';
   trackNameDom.appendChild(document.createTextNode(newTrack.name));
-  var ownerId = newTrack.ownerId;
+  let ownerId = newTrack.ownerId;
   trackConfigDom.setAttribute(
       'onclick', 'TraX.DataView.toggleDataViewOverlay(true, ' +
           DataView.trackData.trackId + ',"' + ownerId + '");');
   fetchState = 0;
   pickTrack();
 };
-// A new config has been selected. Change relevant information to request
-// necessary data.
+/**
+ * A new config has been selected. Change relevant information to request
+ * necessary data.
+ *
+ * @public
+ * @param {Config} newConfig The new data for the config.
+ * @param {boolean} [norefresh=false] Should we disable fetching data from
+ * server after this.
+ */
 DataView.changeConfig = function(newConfig, norefresh) {
-  if (TraX.debugMode) console.log("Changing config to", newConfig);
+  if (TraX.debugMode) console.log('Changing config to', newConfig);
   DataView.trackData.configName = newConfig.name;
   DataView.trackData.configId = newConfig.id;
   DataView.trackData.configOwnerId = newConfig.ownerId;
-  trackConfigDom.innerHTML = "";
+  trackConfigDom.innerHTML = '';
   trackConfigDom.appendChild(document.createTextNode(newConfig.name));
   if (!norefresh) pickTrack();
 };
-// Get the name of the currently selected track.
+/**
+ * Get the name of the currently selected track.
+ *
+ * @private
+ * @param {Track} [track] The track to get the name of, or the currently
+ * selected track by default.
+ * @param {boolean} [useIdAsName=false] If unable to find the name, use the id
+ * instead.
+ * @return {string} The name of the track, or the Id, or nothing depending on
+ * settings and availability of data.
+ */
 function getTrackName(track, useIdAsName) {
   if (!track) {
     if (DataView.trackData && DataView.trackData.trackName) {
       return DataView.trackData.trackName;
     } else {
-      return "";
+      return '';
     }
   } else {
-    for (var i = 0; i < DataView.trackList.length; i++) {
+    for (let i = 0; i < DataView.trackList.length; i++) {
       if (DataView.trackList[i].id == track.id &&
           DataView.trackList[i].ownerId == track.ownerId) {
         if (!useIdAsName || DataView.trackList[i].name) {
           return DataView.trackList[i].name;
         } else {
-          return DataView.trackList[i].trackOwnerId + "," +
+          return DataView.trackList[i].trackOwnerId + ',' +
               DataView.trackList[i].trackId;
         }
       }
     }
     if (!useIdAsName) {
-      return "";
+      return '';
     } else {
-      return track.ownerId + "," + track.id;
+      return track.ownerId + ',' + track.id;
     }
   }
 }
-// Get the name of the currently selected config.
+/**
+ * Get the name of the currently selected config.
+ *
+ * @private
+ * @return {string} Name of the selected config or empty string of none.
+ */
 function getTrackConfigName() {
   if (DataView.trackData && DataView.trackData.configName) {
     return DataView.trackData.configName;
   } else {
-    return "";
+    return '';
   }
 }
-// Get the list of configs for the currently selected track from buffer.
+/**
+ * Get the list of configs for the currently selected track from buffer.
+ *
+ * @public
+ * @param {Track} track The track information to fetch the configurations of.
+ * @return {Array} Array of configurations or empty array if unable to find
+ * anything.
+ */
 DataView.getConfigList = function(track) {
   if (!track) track = DataView.trackData.track;
   if (!track) return [];
 
-  return DataView.configList[track.id + "," + (track.ownerId || "")] || [];
+  return DataView.configList[track.id + ',' + (track.ownerId || '')] || [];
 };
-// New track or config data is received from server. Store it properly.
+/**
+ * New track or config data is received from server. Store it properly.
+ *
+ * @private
+ * @param {string|Array} data Received data or error message from server.
+ * @param {string} request The request that caused the server to send this data.
+ * @param {string} ownerId The id of the owner of the requested data.
+ */
 function handleNewTrackData(data, request, ownerId) {
   if (typeof data === 'string') {
     if (data !== 'readerror') {
       data = JSON.parse(data);
     } else {
-      console.warn("TrackData Readerr", data, request);
+      console.warn('TrackData Readerr', data, request);
       return;
     }
   }
   if (request == 'track') {
     if (ownerId == TraX.getDriverId()) {
       data = data.map(function(obj) {
-        obj.name = "You: " + obj.name;
+        obj.name = 'You: ' + obj.name;
         return obj;
       });
     } else if (ownerId) {
-      var prefix = "F: ";
-      for (var i = 0; i < TraX.friendsList.length; i++) {
+      let prefix = 'F: ';
+      for (let i = 0; i < TraX.friendsList.length; i++) {
         if (TraX.friendsList[i].id == ownerId) {
           prefix = TraX.friendsList[i].firstName[0] +
-              TraX.friendsList[i].lastName[0] + ": ";
+              TraX.friendsList[i].lastName[0] + ': ';
           break;
         }
       }
@@ -1507,14 +1834,14 @@ function handleNewTrackData(data, request, ownerId) {
     } else {
       DataView.trackList = data;
     }
-    if (TraX.debugMode) console.log("New track list:", DataView.trackList);
+    if (TraX.debugMode) console.log('New track list:', DataView.trackList);
     if (!DataView.trackData.trackOwnerId) {
       DataView.changeTrack(data[0]);
     }
     showTrackNames();
   } else {
-    DataView.configList[request + "," + (ownerId || "")] = data;
-    if (TraX.debugMode) console.log("New config list:", DataView.configList);
+    DataView.configList[request + ',' + (ownerId || '')] = data;
+    if (TraX.debugMode) console.log('New config list:', DataView.configList);
     if (!DataView.trackData.config ||
         DataView.trackData.config.trackId != DataView.trackData.track.id) {
       DataView.changeConfig(data[0]);
@@ -1522,8 +1849,15 @@ function handleNewTrackData(data, request, ownerId) {
   }
   showTrackNames();
 }
-// Toggle track and config choosing overlay. Force forces open or closed.
-// TrackId will auto-select the track if ownerId is also set.
+/**
+ * Toggle track and config choosing overlay. Force forces open or closed.
+ * TrackId will auto-select the track if ownerId is also set.
+ *
+ * @public
+ * @param {?boolean} [force=undefined] Set value or toggle if undefined.
+ * @param {string} trackId The id of the track to show as selected.
+ * @param {string} ownerId The id of the owner of the track data.
+ */
 DataView.toggleDataViewOverlay = function(force, trackId, ownerId) {
   if (typeof force !== 'boolean') {
     dataViewOverlay.classList.toggle('visible');
@@ -1545,17 +1879,23 @@ DataView.toggleDataViewOverlay = function(force, trackId, ownerId) {
     dataViewOverlay.classList.remove('visible');
   }
   if (dataViewOverlay.classList.contains('visible')) {
-    lapListDom.style.display = "none";
+    lapListDom.style.display = 'none';
     downloadOverlayDom.classList.remove('visible');
   } else {
-    lapListDom.style.display = "block";
+    lapListDom.style.display = 'block';
   }
 };
-// Track name in dataViewOverlay was selected.
+/**
+ * Track name in dataViewOverlay was selected.
+ *
+ * @public
+ * @param {string} trackId The id of the track that was clicked.
+ * @param {string} ownerId The id of the owner of the track data.
+ */
 DataView.handleClickTrackName = function(trackId, ownerId) {
-  if (TraX.debugMode) console.log("Clicked trackname:", trackId, ownerId);
-  var track;
-  for (var i = 0; i < DataView.trackList.length; i++) {
+  if (TraX.debugMode) console.log('Clicked trackname:', trackId, ownerId);
+  let track;
+  for (let i = 0; i < DataView.trackList.length; i++) {
     if (DataView.trackList[i].id == trackId &&
         DataView.trackList[i].ownerId == ownerId) {
       track = DataView.trackList[i];
@@ -1565,17 +1905,18 @@ DataView.handleClickTrackName = function(trackId, ownerId) {
   if (!track) return;
   DataView.changeTrack(track);
   showTrackNames();
-  trackListDom.classList.add("covered");
-  configListDom.classList.remove("hidden");
-  if (trackListTitlesDom.children.length > 0)
+  trackListDom.classList.add('covered');
+  configListDom.classList.remove('hidden');
+  if (trackListTitlesDom.children.length > 0) {
     trackListTitlesDom.children[0].remove();
-  var newTitle = document.createElement("p");
-  newTitle.innerHTML = "<strong>Track:</strong> ";
+  }
+  let newTitle = document.createElement('p');
+  newTitle.innerHTML = '<strong>Track:</strong> ';
   newTitle.appendChild(document.createTextNode(track.name));
   trackListTitlesDom.innerHTML = newTitle.outerHTML;
-  if (TraX.debugMode) console.log("Editing session?", currentSession);
+  if (TraX.debugMode) console.log('Editing session?', currentSession);
   if (currentSession && currentSession.ownerId == TraX.getDriverId()) {
-    if (TraX.debugMode) console.log("Editing session", currentSession, track);
+    if (TraX.debugMode) console.log('Editing session', currentSession, track);
     currentSession.trackId = trackId;
     currentSession.trackOwnerId = ownerId;
     currentSession.configId = undefined;
@@ -1585,11 +1926,17 @@ DataView.handleClickTrackName = function(trackId, ownerId) {
         undefined, currentSession.id);
   }
 };
-// Config name was selected in dataViewOverlay.
+/**
+ * Config name was selected in dataViewOverlay.
+ *
+ * @public
+ * @param {string} configId The id of the config that was clicked.
+ * @param {string} ownerId The id of the owner of the config.
+ */
 DataView.handleClickConfigName = function(configId, ownerId) {
-  if (TraX.debugMode) console.log("Clicked configname:", configId, ownerId);
-  var config;
-  for (var i = 0; i < DataView.getConfigList().length; i++) {
+  if (TraX.debugMode) console.log('Clicked configname:', configId, ownerId);
+  let config;
+  for (let i = 0; i < DataView.getConfigList().length; i++) {
     if (DataView.getConfigList()[i].id == configId &&
         DataView.getConfigList()[i].ownerId == ownerId) {
       config = DataView.getConfigList()[i];
@@ -1601,14 +1948,15 @@ DataView.handleClickConfigName = function(configId, ownerId) {
   // configListDom.classList.add("covered");
   // carListDom.classList.remove("hidden");
   DataView.toggleDataViewOverlay(false);
-  if (trackListTitlesDom.children.length > 1)
+  if (trackListTitlesDom.children.length > 1) {
     trackListTitlesDom.children[1].remove();
-  var newTitle = document.createElement("p");
-  newTitle.innerHTML = "<strong>Config:</strong> ";
+  }
+  let newTitle = document.createElement('p');
+  newTitle.innerHTML = '<strong>Config:</strong> ';
   newTitle.appendChild(document.createTextNode(config.name));
   trackListTitlesDom.appendChild(newTitle);
   if (currentSession && currentSession.ownerId == TraX.getDriverId()) {
-    if (TraX.debugMode) console.log("Editing session", currentSession, config);
+    if (TraX.debugMode) console.log('Editing session', currentSession, config);
     currentSession.configId = configId;
     currentSession.configOwnerId = ownerId;
     TraX.socket.emit(
@@ -1616,26 +1964,38 @@ DataView.handleClickConfigName = function(configId, ownerId) {
         currentSession.trackOwnerId, configId, ownerId, currentSession.id);
   }
 };
-// The back button was pressed in dataViewOverlay.
+/**
+ * The back button was pressed in dataViewOverlay.
+ *
+ * @public
+ */
 DataView.dataOverlayBack = function() {
   if (configListDom.classList.contains('covered')) {
     carListDom.classList.add('hidden');
     configListDom.classList.remove('covered');
-    if (trackListTitlesDom.children.length > 2)
+    if (trackListTitlesDom.children.length > 2) {
       trackListTitlesDom.children[2].remove();
+    }
   } else if (!configListDom.classList.contains('hidden')) {
     configListDom.classList.add('hidden');
     trackListDom.classList.remove('covered');
-    if (trackListTitlesDom.children.length > 1)
+    if (trackListTitlesDom.children.length > 1) {
       trackListTitlesDom.children[1].remove();
+    }
   }
 };
-// Reset UI in overlay to fresh. Does not clear data or change values.
-// Deselects all values and goes to first visible menu.
+/**
+ * Reset UI in overlay to fresh. Does not clear data or change values. Deselects
+ * all values and goes to first visible menu.
+ *
+ * @private
+ * @param {boolean} [refresh=false] Prevents changing of view, just changes
+ * values.
+ */
 function resetDataViewOverlay(refresh) {
-  for (var i = 1; i < trackListDom.childNodes.length; i++) {
+  for (let i = 1; i < trackListDom.childNodes.length; i++) {
     if (typeof trackListDom.childNodes[i].classList !== 'undefined') {
-      if (trackListDom.childNodes[i].tagName == "BUTTON" &&
+      if (trackListDom.childNodes[i].tagName == 'BUTTON' &&
           trackListDom.childNodes[i].innerHTML.indexOf(getTrackName()) == 0) {
         trackListDom.childNodes[i].classList.add('selected');
       } else {
@@ -1643,9 +2003,9 @@ function resetDataViewOverlay(refresh) {
       }
     }
   }
-  for (var i = 1; i < configListDom.childNodes.length; i++) {
+  for (let i = 1; i < configListDom.childNodes.length; i++) {
     if (typeof configListDom.childNodes[i].classList !== 'undefined') {
-      if (configListDom.childNodes[i].tagName == "BUTTON" &&
+      if (configListDom.childNodes[i].tagName == 'BUTTON' &&
           configListDom.childNodes[i].innerHTML.indexOf(getTrackConfigName()) ==
               0 &&
           getTrackConfigName()) {
@@ -1656,13 +2016,17 @@ function resetDataViewOverlay(refresh) {
     }
   }
   if (!refresh) {
-    trackListDom.classList.remove("covered");
-    configListDom.classList.remove("covered");
-    configListDom.classList.add("hidden");
-    carListDom.classList.add("hidden");
+    trackListDom.classList.remove('covered');
+    configListDom.classList.remove('covered');
+    configListDom.classList.add('hidden');
+    carListDom.classList.add('hidden');
   }
 }
-// Shows the track and config names in the dataViewOverlay list.
+/**
+ * Shows the track and config names in the dataViewOverlay list.
+ *
+ * @private
+ */
 function showTrackNames() {
   // trackNameDom.innerHTML = "";
   // trackConfigDom.innerHTML = "";
@@ -1672,35 +2036,35 @@ function showTrackNames() {
     DataView.fetchTrackList();
     return;
   }
-  trackNameDom.innerHTML = "";
+  trackNameDom.innerHTML = '';
   trackNameDom.appendChild(
       document.createTextNode(DataView.trackData.trackName));
-  trackConfigDom.innerHTML = "";
+  trackConfigDom.innerHTML = '';
   trackConfigDom.appendChild(
       document.createTextNode(DataView.trackData.configName));
-  for (var i = 0; i < DataView.trackList.length; i++) {
-    var opt = document.createElement("button");
+  for (let i = 0; i < DataView.trackList.length; i++) {
+    let opt = document.createElement('button');
     opt.appendChild(document.createTextNode(DataView.trackList[i].name));
-    var ownerId = DataView.trackList[i].ownerId;
+    let ownerId = DataView.trackList[i].ownerId;
     opt.setAttribute(
         'onclick', 'TraX.DataView.handleClickTrackName(' +
             DataView.trackList[i].id + ',"' + ownerId + '");');
 
     if (ownerId == TraX.getDriverId()) {
-      var deleteIcon = document.createElement("img");
-      deleteIcon.src = "https://dev.campbellcrowley.com/trax/images/trash.png";
-      deleteIcon.href = "#";
+      let deleteIcon = document.createElement('img');
+      deleteIcon.src = 'https://dev.campbellcrowley.com/trax/images/trash.png';
+      deleteIcon.href = '#';
       deleteIcon.setAttribute(
-          "onclick", "TraX.DataView.deleteTrack(" + DataView.trackList[i].id +
-              ",\"" + ownerId + "\")");
+          'onclick', 'TraX.DataView.deleteTrack(' + DataView.trackList[i].id +
+              ',"' + ownerId + '")');
       opt.appendChild(deleteIcon);
 
-      var editIcon = document.createElement("img");
-      editIcon.src = "https://dev.campbellcrowley.com/trax/images/pencil.png";
-      editIcon.href = "#";
+      let editIcon = document.createElement('img');
+      editIcon.src = 'https://dev.campbellcrowley.com/trax/images/pencil.png';
+      editIcon.href = '#';
       editIcon.setAttribute(
-          "onclick", "TraX.DataView.editTrack(" + DataView.trackList[i].id +
-              ",\"" + ownerId + "\")");
+          'onclick', 'TraX.DataView.editTrack(' + DataView.trackList[i].id +
+              ',"' + ownerId + '")');
       opt.appendChild(editIcon);
     }
 
@@ -1708,29 +2072,29 @@ function showTrackNames() {
   }
   resetDataViewOverlay(true);
   if (DataView.getConfigList().length == 0) return;
-  for (var i = 0; i < DataView.getConfigList().length; i++) {
-    var opt = document.createElement("button");
+  for (let i = 0; i < DataView.getConfigList().length; i++) {
+    let opt = document.createElement('button');
     opt.appendChild(document.createTextNode(DataView.getConfigList()[i].name));
-    var ownerId = DataView.getConfigList()[i].ownerId;
+    let ownerId = DataView.getConfigList()[i].ownerId;
     opt.setAttribute(
         'onclick', 'TraX.DataView.handleClickConfigName(' +
             DataView.getConfigList()[i].id + ',"' + ownerId + '");');
 
     if (ownerId == TraX.getDriverId()) {
-      var deleteIcon = document.createElement("img");
-      deleteIcon.src = "https://dev.campbellcrowley.com/trax/images/trash.png";
-      deleteIcon.href = "#";
+      let deleteIcon = document.createElement('img');
+      deleteIcon.src = 'https://dev.campbellcrowley.com/trax/images/trash.png';
+      deleteIcon.href = '#';
       deleteIcon.setAttribute(
-          "onclick", "TraX.DataView.deleteConfig(" +
-              DataView.getConfigList()[i].id + ",\"" + ownerId + "\")");
+          'onclick', 'TraX.DataView.deleteConfig(' +
+              DataView.getConfigList()[i].id + ',"' + ownerId + '")');
       opt.appendChild(deleteIcon);
 
-      var editIcon = document.createElement("img");
-      editIcon.src = "https://dev.campbellcrowley.com/trax/images/pencil.png";
-      editIcon.href = "#";
+      let editIcon = document.createElement('img');
+      editIcon.src = 'https://dev.campbellcrowley.com/trax/images/pencil.png';
+      editIcon.href = '#';
       editIcon.setAttribute(
-          "onclick", "TraX.DataView.editConfig(" +
-              DataView.getConfigList()[i].id + ",\"" + ownerId + "\")");
+          'onclick', 'TraX.DataView.editConfig(' +
+              DataView.getConfigList()[i].id + ',"' + ownerId + '")');
       opt.appendChild(editIcon);
     }
 
@@ -1738,10 +2102,16 @@ function showTrackNames() {
   }
   resetDataViewOverlay(true);
 }
-// Deletes a track from a user after confirmation from user.
+/**
+ * Deletes a track from a user after confirmation from user.
+ *
+ * @public
+ * @param {string} trackId The id of the track to delete.
+ * @param {string} ownerId The id of the owner of the track data.
+ */
 DataView.deleteTrack = function(trackId, ownerId) {
-  var track;
-  for (var i = 0; i < DataView.trackList.length; i++) {
+  let track;
+  for (let i = 0; i < DataView.trackList.length; i++) {
     if (DataView.trackList[i].id == trackId &&
         DataView.trackList[i].ownerId == ownerId) {
       track = DataView.trackList[i];
@@ -1749,24 +2119,31 @@ DataView.deleteTrack = function(trackId, ownerId) {
     }
   }
   if (track.ownerId != TraX.getDriverId()) {
-    TraX.showMessageBox("You can't delete that track.");
+    TraX.showMessageBox('You can\'t delete that track.');
     setTimeout(DataView.dataOverlayBack);
     return;
   }
   if (confirm(
-          "Are you sure you wish to delete \"" + track.name +
-          "\"? All of its configurations will also be deleted. This cannot be undone")) {
+          'Are you sure you wish to delete "' + track.name +
+          '"? All of its configurations will also be deleted. ' +
+          'This cannot be undone')) {
     TraX.socket.emit('deletefolder', track.id, ownerId);
-    console.log("Deleting track", track);
+    console.log('Deleting track', track);
     setTimeout(DataView.fetchTrackList, 50);
     setTimeout(TraX.requestFilesize, 50);
   }
   setTimeout(DataView.dataOverlayBack);
 };
-// Renames a user's track to their given input.
+/**
+ * Renames a user's track to their given input.
+ *
+ * @public
+ * @param {string} trackId The id of track to edit.
+ * @param {string} ownerId The id of the owner of the track data.
+ */
 DataView.editTrack = function(trackId, ownerId) {
-  var track;
-  for (var i = 0; i < DataView.trackList.length; i++) {
+  let track;
+  for (let i = 0; i < DataView.trackList.length; i++) {
     if (DataView.trackList[i].id == trackId &&
         DataView.trackList[i].ownerId == ownerId) {
       track = DataView.trackList[i];
@@ -1775,13 +2152,13 @@ DataView.editTrack = function(trackId, ownerId) {
   }
   if (!track) return;
   if (track.ownerId != TraX.getDriverId()) {
-    TraX.showMessageBox("You can't edit that track.");
+    TraX.showMessageBox('You can\'t edit that track.');
     setTimeout(DataView.dataOverlayBack);
     return;
   }
   // DataView.changeTrack(track);
   setTimeout(DataView.MyMap.handleClickEditTrack, 100);
-  /*var input = prompt(
+  /* let input = prompt(
       "What would you like \"" + track.name + "\" to be named?", track.name);
   if (input) {
     TraX.socket.emit('editfolder', track.id, input, ownerId);
@@ -1790,51 +2167,63 @@ DataView.editTrack = function(trackId, ownerId) {
   }*/
   setTimeout(DataView.dataOverlayBack);
 };
-// Deletes a user's track config after confirmation.
+/**
+ * Deletes a user's track config after confirmation.
+ *
+ * @public
+ * @param {string} configId The id of the config to delete.
+ */
 DataView.deleteConfig = function(configId) {
-  var config;
-  for (var i = 0; i < DataView.getConfigList().length; i++) {
+  let config;
+  for (let i = 0; i < DataView.getConfigList().length; i++) {
     if (DataView.getConfigList()[i].id == configId) {
       config = DataView.getConfigList()[i];
       break;
     }
   }
   if (!config) {
-    console.warn("Failed to delete config", configId, DataView.getConfigList());
+    console.warn('Failed to delete config', configId, DataView.getConfigList());
     return;
   }
   if (confirm(
-          "Are you sure you wish to delete \"" + config.name +
-          "\"? This cannot be undone")) {
+          'Are you sure you wish to delete "' + config.name +
+          '"? This cannot be undone')) {
     TraX.socket.emit(
-        'deletefolder', DataView.trackData.track.id + "/" + config.id, ownerId);
+        'deletefolder', DataView.trackData.track.id + '/' + config.id, ownerId);
     console.log(
-        "Deleting config", DataView.trackData.track.name + "(" +
-            DataView.trackData.track.id + ")/" + config.name + "(" + config.id +
-            ")");
+        'Deleting config', DataView.trackData.track.name + '(' +
+            DataView.trackData.track.id + ')/' + config.name + '(' + config.id +
+            ')');
     setTimeout(DataView.fetchTrackConfigList, 50);
     setTimeout(TraX.requestFilesize, 50);
   }
-  setTimeout(function() { DataView.toggleDataViewOverlay(true); });
+  setTimeout(function() {
+    DataView.toggleDataViewOverlay(true);
+  });
 };
-// Renames a user's track config.
+/**
+ * Renames a user's track config.
+ *
+ * @public
+ * @param {string} configId The id of the config to edit.
+ */
 DataView.editConfig = function(configId) {
-  var config;
-  for (var i = 0; i < DataView.getConfigList().length; i++) {
+  let config;
+  for (let i = 0; i < DataView.getConfigList().length; i++) {
     if (DataView.getConfigList()[i].id == configId) {
       config = DataView.getConfigList()[i];
       break;
     }
   }
   if (!config) {
-    console.log("Failed to rename config", configId, DataView.getConfigList());
+    console.log('Failed to rename config', configId, DataView.getConfigList());
     return;
   }
 
   // DataView.changeConfig(config);
   setTimeout(DataView.MyMap.handleClickEditConfig, 100);
 
-  /*var input = prompt(
+  /* let input = prompt(
       "What would you like \"" + config.name + "\" to be named?", config.name);
   if (input) {
     TraX.socket.emit(
@@ -1847,26 +2236,46 @@ DataView.editConfig = function(configId) {
     DataView.toggleDataViewOverlay(true, config.trackId, config.ownerId);
   });
 };
-// Gets the start line information for the current track config.
+/**
+ * Gets the start line information for the current track config.
+ *
+ * @public
+ * @return {Object} The start line data.
+ */
 DataView.getStartLine = function() {
   if (!DataView.trackData.config) return null;
   return DataView.trackData.config.start;
 };
-// Gets the finish line information for the current track config.
+/**
+ * Gets the finish line information for the current track config.
+ *
+ * @public
+ * @return {Object} The finish line data.
+ */
 DataView.getFinishLine = function() {
   if (!DataView.trackData.config) return null;
   return DataView.trackData.config.finish;
 };
-// Get sessionData at the time closest to msecs after start of data. If
-// forceAfter, it will find the closest index after msecs, otherwise index could
-// be before.
+/**
+ * Get sessionData at the time closest to msecs after start of data. If
+ * forceAfter, it will find the closest index after msecs, otherwise index could
+ * be before.
+ *
+ * @private
+ * @param {number} msecs The number of milliseconds since session start to look
+ * for the index of.
+ * @param {boolean} [forceAfter=false] Force the value to be after msecs instead
+ * of absolute closest.
+ * @param {Array} sessionData The data to look through.
+ * @return {number} The array index of the data.
+ */
 function getIndexAtTime(msecs, forceAfter, sessionData) {
-  var start = sessionData[0]["clientTimestamp"];
-  for (var i = 0; i < sessionData.length; i++) {
-    var thisTime = sessionData[i]["clientTimestamp"] - start;
+  let start = sessionData[0]['clientTimestamp'];
+  for (let i = 0; i < sessionData.length; i++) {
+    let thisTime = sessionData[i]['clientTimestamp'] - start;
     if (thisTime >= msecs) {
       if (!forceAfter && i > 0 &&
-          Math.abs(msecs - (sessionData[i - 1]["clientTimestamp"] - start)) <
+          Math.abs(msecs - (sessionData[i - 1]['clientTimestamp'] - start)) <
               thisTime - msecs) {
         return i - 1;
       }
@@ -1875,7 +2284,15 @@ function getIndexAtTime(msecs, forceAfter, sessionData) {
   }
   return msecs > 0 ? sessionData.length - 1 : 0;
 }
-// Returns datapoint closest to given coordinates and after msecs if given.
+/**
+ * Returns datapoint closest to given coordinates and after msecs if given.
+ *
+ * @public
+ * @param {{lat: number, lng: number}} coord Position to look for.
+ * @param {number} [msecs=0] The milliseconds since session start to look after.
+ * @param {Array} [data=sessionData] The data to look through.
+ * @return {Object} The data at the first found position.
+ */
 DataView.getDataAtPosition = function(coord, msecs, data) {
   if (typeof data === 'undefined') data = sessionData;
   return DataView.getDataAtIndex(
@@ -1885,126 +2302,170 @@ DataView.getDataAtPosition = function(coord, msecs, data) {
           false, data),
       data);
 };
+/**
+ * Gets the data at a certain index. Also linearly interpolates GPS data for
+ * easier calculations.
+ *
+ * @public
+ * @param {number} index The index of data to get the data for.
+ * @param {Array} data The data to look through.
+ * @return {Object} The formatted chunk from the given index.
+ */
 DataView.getDataAtIndex = function(index, data) {
   if (typeof data === 'undefined') data = sessionData;
-  var prevPos = {coord: {lat: 0, lng: 0}, speed: 0, time: 0};
-  var nextPos = {coord: {lat: 0, lng: 0}, speed: 0, time: 0};
-  for (var i = index; i >= 0; i--) {
-    if (data[i]["latitude"] && data[i]["longitude"]) {
+  let prevPos = {coord: {lat: 0, lng: 0}, speed: 0, time: 0};
+  let nextPos = {coord: {lat: 0, lng: 0}, speed: 0, time: 0};
+  for (let i = index; i >= 0; i--) {
+    if (data[i]['latitude'] && data[i]['longitude']) {
       prevPos = {
-        coord: {lat: data[i]["latitude"], lng: data[i]["longitude"]},
-        speed: data[i]["gpsSpeed"],
-        time: data[i]["clientTimestamp"]
+        coord: {lat: data[i]['latitude'], lng: data[i]['longitude']},
+        speed: data[i]['gpsSpeed'],
+        time: data[i]['clientTimestamp'],
       };
       break;
     }
   }
-  for (var i = index; i < data.length; i++) {
-    if (data[i]["latitude"] && data[i]["longitude"]) {
+  for (let i = index; i < data.length; i++) {
+    if (data[i]['latitude'] && data[i]['longitude']) {
       nextPos = {
-        coord: {lat: data[i]["latitude"], lng: data[i]["longitude"]},
-        speed: data[i]["gpsSpeed"],
-        time: data[i]["clientTimestamp"]
+        coord: {lat: data[i]['latitude'], lng: data[i]['longitude']},
+        speed: data[i]['gpsSpeed'],
+        time: data[i]['clientTimestamp'],
       };
       break;
     }
   }
-  var shiftedNextTime = nextPos.time - prevPos.time;
-  var shiftedThisTime = data[index]['clientTimestamp'] - prevPos.time;
-  var intVal = shiftedThisTime / shiftedNextTime || 0;
+  let shiftedNextTime = nextPos.time - prevPos.time;
+  let shiftedThisTime = data[index]['clientTimestamp'] - prevPos.time;
+  let intVal = shiftedThisTime / shiftedNextTime || 0;
   sessionData[index].estimatedCoord =
       TraX.Common.interpolateCoord(prevPos.coord, nextPos.coord, intVal);
   sessionData[index].estimatedSpeed =
       TraX.Common.lerp(prevPos.speed, nextPos.speed, intVal);
   return sessionData[index];
 };
+/**
+ * Gets the milliseconds since session start of a given index.
+ *
+ * @public
+ * @param {number} index The index of data to look at.
+ * @param {Object} [data=sessionData] The data to look at.
+ * @return {number} Milliseconds since session start.
+ */
 DataView.getTimeAtIndex = function(index, data) {
   if (typeof data === 'undefined') data = sessionData;
   if (typeof index !== 'number' || index < 0 || index >= data.length) return 0;
   return data[index]['clientTimestamp'] - data[0]['clientTimestamp'];
 };
-// Find the first time after msecs with the point closest to the given coords.
+/**
+ * Find the first time after msecs with the point closest to the given coords.
+ *
+ * @private
+ * @param {{lat: number, lng: number}} coord The coordinates to use.
+ * @param {number} msecs The time in milliseconds since session start to start
+ * after.
+ * @param {number} [tolerance=360] The tolerance in degrees to find valid
+ * points.
+ * @param {boolean} [absolute=false] Look through all data after msecs to find
+ * the absolute closest time, instead of the first closest time.
+ * @param {Array} sessionData The data to look through.
+ * @return {number} Milliseconds since session start.
+ */
 function getTimeAtPosition(coord, msecs, tolerance, absolute, sessionData) {
   tolerance = tolerance || 360.0;
-  var start = sessionData[0]["clientTimestamp"];
-  var obj =
+  let start = sessionData[0]['clientTimestamp'];
+  let obj =
       DataView.getDataWithCoords(undefined, undefined, undefined, sessionData);
-  var coords = DataView.getFilteredCoords(obj).points;
-  var closest = {index: -1, dist: -1};
-  for (var i = 0; i < obj.length; i++) {
-    if (obj[i]["clientTimestamp"] - start > msecs) {
-      var dist = TraX.Common.coordDistance(coord, coords[i]);
+  let coords = DataView.getFilteredCoords(obj).points;
+  let closest = {index: -1, dist: -1};
+  for (let i = 0; i < obj.length; i++) {
+    if (obj[i]['clientTimestamp'] - start > msecs) {
+      let dist = TraX.Common.coordDistance(coord, coords[i]);
       if ((dist < closest.dist || closest.dist == -1) && dist <= tolerance) {
         closest = {index: i, dist: dist};
       } else if (closest.index >= 0 && !absolute) {
-        if (TraX.debugMode >= 2)
+        if (TraX.debugMode >= 2) {
           console.log(
-              "POINT!", obj[closest.index]["clientTimestamp"] - start, ">",
+              'POINT!', obj[closest.index]['clientTimestamp'] - start, '>',
               msecs, closest.index);
+        }
         break;
       }
     }
   }
   if (closest.index == -1) {
-    return sessionData[sessionData.length - 1]["clientTimestamp"] - start;
+    return sessionData[sessionData.length - 1]['clientTimestamp'] - start;
   }
-  var current = obj[closest.index];
-  var next = obj[closest.index + 1];
-  var previous = obj[closest.index - 1];
-  var currentCoord = {lat: current["latitude"], lng: current["longitude"]};
-  var nextCoord, previousCoord;
-  if (next) nextCoord = {lat: next["latitude"], lng: next["longitude"]};
-  if (previous)
-    previousCoord = {lat: previous["latitude"], lng: previous["longitude"]};
+  let current = obj[closest.index];
+  let next = obj[closest.index + 1];
+  let previous = obj[closest.index - 1];
+  let currentCoord = {lat: current['latitude'], lng: current['longitude']};
+  let nextCoord; let previousCoord;
+  if (next) nextCoord = {lat: next['latitude'], lng: next['longitude']};
+  if (previous) {
+    previousCoord = {lat: previous['latitude'], lng: previous['longitude']};
+  }
 
-  var lookBack = typeof previous !== "undefined";
+  let lookBack = typeof previous !== 'undefined';
   const increment = 0.001;
 
-  if (typeof next !== "undefined" &&
+  if (typeof next !== 'undefined' &&
       TraX.Common.coordDistance(
           TraX.Common.interpolateCoord(currentCoord, nextCoord, increment),
           coord) < closest.dist) {
     lookBack = false;
   } else if (!lookBack) {
-    return obj[closest.index]["clientTimestamp"] - start;
+    return obj[closest.index]['clientTimestamp'] - start;
   }
-  var newClosest = {index: 0, dist: -1, time: 0};
-  for (var i = 0; i < 1.0; i += increment) {
-    var intCoord = TraX.Common.interpolateCoord(
+  let newClosest = {index: 0, dist: -1, time: 0};
+  for (let i = 0; i < 1.0; i += increment) {
+    let intCoord = TraX.Common.interpolateCoord(
         currentCoord, lookBack ? previousCoord : nextCoord, i);
-    var dist = TraX.Common.coordDistance(intCoord, coord);
-    var currentTime = TraX.Common.lerp(
-        current["clientTimestamp"],
-        lookBack ? previous["clientTimestamp"] : next["clientTimestamp"], i);
+    let dist = TraX.Common.coordDistance(intCoord, coord);
+    let currentTime = TraX.Common.lerp(
+        current['clientTimestamp'],
+        lookBack ? previous['clientTimestamp'] : next['clientTimestamp'], i);
     if (currentTime - start > msecs &&
         (newClosest.dist < 0 || dist < newClosest.dist)) {
       newClosest = {index: i, dist: dist, time: currentTime};
     } else {
-      var newTime = newClosest.time;
-      if (TraX.debugMode >= 2)
+      let newTime = newClosest.time;
+      if (TraX.debugMode >= 2) {
         console.log(
-            "Closest:", current["clientTimestamp"] - start,
-            "(" + closest.index + ")", "Other:",
-            (lookBack ? previous["clientTimestamp"] : next["clientTimestamp"]) -
+            'Closest:', current['clientTimestamp'] - start,
+            '(' + closest.index + ')', 'Other:',
+            (lookBack ? previous['clientTimestamp'] : next['clientTimestamp']) -
                 start,
-            "newClosest:", newTime - start, "index:",
+            'newClosest:', newTime - start, 'index:',
             closest.index + (lookBack ? -1 : 1) * newClosest.index);
+      }
       return newTime - start;
     }
   }
-  return obj[closest.index]["clientTimestamp"] - start;
+  return obj[closest.index]['clientTimestamp'] - start;
 }
-// Find the first time after msecs with the point closest to the given coords
-// that is outside of tolerance.
+/**
+ * Find the first time after msecs with the point closest to the given coords
+ * that is outside of tolerance.
+ *
+ * @private
+ * @param {{lat: number, lng: number}} coord The coordinates to use.
+ * @param {number} msecs The time in milliseconds since session start to start
+ * after.
+ * @param {number} [tolerance=360] The tolerance in degrees to find valid
+ * points.
+ * @param {Array} sessionData The data to look through.
+ * @return {number} Milliseconds since session start.
+ */
 function getTimeAfterPosition(coord, msecs, tolerance, sessionData) {
   tolerance = tolerance || 360.0;
-  var start = sessionData[0]["clientTimestamp"];
-  var obj = DataView.getDataWithCoords();
-  var coords = DataView.getFilteredCoords(obj).points;
-  var latest = {index: -1, dist: -1};
-  for (var i = 0; i < obj.length; i++) {
-    if (obj[i]["clientTimestamp"] - start > msecs) {
-      var dist = TraX.Common.coordDistance(coord, coords[i]);
+  let start = sessionData[0]['clientTimestamp'];
+  let obj = DataView.getDataWithCoords();
+  let coords = DataView.getFilteredCoords(obj).points;
+  let latest = {index: -1, dist: -1};
+  for (let i = 0; i < obj.length; i++) {
+    if (obj[i]['clientTimestamp'] - start > msecs) {
+      let dist = TraX.Common.coordDistance(coord, coords[i]);
       // In case the first point given is within tolerance.
       if (i > 0 && latest.index == -1 && dist > tolerance) {
         dist = TraX.Common.coordDistance(coord, coords[i - 1]);
@@ -2012,69 +2473,78 @@ function getTimeAfterPosition(coord, msecs, tolerance, sessionData) {
       if (dist <= tolerance) {
         latest = {index: i, dist: dist};
       } else if (latest.index >= 0) {
-        if (TraX.debugMode >= 2)
+        if (TraX.debugMode >= 2) {
           console.log(
-              "Final Point!", obj[latest.index]["clientTimestamp"] - start, ">",
+              'Final Point!', obj[latest.index]['clientTimestamp'] - start, '>',
               msecs, latest.index);
+        }
         break;
       }
     }
   }
   if (latest.index == -1) {
-    return sessionData[sessionData.length - 1]["clientTimestamp"] - start;
+    return sessionData[sessionData.length - 1]['clientTimestamp'] - start;
   }
-  var current = obj[latest.index];
-  var next = obj[latest.index + 1];
-  var currentCoord = {lat: current["latitude"], lng: current["longitude"]};
-  var nextCoord;
-  if (next) nextCoord = {lat: next["latitude"], lng: next["longitude"]};
-  else return obj[latest.index]["clientTimestamp"] - start;
+  let current = obj[latest.index];
+  let next = obj[latest.index + 1];
+  let currentCoord = {lat: current['latitude'], lng: current['longitude']};
+  let nextCoord;
+  if (next) nextCoord = {lat: next['latitude'], lng: next['longitude']};
+  else return obj[latest.index]['clientTimestamp'] - start;
 
   const increment = 0.001;
 
-  for (var i = 0; i < 1.0; i += increment) {
-    var intCoord = TraX.Common.interpolateCoord(currentCoord, nextCoord, i);
-    var dist = TraX.Common.coordDistance(intCoord, coord);
+  for (let i = 0; i < 1.0; i += increment) {
+    let intCoord = TraX.Common.interpolateCoord(currentCoord, nextCoord, i);
+    let dist = TraX.Common.coordDistance(intCoord, coord);
     if (dist > tolerance) {
-      var newTime = TraX.Common.lerp(
-          current["clientTimestamp"], next["clientTimestamp"], i);
-      if (TraX.debugMode >= 2)
+      let newTime = TraX.Common.lerp(
+          current['clientTimestamp'], next['clientTimestamp'], i);
+      if (TraX.debugMode >= 2) {
         console.log(
-            "Latest:", current["clientTimestamp"] - start,
-            "(" + latest.index + ")", "Other:", next["clientTimestamp"] - start,
-            "newClosest:", newTime - start, "index:", latest.index + i);
+            'Latest:', current['clientTimestamp'] - start,
+            '(' + latest.index + ')', 'Other:', next['clientTimestamp'] - start,
+            'newClosest:', newTime - start, 'index:', latest.index + i);
+      }
       return newTime - start;
     }
   }
-  return obj[latest.index]["clientTimestamp"] - start;
+  return obj[latest.index]['clientTimestamp'] - start;
 }
-// Returns the interpolated data at a certain number of milliseconds after
-// session start.
+/**
+ * Returns the interpolated data at a certain number of milliseconds after
+ * session start.
+ *
+ * @public
+ * @param {number} msecs The time since session start in milliseconds.
+ * @param {Array} [data=sessionData] The data to get the data from.
+ * @return {Object} The chunk at the specified time.
+ */
 DataView.getDataAtTime = function(msecs, data) {
   if (typeof data === 'undefined') data = sessionData;
-  var start = data[0]["clientTimestamp"];
-  var prevIndex = 0;
-  for (var i = 0; i < data.length; i++) {
-    if (data[i]["clientTimestamp"] - start <= msecs) {
+  let start = data[0]['clientTimestamp'];
+  let prevIndex = 0;
+  for (let i = 0; i < data.length; i++) {
+    if (data[i]['clientTimestamp'] - start <= msecs) {
       prevIndex = i;
     } else {
       break;
     }
   }
-  var nextIndex = getIndexAtTime(msecs, true, data);
-  var shiftedNextTime =
-      data[nextIndex]["clientTimestamp"] - data[prevIndex]["clientTimestamp"];
-  var shiftedNowTime = msecs - (data[prevIndex]["clientTimestamp"] - start);
-  var intVal = shiftedNowTime / shiftedNextTime || 0;
+  let nextIndex = getIndexAtTime(msecs, true, data);
+  let shiftedNextTime =
+      data[nextIndex]['clientTimestamp'] - data[prevIndex]['clientTimestamp'];
+  let shiftedNowTime = msecs - (data[prevIndex]['clientTimestamp'] - start);
+  let intVal = shiftedNowTime / shiftedNextTime || 0;
 
-  var prevData = DataView.getDataAtIndex(prevIndex, data);
-  var nextData = DataView.getDataAtIndex(nextIndex, data);
-  var newData = {};
+  let prevData = DataView.getDataAtIndex(prevIndex, data);
+  let nextData = DataView.getDataAtIndex(nextIndex, data);
+  let newData = {};
   Object.keys(prevData).map(function(key) {
-    if (key == "estimatedCoord") {
+    if (key == 'estimatedCoord') {
       newData[key] =
           TraX.Common.interpolateCoord(prevData[key], nextData[key], intVal);
-    } else if (typeof prevData[key] !== "number" || key === "lap") {
+    } else if (typeof prevData[key] !== 'number' || key === 'lap') {
       newData[key] = prevData[key];
     } else {
       newData[key] = TraX.Common.lerp(prevData[key], nextData[key], intVal);
@@ -2082,45 +2552,60 @@ DataView.getDataAtTime = function(msecs, data) {
   });
   return newData;
 };
-// Returns the interpolated position at a certain number of milliseconds after
-// session start.
-function getPositionAtTime(msecs) {
-  var filteredPoints = DataView.getDataWithCoords();
-  var start = filteredPoints[0]["clientTimestamp"];
-  for (var i = 0; i < filteredPoints.length; i++) {
-    if (filteredPoints[i]["clientTimestamp"] - start > msecs &&
-        filteredPoints[i - 1]["clientTimestamp"] - start < msecs) {
-      var prevPoint = {
-        lat: filteredPoints[i - 1]["latitude"],
-        lng: filteredPoints[i - 1]["longitude"],
-        alt: filteredPoints[i - 1]["altitude"]
-      };
-      var nextPoint = {
-        lat: filteredPoints[i]["latitude"],
-        lng: filteredPoints[i]["longitude"],
-        alt: filteredPoints[i]["altitude"]
-      };
-      var prevTime = filteredPoits[i - 1]["clientTimestamp"] - start;
-      var nextTime = filteredPoits[i]["clientTimestamp"] - start - prevTime;
-      var normalizedTime = (msecs - prevTime) / nextTime;
-      return TraX.Common.interpolateCoord(prevPoint, nextPoint, normalizedTime);
-    } else if (filteredPoints[i]["clientTimestamp"] - start == msecs) {
-      return {
-        lat: filteredPoints[i]["latitude"],
-        lng: filteredPoints[i]["longitude"],
-        alt: filteredPoints[i]["altitude"]
-      };
-    }
-  }
-  return null;
-}
-// Returns all data between start and end indexes that includes gps coordinates.
-// MaxIndexes can limit the number of returned results.
+/**
+ * Returns the interpolated position at a certain number of milliseconds after
+ * session start.
+ *
+ * @private
+ */
+// function getPositionAtTime(msecs) {
+//   let filteredPoints = DataView.getDataWithCoords();
+//   let start = filteredPoints[0]['clientTimestamp'];
+//   for (let i = 0; i < filteredPoints.length; i++) {
+//     if (filteredPoints[i]['clientTimestamp'] - start > msecs &&
+//         filteredPoints[i - 1]['clientTimestamp'] - start < msecs) {
+//       let prevPoint = {
+//         lat: filteredPoints[i - 1]['latitude'],
+//         lng: filteredPoints[i - 1]['longitude'],
+//         alt: filteredPoints[i - 1]['altitude'],
+//       };
+//       let nextPoint = {
+//         lat: filteredPoints[i]['latitude'],
+//         lng: filteredPoints[i]['longitude'],
+//         alt: filteredPoints[i]['altitude'],
+//       };
+//       let prevTime = filteredPoits[i - 1]['clientTimestamp'] - start;
+//       let nextTime = filteredPoits[i]['clientTimestamp'] - start - prevTime;
+//       let normalizedTime = (msecs - prevTime) / nextTime;
+//       return TraX.Common.interpolateCoord(prevPoint, nextPoint,
+//       normalizedTime);
+//     } else if (filteredPoints[i]['clientTimestamp'] - start == msecs) {
+//       return {
+//         lat: filteredPoints[i]['latitude'],
+//         lng: filteredPoints[i]['longitude'],
+//         alt: filteredPoints[i]['altitude'],
+//       };
+//     }
+//   }
+//   return null;
+// }
+/**
+ * Returns all data between start and end indexes that includes gps coordinates.
+ * MaxIndexes can limit the number of returned results.
+ *
+ * @public
+ * @param {number} [startIndex=0] The index to start looking for data.
+ * @param {number} [endIndex] The last index to look for data.
+ * @param {number} [maxIndexes] The maximum number of matches to find.
+ * @param {Array} [data=sessionData] The data to look through. Defaults to
+ * sessionData.
+ * @return {Array} Only sessionData that had defined GPS data.
+ */
 DataView.getDataWithCoords = function(startIndex, endIndex, maxIndexes, data) {
   if (typeof data === 'undefined') data = sessionData;
   if (typeof startIndex === 'undefined') startIndex = 0;
   if (typeof endIndex === 'undefined') endIndex = data.length - 1;
-  var numIndexes = 0;
+  let numIndexes = 0;
   return data.filter(function(obj, i) {
     if (maxIndexes && numIndexes >= maxIndexes) return false;
     if (i < startIndex || i > endIndex) return false;
@@ -2128,29 +2613,44 @@ DataView.getDataWithCoords = function(startIndex, endIndex, maxIndexes, data) {
     if (obj['latitude'] == 0 || obj['latitude'] == 0) return false;
     numIndexes++;
     return true;
-  })
+  });
 };
-// Get session info with given ids.
+/**
+ * Get session info with given ids.
+ *
+ * @private
+ * @param {string} sessionId The id of the session to get the metadata for.
+ * @param {string} ownerId The id of the owner of the session to get metadata
+ * for.
+ * @return {?Object} The metadata of the session, or null if failed to find the
+ * specified session.
+ */
 function getSession(sessionId, ownerId) {
-  var index = -1;
-  for (var i = 0; i < fileList.length; i++) {
+  let index = -1;
+  for (let i = 0; i < fileList.length; i++) {
     if (fileList[i].id == sessionId && fileList[i].ownerId == ownerId) {
       index = i;
       break;
     }
   }
   if (index < 0) {
-    console.error("THIS SHOULD NOT HAPPEN. FAILED TO FIND SESSION");
+    console.error('THIS SHOULD NOT HAPPEN. FAILED TO FIND SESSION');
     return;
   }
   return fileList[index];
 }
-// Session is clicked, request data from server.
+/**
+ * Session is clicked, request data from server.
+ *
+ * @public
+ * @param {string} sessionId The id of the session that was selected.
+ * @param {string} ownerId The id of the owner of the session to select.
+ */
 DataView.sessionClick = function(sessionId, ownerId) {
   // if (Panes.getPane() != 0) return;
-  var thisSession = getSession(sessionId, ownerId);
+  let thisSession = getSession(sessionId, ownerId);
   HRTitle = thisSession.HRtitle;
-  dataTitleDom.innerHTML = "";
+  dataTitleDom.innerHTML = '';
   dataTitleDom.appendChild(document.createTextNode(HRTitle));
   Panes.nextPane();
   DataView.toggleDataViewOverlay(false);
@@ -2159,30 +2659,46 @@ DataView.sessionClick = function(sessionId, ownerId) {
   resetSessionData();
   showSessionData();
   TraX.socket.emit('streamsession', thisSession.id, thisSession.ownerId);
-  console.log("Began stream of", thisSession);
+  console.log('Began stream of', thisSession);
   currentSession = thisSession;
 };
-// Renaming session was cancelled.
+/**
+ * Renaming session was cancelled.
+ *
+ * @public
+ */
 DataView.cancelSessionEdit = function() {
-  sessionsListOverlay.style.display = "none";
-  sessionsListTextInput.style.display = "none";
+  sessionsListOverlay.style.display = 'none';
+  sessionsListTextInput.style.display = 'none';
 };
-// User requested to delete session.
+/**
+ * User requested to delete session.
+ *
+ * @public
+ * @param {string} sessionId The id of the session to delete.
+ * @param {string} ownerId the id of the owner of the session to delete.
+ */
 DataView.deleteSession = function(sessionId, ownerId) {
-  var thisSession = getSession(sessionId, ownerId);
-  sessionsListOverlay.style.display = "block";
-  sessionsListTextDom.innerHTML = "Are you sure you wish to delete<br>\"";
+  let thisSession = getSession(sessionId, ownerId);
+  sessionsListOverlay.style.display = 'block';
+  sessionsListTextDom.innerHTML = 'Are you sure you wish to delete<br>"';
   sessionsListTextDom.appendChild(
-      document.createTextNode(thisSession.HRtitle + "\"?"));
+      document.createTextNode(thisSession.HRtitle + '"?'));
   sessionsListConfirmButton.setAttribute(
       'onclick', 'TraX.DataView.confirmDeleteSession(\'' + sessionId + '\',"' +
           ownerId + '")');
 };
-// User confirmed deleting session.
+/**
+ * User confirmed deleting session.
+ *
+ * @public
+ * @param {string} sessionId The id of the session to delete.
+ * @param {string} ownerId The id of the owner of the session to delete.
+ */
 DataView.confirmDeleteSession = function(sessionId, ownerId) {
-  var thisSession = getSession(sessionId, ownerId);
-  console.log("Deleted session", thisSession);
-  TraX.socket.emit("deletesession", thisSession.id);
+  let thisSession = getSession(sessionId, ownerId);
+  console.log('Deleted session', thisSession);
+  TraX.socket.emit('deletesession', thisSession.id);
   setTimeout(DataView.requestList, 50);
   setTimeout(TraX.requestFilesize, 50);
   if (dataTitleDom.innerHTML == thisSession.HRtitle) {
@@ -2191,32 +2707,55 @@ DataView.confirmDeleteSession = function(sessionId, ownerId) {
   }
   DataView.cancelSessionEdit();
 };
-// User requested to rename session.
+/**
+ * User requested to rename session.
+ *
+ * @public
+ * @param {string} sessionId The id of the session to rename.
+ * @param {string} ownerId The id of the owner of the session to rename.
+ */
 DataView.editSession = function(sessionId, ownerId) {
-  var thisSession = getSession(sessionId, ownerId);
-  sessionsListOverlay.style.display = "block";
-  sessionsListTextInput.style.display = "block";
-  sessionsListTextDom.innerHTML = "Enter a new name for<br>\"";
+  let thisSession = getSession(sessionId, ownerId);
+  sessionsListOverlay.style.display = 'block';
+  sessionsListTextInput.style.display = 'block';
+  sessionsListTextDom.innerHTML = 'Enter a new name for<br>"';
   sessionsListTextDom.appendChild(
-      document.createTextNode(thisSession.HRtitle + "\""));
+      document.createTextNode(thisSession.HRtitle + '"'));
   sessionsListTextInput.value = thisSession.HRtitle;
   sessionsListConfirmButton.setAttribute(
       'onclick', 'TraX.DataView.confirmRenameSession(\'' + sessionId + '\',"' +
           ownerId + '")');
 };
-// User confirmed renaming session.
+/**
+ * User confirmed renaming session.
+ *
+ * @public
+ * @param {string} sessionId The id of the session to rename.
+ * @param {string} ownerId The id of the owner of the session to rename.
+ */
 DataView.confirmRenameSession = function(sessionId, ownerId) {
-  var newName = sessionsListTextInput.value;
-  var thisSession = getSession(sessionId, ownerId);
-  console.log("Renaming session", thisSession, newName);
+  let newName = sessionsListTextInput.value;
+  let thisSession = getSession(sessionId, ownerId);
+  console.log('Renaming session', thisSession, newName);
   if (!newName) return;
-  TraX.socket.emit("renamesession", thisSession.id, newName);
+  TraX.socket.emit('renamesession', thisSession.id, newName);
   setTimeout(DataView.requestList, 50);
-  dataTitleDom.innerHTML = "";
+  dataTitleDom.innerHTML = '';
   dataTitleDom.appendChild(document.createTextNode(newName));
   DataView.cancelSessionEdit();
 };
-// Rename coordinate data to more common format and determine bounds of data.
+/**
+ * Rename coordinate data to more common format and determine bounds of data.
+ *
+ * @public
+ * @param {Array} input sessionData to filter.
+ * @param {{lat: number, lng: number}} SWBound Southwestern bound of
+ * coordinates.
+ * @param {{lat: number, lng: number}} NEBound Northeastern bound of
+ * coordinates.
+ * @return {{points: Array, NEBound: Object, SWBound: Object}} Filtered
+ * coordinates and their bounding box.
+ */
 DataView.getFilteredCoords = function(input, SWBound, NEBound) {
   SWBound = SWBound || {};
   NEBound = NEBound || {};
@@ -2225,32 +2764,42 @@ DataView.getFilteredCoords = function(input, SWBound, NEBound) {
              DataView.getDataWithCoords(
                  undefined, undefined, undefined, sessionData))
                 .map(function(obj) {
-                  var lat = obj["latitude"];
-                  var lng = obj["longitude"];
-                  var alt = obj["altitude"];
-                  var spd = obj["gpsSpeed"];
-                  if (!SWBound["lat"] || SWBound["lat"] > lat)
-                    SWBound["lat"] = lat;
-                  if (!SWBound["lng"] || SWBound["lng"] > lng)
-                    SWBound["lng"] = lng;
-                  if (!NEBound["lat"] || NEBound["lat"] < lat)
-                    NEBound["lat"] = lat;
-                  if (!NEBound["lng"] || NEBound["lng"] < lng)
-                    NEBound["lng"] = lng;
+                  let lat = obj['latitude'];
+                  let lng = obj['longitude'];
+                  let alt = obj['altitude'];
+                  let spd = obj['gpsSpeed'];
+                  if (!SWBound['lat'] || SWBound['lat'] > lat) {
+                    SWBound['lat'] = lat;
+                  }
+                  if (!SWBound['lng'] || SWBound['lng'] > lng) {
+                    SWBound['lng'] = lng;
+                  }
+                  if (!NEBound['lat'] || NEBound['lat'] < lat) {
+                    NEBound['lat'] = lat;
+                  }
+                  if (!NEBound['lng'] || NEBound['lng'] < lng) {
+                    NEBound['lng'] = lng;
+                  }
                   if (spd == 'null' || spd == null) spd = 0;
                   return {lat: lat, lng: lng, alt: alt, spd: spd};
                 }),
     NEBound: NEBound,
-    SWBound: SWBound
+    SWBound: SWBound,
   };
 };
-// Get data divided into each duration (multi-session).
+/**
+ * Get data divided into each duration (multi-session).
+ *
+ * @public
+ * @param {Array} input Input session data chunks to split into durations.
+ * @return {Array.<Array>} Array of sections of input durations.
+ */
 DataView.getFilteredDurations = function(input) {
-  var output = [[]];
-  for (var i = 0; i < input.length; i++) {
-    for (var j = 0; j < sessionSummary.times.length; j++) {
-      if (input[i]["clientTimestamp"] > sessionSummary.times[j][0] &&
-          input[i]["clientTimestamp"] < sessionSummary.times[j][1]) {
+  let output = [[]];
+  for (let i = 0; i < input.length; i++) {
+    for (let j = 0; j < sessionSummary.times.length; j++) {
+      if (input[i]['clientTimestamp'] > sessionSummary.times[j][0] &&
+          input[i]['clientTimestamp'] < sessionSummary.times[j][1]) {
         if (!output[j]) output[j] = [input[i]];
         else output[j].push(input[i]);
       }
@@ -2259,28 +2808,64 @@ DataView.getFilteredDurations = function(input) {
   if (output.length == 0) output = input;
   return output;
 };
-// Returns number of elements currently in sessionData.
-DataView.getSessionDataLength = function() { return sessionData.length; };
-// Returns summary of session.
-DataView.getSessionSummary = function() { return sessionSummary; };
+/**
+ * Returns number of elements currently in sessionData.
+ *
+ * @public
+ * @return {number} Number of chunks in sessionData.
+ */
+DataView.getSessionDataLength = function() {
+ return sessionData.length;
+};
+/**
+ * Returns summary of session.
+ *
+ * @public
+ * @return {Object} Summary of current session.
+ */
+DataView.getSessionSummary = function() {
+ return sessionSummary;
+};
 
-// User clicked download session as GPX.
+/**
+ * User clicked download session as GPX.
+ *
+ * @public
+ */
 DataView.handleDownloadClick = function() {
   TraX.Export.exportGPX(sessionData, undefined, getTrackName(), HRTitle);
 };
-// User clicked download session as JSON raw.
+/**
+ * User clicked download session as JSON raw.
+ *
+ * @public
+ */
 DataView.handleDownload2Click = function() {
   TraX.Export.exportJSON(sessionData, undefined, getTrackName(), HRTitle);
 };
-// User clicked download session as CSV raw.
+/**
+ * User clicked download session as CSV raw.
+ *
+ * @public
+ */
 DataView.handleDownload3Click = function() {
   TraX.Export.exportRawCSV(sessionData, undefined, getTrackName(), HRTitle);
 };
-// User clicked download session as CSV formatted.
+/**
+ * User clicked download session as CSV formatted.
+ *
+ * @public
+ */
 DataView.handleDownload4Click = function() {
-  TraX.Export.exportFormattedCSV(sessionData, undefined, getTrackName(), HRTitle);
+  TraX.Export.exportFormattedCSV(
+      sessionData, undefined, getTrackName(), HRTitle);
 };
-// Toggle the overlay to download a session.
+/**
+ * Toggle the overlay to download a session.
+ *
+ * @public
+ * @param {?boolean} [force=undefined] Set value or toggle with undefined.
+ */
 DataView.toggleDownloadOverlay = function(force) {
   if (typeof force !== 'undefined') {
     if (force) {
@@ -2292,12 +2877,11 @@ DataView.toggleDownloadOverlay = function(force) {
     downloadOverlayDom.classList.toggle('visible');
   }
   if (downloadOverlayDom.classList.contains('visible')) {
-    lapListDom.style.display = "none";
+    lapListDom.style.display = 'none';
     dataViewOverlay.classList.remove('visible');
   } else {
-    lapListDom.style.display = "block";
+    lapListDom.style.display = 'block';
   }
 };
-
 }(window.TraX.DataView = window.TraX.DataView || {}));
 }(window.TraX = window.TraX || {}));
