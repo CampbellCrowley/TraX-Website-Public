@@ -38,8 +38,8 @@
   },
   "scripts": {
     "install": ".hooks/install-hooks.sh",
-    "lint": "eslint $(find -iname '*.js' -not -path './node_modules/*' -not -iname '*.min.js' -printf '%p ')",
-    "lint:fix": "eslint $(find -iname '*.js' -not -path './node_modules/*' -not -iname '*.min.js' -printf '%p ') --fix",
+    "lint": "eslint $(find -iname '*.js' -not -path './node_modules/*' -not -iname '*.min.js' -not -iname '.eslintrc.js' -printf '%p ')",
+    "lint:fix": "eslint $(find -iname '*.js' -not -path './node_modules/*' -not -iname '*.min.js' -not -iname '.eslintrc.js' -printf '%p ') --fix",
     "docs": "npm run lint && bash .hooks/make-docs.sh"
   }
 }
