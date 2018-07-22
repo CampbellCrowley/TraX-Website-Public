@@ -16,16 +16,19 @@ const additionalScripts = [
     url: "https://dev.campbellcrowley.com/trax/canvascontroller.js",
     init: ["TraX", "Canvases"]
   },
-  {url: "https://dev.campbellcrowley.com/trax/constants.js"},
-  {url: "https://dev.campbellcrowley.com/trax/keepAwake.js"},
-  {url: "https://dev.campbellcrowley.com/trax/lz-string.min.js"}, {
-    url: "https://dev.campbellcrowley.com/trax/videocontroller.js",
-    init: ["TraX", "Video"]
+  {url: 'https://dev.campbellcrowley.com/trax/constants.js'},
+  {url: 'https://dev.campbellcrowley.com/trax/keepAwake.js'},
+  {url: 'https://dev.campbellcrowley.com/trax/lz-string.min.js'},
+  {
+    url: 'https://dev.campbellcrowley.com/trax/videocontroller.js',
+    init: ['TraX', 'Video'],
   },
-  {url: "https://dev.campbellcrowley.com/socket.io.js"}, {
-    url: "https://dev.campbellcrowley.com/trax/sidebarcontroller.js",
-    init: ["Sidebar"]
-  }
+  {url: 'https://dev.campbellcrowley.com/socket.io.js'},
+  {
+    url: 'https://dev.campbellcrowley.com/trax/sidebarcontroller.js',
+    init: ['Sidebar'],
+  },
+  {url: 'https://c6.patreon.com/becomePatronButton.bundle.js'},
 ];
 var numInit = 0;
 
