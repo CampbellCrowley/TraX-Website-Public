@@ -2199,4 +2199,4 @@ function TraXServer() {
   } */
 }
 
-module.exports = TraXServer;
+module.exports = new TraXServer();
