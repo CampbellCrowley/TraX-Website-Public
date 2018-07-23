@@ -7,10 +7,22 @@
  * @augments TraX
  */
 (function(DataView, undefined) {
-// Folders to show user for organizing sessions. "#friends#" shows list of all
-// friends.
+/**
+ * Folders to show user for organizing sessions. "#friends#" shows list of all
+ * friends.
+ * @default
+ * @constant
+ * @private
+ * @type {string[]}
+ */
 const sessionFolders = ['All', 'Only Me', '#friends#'];
-// Sorting methods for visible list of sessions.
+/**
+ * Sorting methods for visible list of sessions.
+ * @default
+ * @constant
+ * @private
+ * @type {string[]}
+ */
 const sessionSorts = ['Name', 'Date', 'Track', 'User'];
 
 // DOM elements.
@@ -42,48 +54,151 @@ let trackListTitlesDom;
 let downloadOverlayDom;
 let folderListDom;
 
-// List of all sessions.
+/**
+ * List of all sessions.
+ * @private
+ * @default
+ * @type {Object[]}
+ */
 let fileList = [];
+/**
+ * The currently selected session.
+ * @private
+ * @default
+ * @type {Object}
+ */
 let currentSession = {};
-// Currently loaded session list of data.
+/**
+ * Currently loaded session list of data chunks.
+ * @private
+ * @type {Object[]}
+ */
 let sessionData;
-// Buffer of chunks received from server.
+/**
+ * Buffer of chunks received from server.
+ * @private
+ * @type {Object[]}
+ */
 let chunkReceiveBuffer;
-// Number of bytes received from server.
+/**
+ * Number of bytes received from server.
+ * @private
+ * @type {number}
+ */
 let bytesreceived;
-// Array of list of bytes missing that we need to re-request from server.
+/**
+ * Array of list of bytes missing that we need to re-request from server.
+ * @private
+ * @type {Array}
+ */
 let missingBytesList;
-// Currently displayed session name on UI.
+/**
+ * Currently displayed session name on UI.
+ * @private
+ * @type {string}
+ */
 let HRTitle;
-// Average of all coordinates received for session.
+/**
+ * Average of all coordinates received for session.
+ * @public
+ * @default
+ * @readonly
+ * @type {{lat: number, lng: number}}
+ */
 DataView.coordAverage = {};
-// Data about a track and it's configuration.
+/**
+ * Data about a track and it's configuration.
+ * @public
+ * @readonly
+ * @default
+ * @type {Object}
+ */
 DataView.trackData = {};
-// List of all tracks.
+/**
+ * List of all tracks.
+ * @public
+ * @default
+ * @type {Array}
+ */
 DataView.trackList = [];
-// List of configs arranged by track id and user id in object.
+/**
+ * List of configs arranged by track id and user id in object.
+ * @public
+ * @default
+ * @type {Object.<Array>}
+ */
 DataView.configList = {};
-// Summary of session.
+/**
+ * Summary of session.
+ * @private
+ * @default
+ * @type {Object}
+ */
 let sessionSummary = {};
-// Previous requested sort mode.
+/**
+ * Previous requested sort mode.
+ * @private
+ * @default
+ * @type {string}
+ */
 let sortMode = 'None';
 
-// State where we are trying to get track and config data.
+/**
+ * State where we are trying to get track and config data.
+ * @private
+ * @default
+ * @type {number}
+ */
 let fetchState = 0;
-// Number of times picktrack has run without any updates. If this get's too high
-// pick track times out and continues.
+/**
+ * Number of times picktrack has run without any updates. If this get's too high
+ * pick track times out and continues.
+ * @private
+ * @default
+ * @type {number}
+ */
 let pickTrackCount = 0;
-// Last fetch state for checking if pick track has made progress.
+/**
+ * Last fetch state for checking if pick track has made progress.
+ * @private
+ * @default
+ * @type {number}
+ */
 let lastFetchState = 0;
-// Should pick track determine which track the current session is on after
-// getting list of tracks?
+/**
+ * Should pick track determine which track the current session is on after
+ * getting list of tracks?
+ * @private
+ * @default
+ * @type {boolean}
+ */
 let shouldDetermineTrack = false;
 
-// Currently visible users.
+/**
+ * Currently visible users.
+ * @private
+ * @default
+ * @type {Array.<Object>}
+ */
 let folderUsers = [];
 
+/**
+ * Timeout for the view opening.
+ * @private
+ * @type {Timeout}
+ */
 let viewOpeningTimeout;
+/**
+ * Interval for refreshing the list of files from the server.
+ * @private
+ * @type {Interval}
+ */
 let updateListInterval;
+/**
+ * The timeout for the pickTrack routine.
+ * @private
+ * @type {Interval}
+ */
 let pickTrackTimeout;
 
 /**

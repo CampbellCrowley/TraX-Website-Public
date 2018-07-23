@@ -5,7 +5,10 @@
  * @class TraX
  */
 (function(TraX, undefined) {
-// Prevent navigating away from page if not all data was sent saved.
+/**
+ * Prevent navigating away from page if not all data was sent saved.
+ * @return {?string}
+ */
 window.onbeforeunload = function() {
   if (!isPaused) {
     return 'You are still recording data, are you sure you wish to leave?';
@@ -18,15 +21,45 @@ window.onbeforeunload = function() {
 };
 
 // Constants //
-// milliseconds to retry sending missed chunks.
+/**
+ * Milliseconds to retry sending missed chunks.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const successTimeout = 10000;
-// milliseconds to check for stale data.
+/**
+ * Milliseconds to check for stale data.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const staleDataFlushFrequency = 100;
-// milliseconds to check filesize on server.
+/**
+ * Milliseconds to check filesize on server.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const filesizeCheckFrequency = 10000;
-// milliseconds to update HUD.
+/**
+ * Milliseconds to update HUD.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const realtimeClockUpdateFrequency = 51;
-// milliseconds of minimum allowable delta between gps updates.
+/**
+ * Milliseconds of minimum allowable delta between gps updates.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const gpsMinFrequency = 5000;
 
 // Screen size (x/y) in pixels.
@@ -38,43 +71,116 @@ let x = w.innerWidth || e.clientWidth || g.clientWidth;
 let y = w.innerHeight || e.clientHeight || g.clientHeight; */
 
 // Settings/Events/Intervals/Timeouts //
-// All scripts loaded and initialized.
+/**
+ * All scripts loaded and initialized.
+ * @default
+ * @public
+ * @readonly
+ * @type {boolean}
+ */
 TraX.initialized = false;
-// Debug setting used across scripts for additional logging and additional UI
-// sections that most users do not wish to see.
+/**
+ * Debug setting used across scripts for additional logging and additional UI
+ * sections that most users do not wish to see.
+ * @default
+ * @public
+ * @type {number}
+ */
 TraX.debugMode = 0;
-// Timeout until heartbeat hasn't happened for too long and we can assume death
-// of sensors.
+/**
+ * Timeout until heartbeat hasn't happened for too long and we can assume death
+ * of sensors.
+ * @private
+ * @type {Timeout}
+ */
 let heartbeatTimeout;
-// Timeout until heartbeat hasn't happened for too long and we can assume death
-// of GPS updates.
+/**
+ * Timeout until heartbeat hasn't happened for too long and we can assume death
+ * of GPS updates.
+ * @private
+ * @type {Timeout}
+ */
 let gpsHeartbeatTimeout;
-// Heartbeat from server
+/**
+ * Heartbeat from server
+ * @private
+ * @type {Timeout}
+ */
 let serverTimeout;
-// Watch Position ID. For GPS update watching.
+/**
+ * Watch Position ID. For GPS update watching.
+ * @private
+ * @type {number}
+ */
 let wpid;
-// If data sending to server is paused or recording.
+/**
+ * If data sending to server is paused or recording.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let isPaused = true;
-// If we have prevented sending to server via options or setting. Not flipped
-// due to errors or invalid state.
+/**
+ * If we have prevented sending to server via options or setting. Not flipped
+ * due to errors or invalid state.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let preventSend = false;
-// If we have sent the user's login token to server at least once. If the token
-// is empty this will also be false.
+/**
+ * If we have sent the user's login token to server at least once. If the token
+ * is empty this will also be false.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let tokenSent = false;
-// How often to save data
+/**
+ * How often to save data in milliseconds.
+ * @private
+ * @type {number}
+ */
 let updateFrequency;
-// Number of heartbeats we have received since starting getting data to
-// determine if this device has usable sensors.
+/**
+ * Number of heartbeats we have received since starting getting data to
+ * determine if this device has usable sensors.
+ * @private
+ * @type {number}
+ */
 let heartbeatCount;
-// Previous setting the user had chosen for frequency of sending data to server.
+/**
+ * Previous setting the user had chosen for frequency of sending data to server.
+ * @default
+ * @private
+ * @type {number}
+ */
 let previousUpdateFrequency = Math.Infinity;
-// Interval to check for data to pop from preSendBuffer and send to server.
+/**
+ * Interval to check for data to pop from preSendBuffer and send to server.
+ * @private
+ * @type {Interval}
+ */
 let updateInterval;
-// Interval to update clocks in live data view.
+/**
+ * Interval to update clocks in live data view.
+ * @private
+ * @type {Interval}
+ */
 let realtimeDataClockInterval;
-// Interval to update the realtime timers HUD.
+/**
+ * Interval to update the realtime timers HUD.
+ * @private
+ * @type {Interval}
+ */
 let updateTimersInterval;
-// Options to pass into watching GPS.
+/**
+ * Options to pass into watching GPS.
+ * @default
+ * @constant
+ * @private
+ * @type {PositionOptions}
+ */
 const geoOptions = {
   enableHighAccuracy: true,
   maximumAge: 0,
@@ -82,34 +188,125 @@ const geoOptions = {
 };
 
 // UI States //
+/**
+ * Are the mini status lights currently visible.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let statusLightsVisible = false;
+/**
+ * Is the options menu open.
+ * @private
+ * @default
+ * @type {boolean}
+ */
 let optionsMenuOpen = false;
+/**
+ * Is the sensors view open.
+ * @private
+ * @default
+ * @type {boolean}
+ */
 let realtimeViewOpen = false;
+/**
+ * Is the friends overlay open.
+ * @private
+ * @default
+ * @type {boolean}
+ */
 let friendViewOpen = false;
+/**
+ * Is the map visible.
+ * @private
+ * @default
+ * @type {boolean}
+ */
 let friendmapEnabled = false;
 
+/**
+ * The currently visible HUD.
+ * @private
+ * @default
+ * @type {number}
+ */
 let visibleHUD = 0;
 
 // Socket //
-// Whether we are connected to the server or not.
+/**
+ * Whether we are connected to the server or not.
+ * @private
+ * @default
+ * @type {boolean}
+ */
 let isConnected = false;
-// The session we are recording right now.
+/**
+ * The session we are recording right now.
+ * @private
+ * @default
+ * @type {string}
+ */
 let sessionId = '';
-// The previous session id we were recording for.
+/**
+ * The previous session id we were recording for.
+ * @private
+ * @default
+ * @type {string}
+ */
 let previousSessionId = '';
-// The name of the session we are recording now.
+/**
+ * The name of the session we are recording now.
+ * @private
+ * @default
+ * @type {string}
+ */
 let sessionName = '';
-// Track and config id's.
+/**
+ * ID of the currently selected track.
+ * @private
+ * @type {string|number}
+ */
 let trackId;
+/**
+ * The id of the user who owns the track data.
+ * @private
+ * @type {string}
+ */
 let trackOwnerId;
+/**
+ * The id of the currently selected track configuration.
+ * @private
+ * @type {string|number}
+ */
 let configId;
+/**
+ * The id of the user who owns the config data, currently is ignored and must be
+ * the same as trackOwnerId.
+ * @private
+ * @type {string}
+ */
 let configOwnerId;
-// Name of current user.
+/**
+ * Name of current user.
+ * @default
+ * @private
+ * @type {string}
+ */
 let driverName = '';
-// Queue of messages to send once we have connected to the server.
+/**
+ * Queue of messages to send once we have connected to the server.
+ * @private
+ * @default
+ * @type {Array}
+ */
 let socketMessageQueue = [];
 
-// App version.
+/**
+ * App version.
+ * @private
+ * @default
+ * @type {string}
+ */
 let versionNum = 'Unknown';
 
 // HTML Elements
@@ -226,99 +423,339 @@ let beta;
 let gamma;
 
 
+/**
+ * Debugging messages to send along with the data chunks.
+ * @private
+ * @type {Array.<string>}
+ */
 let messages;
-// Number of sensors readings received to average.
-let orientationCount; let accelerationCount;
-// User agent of current browser.
+/**
+ * Number of sensors readings received to average.
+ * @private
+ * @type {number}
+ */
+let orientationCount;
+/**
+ * Number of sensors readings received to average.
+ * @private
+ * @type {number}
+ */
+let accelerationCount;
+/**
+ * User agent of current browser.
+ * @private
+ * @type {string}
+ */
 let userAgent;
-// Should we reset buffered gyro data since data changes periodically but the
-// value doesn't necessarily change.
+/**
+ * Should we reset buffered gyro data since data changes periodically but the
+ * value doesn't necessarily change.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let doGyroDataReset = true;
-// Rotation with -Z pointing towards the Earth.
+/**
+ * Rotation with -Z pointing towards the Earth.
+ * @default
+ * @public
+ * @readonly
+ * @type {{a: number, b: number, g: number}}
+ */
 TraX.downRotation = {a: 0, b: 0, g: 0};
-// Number of received sensor values with minimal acceleration.
+/**
+ * Number of received sensor values with minimal acceleration.
+ * @default
+ * @private
+ * @type {number}
+ */
 let resetDownCount = 0;
-// The last time we attempted to pop the preSendBuffer.
+/**
+ * The last time we attempted to pop the preSendBuffer.
+ * @private
+ * @type {number}
+ */
 let previousUpdate;
-// Collection of buffered data to send to server.
+/**
+ * Collection of buffered data chunks to send to server.
+ * @private
+ * @default
+ * @type {Array.<Object>}
+ */
 let sendBuffer = [];
-// Current rotation of device screen only used for realtime canvases.
+/**
+ * Current rotation of device screen only used for realtime canvases.
+ * @default
+ * @private
+ * @type {{angle: number}}
+ */
 let currentScreenOrientation = {angle: 0};
 
 // Message Box //
-// Number of message boxes shown for warning the user their device is slow.
+/**
+ * Number of message boxes shown for warning the user their device is slow.
+ * @default
+ * @private
+ * @type {number}
+ */
 let popMessageWarningCount = 0;
 
 // Code status //
-// No sensor data received for too long.
+/**
+ * No sensor data received for too long.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let sensorsDead = false;
-// No gps data received for too long.
+/**
+ * No gps data received for too long.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let gpsDead = false;
-// Socket.io thinks the server connection died.
+/**
+ * Socket.io thinks the server connection died.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let connectionDead = true;
-// No data from server received for too long.
+/**
+ * No data from server received for too long.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 // let serverDead = true;
-// A script failed to load.
+/**
+ * A script failed to load.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let scriptsDead = false;
-// If the user is not signed in.
+/**
+ * If the user is not signed in.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let accountDead = true;
-// Override to force the big light to red. Set if we're sure sensors don't work
-// and we're not getting enough data to function minimally.
+/**
+ * Override to force the big light to red. Set if we're sure sensors don't work
+ * and we're not getting enough data to function minimally.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let forceDead = false;
 
 // Timers Data view //
-// The time when Record was pressed.
+/**
+ * The time when Record was pressed.
+ * @default
+ * @private
+ * @type {number}
+ */
 let sessionStartTime = 0;
-// The time when the start line was crossed.
+/**
+ * The time when the start line was crossed.
+ * @default
+ * @private
+ * @type {number}
+ */
 let lapStartTime = 0;
-// The time the previous lap started to allow for processing laps while data
-// overlaps.
+/**
+ * The time the previous lap started to allow for processing laps while data
+ * overlaps.
+ * @default
+ * @private
+ * @type {number}
+ */
 let previousLapStartTime = 0;
-// Previous lap duration in milliseconds.
+/**
+ * Previous lap duration in milliseconds.
+ * @default
+ * @private
+ * @type {number}
+ */
 let previousLapDuration = 0;
-// The best lap duration in milliseconds.
+/**
+ * The best lap duration in milliseconds.
+ * @default
+ * @private
+ * @type {number}
+ */
 let bestLapDuration = 0;
-// The predicted milliseconds the current lap will take.
+/**
+ * The predicted milliseconds the current lap will take.
+ * @default
+ * @private
+ * @type {number}
+ */
 let predictedLapDuration = 0;
-// Driver has crossed start but not finish yet.
+/**
+ * Driver has crossed start but not finish yet.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let currentlyRacing = false;
-// Just crossed the start/finish line and haven't left the threshold radius yet.
+/**
+ * Just crossed the start line and haven't left the threshold radius yet.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let justStartedRacing = false;
+/**
+ * Just crossed the finish line and haven't left the threshold radius yet.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let justFinishedRacing = false;
+/**
+ * Just crossed the start and finish line and haven't left the threshold radius
+ * yet, but are transitioning to next lap.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let inTransition = false;
+/**
+ * Are we currently in a lap.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let currentLapState = false;
-// Previous received coordinate.
+/**
+ * Previous received coordinate.
+ * @default
+ * @private
+ * @type {{lat: number, lng: number}}
+ */
 let previousCoord = {lat: 0, lng: 0};
+/**
+ * Previous previously received coordinate.
+ * @default
+ * @private
+ * @type {{lat: number, lng: number}}
+ */
 let previousPreviousCoord = {lat: 0, lng: 0};
-// Times at distances driven during the best lap.
+/**
+ * Times at distances driven during the best lap.
+ * @default
+ * @private
+ * @type {Array.<Object>}
+ */
 let bestLapData = [];
-// Times at distances through lap driven (Starts at start line).
+/**
+ * Times at distances through lap driven (Starts at start line).
+ * @default
+ * @private
+ * @type {Array.<Object>}
+ */
 let previousLapData = [];
-// Current lap times at distances since start line.
+/**
+ * Current lap times at distances since start line.
+ * @default
+ * @private
+ * @type {Array.<Object>}
+ */
 let currentLapData = [];
-// Current lap distance driven since start line.
+/**
+ * Current lap distance driven since start line.
+ * @default
+ * @private
+ * @type {number}
+ */
 let currentDistanceDriven = 0;
-// Number of laps driven this session.
+/**
+ * Number of laps driven this session.
+ * @default
+ * @private
+ * @type {number}
+ */
 let lapNum = 0;
-// Number of nonlaps driven this session.
+/**
+ * Number of nonlaps driven this session.
+ * @default
+ * @private
+ * @type {number}
+ */
 let nonLapNum = 1;
 
 
 // Friends //
-// All of user's friends.
+/**
+ * All of user's friends.
+ * @default
+ * @public
+ * @type {Array.<Object>}
+ */
 TraX.friendsList = [];
-// All users with a relationship to user.
+/**
+ * All users with a relationship to user.
+ * @default
+ * @private
+ * @type {Array.<Object>}
+ */
 let allRelations = [];
-// Locations of friends who are currently sharing location.
+/**
+ * Locations of friends who are currently sharing location.
+ * @default
+ * @private
+ * @type {Array.<Object>}
+ */
 let friendPositions = [];
-// Array of markers on map of each friend position.
+/**
+ * Array of markers on map of each friend position.
+ * @default
+ * @private
+ * @type {Array.<google.maps.Marker>}
+ */
 let friendMarkers = [];
 
+/**
+ * List of available tracks to select
+ * @default
+ * @private
+ * @type {Array.<Object>}
+ */
 let trackList = [];
+/**
+ * List of available configs to select.
+ * @default
+ * @private
+ * @type {Array.<Object>}
+ */
 let configList = [];
+/**
+ * Have we sent a request to the server are still waiting for a response from
+ * the server with the track list.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let waitingForTrackList = false;
 
+/**
+ * Current amount of data the user has stored on the server for TraX in bytes.
+ * @default
+ * @private
+ * @type {number}
+ */
 let datasize = 0;
+/**
+ * The maximum amount of data the user may store on the server in bytes.
+ * @default
+ * @private
+ * @type {number}
+ */
 let datalimit = 0;
 
 /**
@@ -758,10 +1195,10 @@ function socketInit() {
               'UNCAUGHT SERVER FAIL:', reason, extraInfo,
               'All failures should be handled properly!');
           if (isPaused) {
-TraX.showMessageBox(
+            TraX.showMessageBox(
                 'Ignore this message: (Server responded with fail code: ' +
                 reason + ')');
-}
+          }
         }
       });
   TraX.socket.on('friendPos', function(friendId, pos) {

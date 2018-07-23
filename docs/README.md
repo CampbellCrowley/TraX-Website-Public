@@ -52,6 +52,59 @@ initial load times, and possibly to later allow for better caching control.</p>
 <dd></dd>
 </dl>
 
+## Constants
+
+<dl>
+<dt><a href="#Agrav">Agrav</a> : <code>number</code></dt>
+<dd><p>Absolute acceleration due to gravity. (m/s)</p>
+</dd>
+<dt><a href="#maxGapInSession">maxGapInSession</a> : <code>number</code></dt>
+<dd><p>Milliseconds between timestamps to assume isMultiSession.</p>
+</dd>
+<dt><a href="#minLapTime">minLapTime</a> : <code>number</code></dt>
+<dd><p>Minimum milliseconds a lap is allowed to be.</p>
+</dd>
+<dt><a href="#noStatus">noStatus</a> : <code>number</code></dt>
+<dd><p>No relationship</p>
+</dd>
+<dt><a href="#oneRequestStatus">oneRequestStatus</a> : <code>number</code></dt>
+<dd><p>User 1 requested to be friends.</p>
+</dd>
+<dt><a href="#twoRequestStatus">twoRequestStatus</a> : <code>number</code></dt>
+<dd><p>User 2 requested to be friends.</p>
+</dd>
+<dt><a href="#friendStatus">friendStatus</a> : <code>number</code></dt>
+<dd><p>Users are friends.</p>
+</dd>
+<dt><a href="#oneBlockedStatus">oneBlockedStatus</a> : <code>number</code></dt>
+<dd><p>User 1 blocked user 2.</p>
+</dd>
+<dt><a href="#twoBlockedStatus">twoBlockedStatus</a> : <code>number</code></dt>
+<dd><p>User 2 blocked user 1.</p>
+</dd>
+<dt><a href="#bothBlockedStatus">bothBlockedStatus</a> : <code>number</code></dt>
+<dd><p>Both users blocked eachother.</p>
+</dd>
+<dt><a href="#onePullRequestCrew">onePullRequestCrew</a> : <code>number</code></dt>
+<dd><p>User 1 requested User 2 to be crew for 1.</p>
+</dd>
+<dt><a href="#onePushRequestCrew">onePushRequestCrew</a> : <code>number</code></dt>
+<dd><p>User 1 requested to be crew for 2.</p>
+</dd>
+<dt><a href="#twoPushRequestCrew">twoPushRequestCrew</a> : <code>number</code></dt>
+<dd><p>user 2 requested 1 to be crew for 2.</p>
+</dd>
+<dt><a href="#twoPullRequestCrew">twoPullRequestCrew</a> : <code>number</code></dt>
+<dd><p>User 2 requested to be crew for 1.</p>
+</dd>
+<dt><a href="#oneCrewStatus">oneCrewStatus</a> : <code>number</code></dt>
+<dd><p>User 1 is crew for 2.</p>
+</dd>
+<dt><a href="#twoCrewStatus">twoCrewStatus</a> : <code>number</code></dt>
+<dd><p>User 2 is crew for 1.</p>
+</dd>
+</dl>
+
 <a name="module_ScriptLoader/live"></a>
 
 ## ScriptLoader/live
@@ -72,20 +125,44 @@ The Server side of TraX.
 
 * [TraXServerModule](#module_TraXServerModule)
     * [~TraXServer](#module_TraXServerModule..TraXServer)
+        * [~sockets](#module_TraXServerModule..TraXServer..sockets) : <code>Array.&lt;io.Client&gt;</code> ℗
+        * [~liveSockets](#module_TraXServerModule..TraXServer..liveSockets) : <code>Array.&lt;io.Client&gt;</code> ℗
+        * [~versionNum](#module_TraXServerModule..TraXServer..versionNum) : <code>string</code> ℗
+        * [~versionNumLastUpdate](#module_TraXServerModule..TraXServer..versionNumLastUpdate) : <code>number</code> ℗
         * [~patreonTiers](#module_TraXServerModule..TraXServer..patreonTiers) : <code>Array</code> ℗
         * [~parseCookies(headers)](#module_TraXServerModule..TraXServer..parseCookies) ⇒ <code>object</code>
         * [~updatePatreonTiers()](#module_TraXServerModule..TraXServer..updatePatreonTiers) ℗
-        * [~setFriendRelation(user, friend, relation, exists, callback)](#module_TraXServerModule..TraXServer..setFriendRelation)
-        * [~checkIfFriends(user, friend, callback)](#module_TraXServerModule..TraXServer..checkIfFriends)
-        * [~checkFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFilePerms)
-        * [~checkFriendFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFriendFilePerms)
-        * [~appendChunk(filename, chunkId, buffer, socket)](#module_TraXServerModule..TraXServer..appendChunk)
-        * [~forwardChunk(userId, chunkId, buffer, [isPublic])](#module_TraXServerModule..TraXServer..forwardChunk)
-        * [~trackIdsToNames(idArray, callback)](#module_TraXServerModule..TraXServer..trackIdsToNames)
-        * [~getFriendsList(userId, relation, callback)](#module_TraXServerModule..TraXServer..getFriendsList)
-        * [~getFriendRelation(user, friend, callback)](#module_TraXServerModule..TraXServer..getFriendRelation)
-        * [~updateVersionNum()](#module_TraXServerModule..TraXServer..updateVersionNum)
-        * [~sendVersionToAll()](#module_TraXServerModule..TraXServer..sendVersionToAll)
+        * [~setFriendRelation(user, friend, relation, exists, callback)](#module_TraXServerModule..TraXServer..setFriendRelation) ℗
+        * [~checkIfFriends(user, friend, callback)](#module_TraXServerModule..TraXServer..checkIfFriends) ℗
+        * [~checkFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFilePerms) ℗
+        * [~checkFriendFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFriendFilePerms) ℗
+        * [~appendChunk(filename, chunkId, buffer, socket)](#module_TraXServerModule..TraXServer..appendChunk) ℗
+        * [~forwardChunk(userId, chunkId, buffer, [isPublic])](#module_TraXServerModule..TraXServer..forwardChunk) ℗
+        * [~trackIdsToNames(idArray, callback)](#module_TraXServerModule..TraXServer..trackIdsToNames) ℗
+        * [~getFriendsList(userId, relation, callback)](#module_TraXServerModule..TraXServer..getFriendsList) ℗
+        * [~getFriendRelation(user, friend, callback)](#module_TraXServerModule..TraXServer..getFriendRelation) ℗
+        * [~updateVersionNum()](#module_TraXServerModule..TraXServer..updateVersionNum) ℗
+        * [~sendVersionToAll()](#module_TraXServerModule..TraXServer..sendVersionToAll) ℗
+    * [~sqlCon](#module_TraXServerModule..sqlCon) : <code>sql.ConnectionConfig</code> ℗
+    * [~versionType](#module_TraXServerModule..versionType) : <code>string</code> ℗
+    * [~userdata](#module_TraXServerModule..userdata) : <code>string</code> ℗
+    * [~traxsubdir](#module_TraXServerModule..traxsubdir) : <code>string</code> ℗
+    * [~sessionsubdir](#module_TraXServerModule..sessionsubdir) : <code>string</code> ℗
+    * [~usertracksubdir](#module_TraXServerModule..usertracksubdir) : <code>string</code> ℗
+    * [~usersummariessubdir](#module_TraXServerModule..usersummariessubdir) : <code>string</code> ℗
+    * [~trackdataDirs](#module_TraXServerModule..trackdataDirs) : <code>Object.&lt;string&gt;</code> ℗
+    * [~trackdata](#module_TraXServerModule..trackdata) : <code>string</code> ℗
+    * [~accountsTable](#module_TraXServerModule..accountsTable) : <code>string</code> ℗
+    * [~friendTable](#module_TraXServerModule..friendTable) : <code>string</code> ℗
+    * [~statusColumn](#module_TraXServerModule..statusColumn) : <code>string</code> ℗
+    * [~noStatus](#module_TraXServerModule..noStatus) : <code>number</code> ℗
+    * [~oneRequestStatus](#module_TraXServerModule..oneRequestStatus) : <code>number</code> ℗
+    * [~twoRequestStatus](#module_TraXServerModule..twoRequestStatus) : <code>number</code> ℗
+    * [~friendStatus](#module_TraXServerModule..friendStatus) : <code>number</code> ℗
+    * [~oneBlockedStatus](#module_TraXServerModule..oneBlockedStatus) : <code>number</code> ℗
+    * [~twoBlockedStatus](#module_TraXServerModule..twoBlockedStatus) : <code>number</code> ℗
+    * [~bothBlockedStatus](#module_TraXServerModule..bothBlockedStatus) : <code>number</code> ℗
+    * [~versionNumFile](#module_TraXServerModule..versionNumFile) : <code>string</code> ℗
     * [~connectSQL()](#module_TraXServerModule..connectSQL) ℗
     * [~handler(req, res)](#module_TraXServerModule..handler) ℗
     * [~permCallback](#module_TraXServerModule..permCallback) : <code>function</code>
@@ -101,27 +178,65 @@ side of TraX.
 **Kind**: inner class of [<code>TraXServerModule</code>](#module_TraXServerModule)  
 
 * [~TraXServer](#module_TraXServerModule..TraXServer)
+    * [~sockets](#module_TraXServerModule..TraXServer..sockets) : <code>Array.&lt;io.Client&gt;</code> ℗
+    * [~liveSockets](#module_TraXServerModule..TraXServer..liveSockets) : <code>Array.&lt;io.Client&gt;</code> ℗
+    * [~versionNum](#module_TraXServerModule..TraXServer..versionNum) : <code>string</code> ℗
+    * [~versionNumLastUpdate](#module_TraXServerModule..TraXServer..versionNumLastUpdate) : <code>number</code> ℗
     * [~patreonTiers](#module_TraXServerModule..TraXServer..patreonTiers) : <code>Array</code> ℗
     * [~parseCookies(headers)](#module_TraXServerModule..TraXServer..parseCookies) ⇒ <code>object</code>
     * [~updatePatreonTiers()](#module_TraXServerModule..TraXServer..updatePatreonTiers) ℗
-    * [~setFriendRelation(user, friend, relation, exists, callback)](#module_TraXServerModule..TraXServer..setFriendRelation)
-    * [~checkIfFriends(user, friend, callback)](#module_TraXServerModule..TraXServer..checkIfFriends)
-    * [~checkFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFilePerms)
-    * [~checkFriendFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFriendFilePerms)
-    * [~appendChunk(filename, chunkId, buffer, socket)](#module_TraXServerModule..TraXServer..appendChunk)
-    * [~forwardChunk(userId, chunkId, buffer, [isPublic])](#module_TraXServerModule..TraXServer..forwardChunk)
-    * [~trackIdsToNames(idArray, callback)](#module_TraXServerModule..TraXServer..trackIdsToNames)
-    * [~getFriendsList(userId, relation, callback)](#module_TraXServerModule..TraXServer..getFriendsList)
-    * [~getFriendRelation(user, friend, callback)](#module_TraXServerModule..TraXServer..getFriendRelation)
-    * [~updateVersionNum()](#module_TraXServerModule..TraXServer..updateVersionNum)
-    * [~sendVersionToAll()](#module_TraXServerModule..TraXServer..sendVersionToAll)
+    * [~setFriendRelation(user, friend, relation, exists, callback)](#module_TraXServerModule..TraXServer..setFriendRelation) ℗
+    * [~checkIfFriends(user, friend, callback)](#module_TraXServerModule..TraXServer..checkIfFriends) ℗
+    * [~checkFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFilePerms) ℗
+    * [~checkFriendFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFriendFilePerms) ℗
+    * [~appendChunk(filename, chunkId, buffer, socket)](#module_TraXServerModule..TraXServer..appendChunk) ℗
+    * [~forwardChunk(userId, chunkId, buffer, [isPublic])](#module_TraXServerModule..TraXServer..forwardChunk) ℗
+    * [~trackIdsToNames(idArray, callback)](#module_TraXServerModule..TraXServer..trackIdsToNames) ℗
+    * [~getFriendsList(userId, relation, callback)](#module_TraXServerModule..TraXServer..getFriendsList) ℗
+    * [~getFriendRelation(user, friend, callback)](#module_TraXServerModule..TraXServer..getFriendRelation) ℗
+    * [~updateVersionNum()](#module_TraXServerModule..TraXServer..updateVersionNum) ℗
+    * [~sendVersionToAll()](#module_TraXServerModule..TraXServer..sendVersionToAll) ℗
 
+<a name="module_TraXServerModule..TraXServer..sockets"></a>
+
+#### TraXServer~sockets : <code>Array.&lt;io.Client&gt;</code> ℗
+All connected sockets.
+
+**Kind**: inner property of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Default**: <code>[]</code>  
+**Access**: private  
+<a name="module_TraXServerModule..TraXServer..liveSockets"></a>
+
+#### TraXServer~liveSockets : <code>Array.&lt;io.Client&gt;</code> ℗
+All connected sockets requesting live data streams.
+
+**Kind**: inner property of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Default**: <code>[]</code>  
+**Access**: private  
+<a name="module_TraXServerModule..TraXServer..versionNum"></a>
+
+#### TraXServer~versionNum : <code>string</code> ℗
+The current version read from file.
+
+**Kind**: inner property of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Default**: <code>&quot;Unknown&quot;</code>  
+**Access**: private  
+**See**: {TraXServerModule~versionNumFile}  
+<a name="module_TraXServerModule..TraXServer..versionNumLastUpdate"></a>
+
+#### TraXServer~versionNumLastUpdate : <code>number</code> ℗
+The last time at which the version number was read from file.
+
+**Kind**: inner property of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Default**: <code>0</code>  
+**Access**: private  
 <a name="module_TraXServerModule..TraXServer..patreonTiers"></a>
 
 #### TraXServer~patreonTiers : <code>Array</code> ℗
 Stores the current Patreon tier benefits read from patreon.json
 
 **Kind**: inner property of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Default**: <code>[]</code>  
 **Access**: private  
 <a name="module_TraXServerModule..TraXServer..parseCookies"></a>
 
@@ -145,10 +260,11 @@ Read the Patreon tier beneits from patreon.json
 **See**: {patreonTiers}  
 <a name="module_TraXServerModule..TraXServer..setFriendRelation"></a>
 
-#### TraXServer~setFriendRelation(user, friend, relation, exists, callback)
+#### TraXServer~setFriendRelation(user, friend, relation, exists, callback) ℗
 Sets two users relation in the database.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -160,10 +276,11 @@ Sets two users relation in the database.
 
 <a name="module_TraXServerModule..TraXServer..checkIfFriends"></a>
 
-#### TraXServer~checkIfFriends(user, friend, callback)
+#### TraXServer~checkIfFriends(user, friend, callback) ℗
 Checks if the two users are friends.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -173,10 +290,11 @@ Checks if the two users are friends.
 
 <a name="module_TraXServerModule..TraXServer..checkFilePerms"></a>
 
-#### TraXServer~checkFilePerms(filename, userId, otherId, callback)
+#### TraXServer~checkFilePerms(filename, userId, otherId, callback) ℗
 Checks if the given userId has permission to view the given filename.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -187,10 +305,11 @@ Checks if the given userId has permission to view the given filename.
 
 <a name="module_TraXServerModule..TraXServer..checkFriendFilePerms"></a>
 
-#### TraXServer~checkFriendFilePerms(filename, userId, otherId, callback)
+#### TraXServer~checkFriendFilePerms(filename, userId, otherId, callback) ℗
 Checks if the given userId has permission to view otherId's data.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -201,10 +320,11 @@ Checks if the given userId has permission to view otherId's data.
 
 <a name="module_TraXServerModule..TraXServer..appendChunk"></a>
 
-#### TraXServer~appendChunk(filename, chunkId, buffer, socket)
+#### TraXServer~appendChunk(filename, chunkId, buffer, socket) ℗
 Appends a given session chunk to its file. Responds to socket.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -215,10 +335,11 @@ Appends a given session chunk to its file. Responds to socket.
 
 <a name="module_TraXServerModule..TraXServer..forwardChunk"></a>
 
-#### TraXServer~forwardChunk(userId, chunkId, buffer, [isPublic])
+#### TraXServer~forwardChunk(userId, chunkId, buffer, [isPublic]) ℗
 Forwards received chunk data to all clients requesting live data.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -229,11 +350,12 @@ Forwards received chunk data to all clients requesting live data.
 
 <a name="module_TraXServerModule..TraXServer..trackIdsToNames"></a>
 
-#### TraXServer~trackIdsToNames(idArray, callback)
+#### TraXServer~trackIdsToNames(idArray, callback) ℗
 Takes an array of directories describing a track, and returns an array of
 objects of the names and ids of the tracks.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -242,10 +364,11 @@ objects of the names and ids of the tracks.
 
 <a name="module_TraXServerModule..TraXServer..getFriendsList"></a>
 
-#### TraXServer~getFriendsList(userId, relation, callback)
+#### TraXServer~getFriendsList(userId, relation, callback) ℗
 Gets list of all users with relation to userId.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -255,10 +378,11 @@ Gets list of all users with relation to userId.
 
 <a name="module_TraXServerModule..TraXServer..getFriendRelation"></a>
 
-#### TraXServer~getFriendRelation(user, friend, callback)
+#### TraXServer~getFriendRelation(user, friend, callback) ℗
 Gets the relation between two users.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -268,16 +392,176 @@ Gets the relation between two users.
 
 <a name="module_TraXServerModule..TraXServer..updateVersionNum"></a>
 
-#### TraXServer~updateVersionNum()
+#### TraXServer~updateVersionNum() ℗
 Checks the versionNumFile for updated current app version.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
 <a name="module_TraXServerModule..TraXServer..sendVersionToAll"></a>
 
-#### TraXServer~sendVersionToAll()
+#### TraXServer~sendVersionToAll() ℗
 Sends the version number to all connected clients.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
+<a name="module_TraXServerModule..sqlCon"></a>
+
+### TraXServerModule~sqlCon : <code>sql.ConnectionConfig</code> ℗
+Stores the information about the SQL server connection.
+
+**Kind**: inner property of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Access**: private  
+<a name="module_TraXServerModule..versionType"></a>
+
+### TraXServerModule~versionType : <code>string</code> ℗
+String defining which version this script is.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Access**: private  
+<a name="module_TraXServerModule..userdata"></a>
+
+### TraXServerModule~userdata : <code>string</code> ℗
+Directory to find and store user data.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>&quot;/var/www/data/user/&quot;</code>  
+**Access**: private  
+<a name="module_TraXServerModule..traxsubdir"></a>
+
+### TraXServerModule~traxsubdir : <code>string</code> ℗
+Subdirectory in specific user's filder where we store our data.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>&quot;/TraX/&quot;</code>  
+**Access**: private  
+<a name="module_TraXServerModule..sessionsubdir"></a>
+
+### TraXServerModule~sessionsubdir : <code>string</code> ℗
+Subdirectory within the user's TraX folder to store session data.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>&quot;sessions/&quot;</code>  
+**Access**: private  
+<a name="module_TraXServerModule..usertracksubdir"></a>
+
+### TraXServerModule~usertracksubdir : <code>string</code> ℗
+Subdirectory within the user's TraX folder to store track data.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>&quot;tracks/&quot;</code>  
+**Access**: private  
+<a name="module_TraXServerModule..usersummariessubdir"></a>
+
+### TraXServerModule~usersummariessubdir : <code>string</code> ℗
+Subdirectory within user's TraX folder to store summary data.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>&quot;summaries/&quot;</code>  
+**Access**: private  
+<a name="module_TraXServerModule..trackdataDirs"></a>
+
+### TraXServerModule~trackdataDirs : <code>Object.&lt;string&gt;</code> ℗
+Folder paths to find public track data.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>{&quot;development&quot;:&quot;/var/www/dev.campbellcrowley.com/trax/trackdata/&quot;,&quot;release&quot;:&quot;/var/www/trax.campbellcrowley.com/trackdata/&quot;}</code>  
+**Access**: private  
+<a name="module_TraXServerModule..trackdata"></a>
+
+### TraXServerModule~trackdata : <code>string</code> ℗
+Selected path from trackdataDirs to use for this version of the script.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Access**: private  
+<a name="module_TraXServerModule..accountsTable"></a>
+
+### TraXServerModule~accountsTable : <code>string</code> ℗
+The table where account data is stored about users.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>&quot;Accounts&quot;</code>  
+**Access**: private  
+<a name="module_TraXServerModule..friendTable"></a>
+
+### TraXServerModule~friendTable : <code>string</code> ℗
+The table where relationship statuses are stored.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>&quot;Friends&quot;</code>  
+**Access**: private  
+<a name="module_TraXServerModule..statusColumn"></a>
+
+### TraXServerModule~statusColumn : <code>string</code> ℗
+The column within the friendTable to look for the relationship value between
+the users.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>&quot;relationship&quot;</code>  
+**Access**: private  
+<a name="module_TraXServerModule..noStatus"></a>
+
+### TraXServerModule~noStatus : <code>number</code> ℗
+No relationship.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Access**: private  
+**Todo:**: Move relationship values to enum-like structure.  
+<a name="module_TraXServerModule..oneRequestStatus"></a>
+
+### TraXServerModule~oneRequestStatus : <code>number</code> ℗
+User 1 requested to be friends.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>0</code>  
+**Access**: private  
+<a name="module_TraXServerModule..twoRequestStatus"></a>
+
+### TraXServerModule~twoRequestStatus : <code>number</code> ℗
+User 2 requested to be friends.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>1</code>  
+**Access**: private  
+<a name="module_TraXServerModule..friendStatus"></a>
+
+### TraXServerModule~friendStatus : <code>number</code> ℗
+Users are friends.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>2</code>  
+**Access**: private  
+<a name="module_TraXServerModule..oneBlockedStatus"></a>
+
+### TraXServerModule~oneBlockedStatus : <code>number</code> ℗
+User 1 blocked user 2.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>3</code>  
+**Access**: private  
+<a name="module_TraXServerModule..twoBlockedStatus"></a>
+
+### TraXServerModule~twoBlockedStatus : <code>number</code> ℗
+User 2 blocked user 1.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>4</code>  
+**Access**: private  
+<a name="module_TraXServerModule..bothBlockedStatus"></a>
+
+### TraXServerModule~bothBlockedStatus : <code>number</code> ℗
+Both users blocked eachother.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>5</code>  
+**Access**: private  
+<a name="module_TraXServerModule..versionNumFile"></a>
+
+### TraXServerModule~versionNumFile : <code>string</code> ℗
+File to find the current version of the project.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>&quot;./version.txt&quot;</code>  
+**Access**: private  
 <a name="module_TraXServerModule..connectSQL"></a>
 
 ### TraXServerModule~connectSQL() ℗
@@ -381,20 +665,172 @@ Print stored data for debugging.
 
 ## Sidebar
 **Kind**: global class  
+
+* [Sidebar](#Sidebar)
+    * [new Sidebar()](#new_Sidebar_new)
+    * [.init()](#Sidebar.init)
+    * [.toggleOpen([force])](#Sidebar.toggleOpen)
+
 <a name="new_Sidebar_new"></a>
 
 ### new Sidebar()
 Controls a sidebar menu.
+
+<a name="Sidebar.init"></a>
+
+### Sidebar.init()
+Initialize Sidebar.
+
+**Kind**: static method of [<code>Sidebar</code>](#Sidebar)  
+**Access**: public  
+<a name="Sidebar.toggleOpen"></a>
+
+### Sidebar.toggleOpen([force])
+Toggle the sidebar open and closed.
+
+**Kind**: static method of [<code>Sidebar</code>](#Sidebar)  
+**Pulbic**:   
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [force] | <code>boolean</code> \| <code>string</code> | "default" sets to default setting, a boolean sets it to that value, undefined toggles state. |
 
 <a name="Units"></a>
 
 ## Units ⇐ [<code>TraX</code>](#TraX)
 **Kind**: global class  
 **Extends**: [<code>TraX</code>](#TraX)  
+
+* [Units](#Units) ⇐ [<code>TraX</code>](#TraX)
+    * [new Units()](#new_Units_new)
+    * [.speedToUnit(input, [units])](#Units.speedToUnit) ⇒ <code>number</code>
+    * [.distanceToLargeUnit(input, [units], [noround])](#Units.distanceToLargeUnit) ⇒ <code>number</code>
+    * [.speedToLargeUnit(input, [units])](#Units.speedToLargeUnit) ⇒ <code>number</code>
+    * [.distanceToSmallUnit(input, [units])](#Units.distanceToSmallUnit) ⇒ <code>number</code>
+    * [.getSmallDistanceUnit([units])](#Units.getSmallDistanceUnit) ⇒ <code>string</code>
+    * [.getLargeSpeedUnit([units])](#Units.getLargeSpeedUnit) ⇒ <code>string</code>
+    * [.coordToMeters(lat1, lng1, lat2, lng2)](#Units.coordToMeters) ⇒ <code>number</code>
+    * [.latLngToMeters(one, two)](#Units.latLngToMeters) ⇒ <code>number</code>
+
 <a name="new_Units_new"></a>
 
 ### new Units()
 Unit conversion helper functions.
+
+<a name="Units.speedToUnit"></a>
+
+### Units.speedToUnit(input, [units]) ⇒ <code>number</code>
+Meters per second to miles per hour or kilometers per hour.
+
+**Kind**: static method of [<code>Units</code>](#Units)  
+**Returns**: <code>number</code> - Number rounded to tenths place in unit.  
+**Access**: public  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| input | <code>number</code> | Speed in meters per second. |
+| [units] | <code>string</code> | The units system to convert to, default uses TraX.unitDropdownDom.value |
+
+<a name="Units.distanceToLargeUnit"></a>
+
+### Units.distanceToLargeUnit(input, [units], [noround]) ⇒ <code>number</code>
+Meters to mile or kilometer
+
+**Kind**: static method of [<code>Units</code>](#Units)  
+**Returns**: <code>number</code> - Converted value.  
+**Access**: public  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| input | <code>number</code> |  | Distance in meters. |
+| [units] | <code>string</code> |  | Unit system to convert to, default uses TraX.unitDropdownDom.value |
+| [noround] | <code>boolean</code> | <code>false</code> | Disable rounding final value to tenths place. |
+
+<a name="Units.speedToLargeUnit"></a>
+
+### Units.speedToLargeUnit(input, [units]) ⇒ <code>number</code>
+Kilometers per hour to MPH or KPH.
+
+**Kind**: static method of [<code>Units</code>](#Units)  
+**Returns**: <code>number</code> - Converted value.  
+**Access**: public  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| input | <code>number</code> | Speed in kilometers per hour. |
+| [units] | <code>string</code> | The unit system to convert to, default uses TraX.unitDropdownDom.value |
+
+<a name="Units.distanceToSmallUnit"></a>
+
+### Units.distanceToSmallUnit(input, [units]) ⇒ <code>number</code>
+Meters to feet or meters.
+
+**Kind**: static method of [<code>Units</code>](#Units)  
+**Returns**: <code>number</code> - Converted value.  
+**Access**: public  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| input | <code>number</code> | Input in meters. |
+| [units] | <code>string</code> | The unit system to convert to, default uses TraX.unitDropdownDom.value |
+
+<a name="Units.getSmallDistanceUnit"></a>
+
+### Units.getSmallDistanceUnit([units]) ⇒ <code>string</code>
+Get feet or meters unit.
+
+**Kind**: static method of [<code>Units</code>](#Units)  
+**Returns**: <code>string</code> - The unit names. (ft or m)  
+**Access**: public  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [units] | <code>string</code> | The unit system to get the units for, default uses TraX.unitDropdownDom.value |
+
+<a name="Units.getLargeSpeedUnit"></a>
+
+### Units.getLargeSpeedUnit([units]) ⇒ <code>string</code>
+Get miles per hour, or kilometers per hour unit.
+
+**Kind**: static method of [<code>Units</code>](#Units)  
+**Returns**: <code>string</code> - The unit names. (kmh or mph)  
+**Access**: public  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [units] | <code>string</code> | The units system to get the unit for, default uses TraX.unitDropdownDom.value |
+
+<a name="Units.coordToMeters"></a>
+
+### Units.coordToMeters(lat1, lng1, lat2, lng2) ⇒ <code>number</code>
+Convert given two points latitude and longitude, get the distance between the
+two. Treats Earth as a sphere with radius 6378.137km.
+
+**Kind**: static method of [<code>Units</code>](#Units)  
+**Returns**: <code>number</code> - Distance in meters between the two coords.  
+**Access**: public  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| lat1 | <code>number</code> | The first latitude. |
+| lng1 | <code>number</code> | The first longitude. |
+| lat2 | <code>number</code> | The second latitude. |
+| lng2 | <code>number</code> | The second longitude. |
+
+<a name="Units.latLngToMeters"></a>
+
+### Units.latLngToMeters(one, two) ⇒ <code>number</code>
+Given two coords, find distance in meters between the two.
+
+**Kind**: static method of [<code>Units</code>](#Units)  
+**Returns**: <code>number</code> - Distance in meters between the two coords.  
+**Access**: public  
+**See**: {Units~coordToMeters}  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| one | <code>Object</code> | First coordinate. |
+| two | <code>Object</code> | Second coordinate. |
 
 <a name="Common"></a>
 
@@ -641,6 +1077,17 @@ Compare two version strings to see which version is a higher value.
 
 * [TraX](#TraX)
     * [new TraX()](#new_TraX_new)
+    * [.socket](#TraX.socket) : <code>SocketIO</code>
+    * [.friendsList](#TraX.friendsList) : <code>Array.&lt;Object&gt;</code>
+    * [.summaryList](#TraX.summaryList) : <code>Object</code>
+    * [.isSignedIn](#TraX.isSignedIn) : <code>boolean</code>
+    * [.preventSend](#TraX.preventSend) : <code>boolean</code>
+    * [.unitDropdownDom](#TraX.unitDropdownDom) : <code>Object</code> \| <code>Element</code>
+    * [.initialized](#TraX.initialized) : <code>boolean</code>
+    * [.debugMode](#TraX.debugMode) : <code>number</code>
+    * [.downRotation](#TraX.downRotation) : <code>Object</code>
+    * [.friendsList](#TraX.friendsList) : <code>Array.&lt;Object&gt;</code>
+    * [.downRotation](#TraX.downRotation) : <code>Object</code>
     * [.goBack()](#TraX.goBack)
     * [.setURLOption(option, setting)](#TraX.setURLOption)
     * [.toggleDebug([isDebug])](#TraX.toggleDebug)
@@ -689,6 +1136,98 @@ Compare two version strings to see which version is a higher value.
 ### new TraX()
 The base class for all TraX related things.
 
+<a name="TraX.socket"></a>
+
+### TraX.socket : <code>SocketIO</code>
+The open socket to the server.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Access**: public  
+<a name="TraX.friendsList"></a>
+
+### TraX.friendsList : <code>Array.&lt;Object&gt;</code>
+All of user's friends.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Default**: <code>[]</code>  
+**Access**: public  
+<a name="TraX.summaryList"></a>
+
+### TraX.summaryList : <code>Object</code>
+List of summaries organized by id.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Default**: <code>{}</code>  
+**Access**: public  
+<a name="TraX.isSignedIn"></a>
+
+### TraX.isSignedIn : <code>boolean</code>
+Is the user currently signed in.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Default**: <code>false</code>  
+**Access**: public  
+**Read only**: true  
+<a name="TraX.preventSend"></a>
+
+### TraX.preventSend : <code>boolean</code>
+Prevent sending information to servers.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Default**: <code>false</code>  
+**Access**: public  
+<a name="TraX.unitDropdownDom"></a>
+
+### TraX.unitDropdownDom : <code>Object</code> \| <code>Element</code>
+If this is implemented, others should override this with the DOM element that
+selects the units.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Default**: <code>{&quot;value&quot;:&quot;imperial&quot;}</code>  
+**Access**: public  
+<a name="TraX.initialized"></a>
+
+### TraX.initialized : <code>boolean</code>
+All scripts loaded and initialized.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Default**: <code>false</code>  
+**Access**: public  
+**Read only**: true  
+<a name="TraX.debugMode"></a>
+
+### TraX.debugMode : <code>number</code>
+Debug setting used across scripts for additional logging and additional UI
+sections that most users do not wish to see.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Default**: <code>0</code>  
+**Access**: public  
+<a name="TraX.downRotation"></a>
+
+### TraX.downRotation : <code>Object</code>
+Rotation with -Z pointing towards the Earth.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Default**: <code>{&quot;a&quot;:0,&quot;b&quot;:0,&quot;g&quot;:0}</code>  
+**Access**: public  
+**Read only**: true  
+<a name="TraX.friendsList"></a>
+
+### TraX.friendsList : <code>Array.&lt;Object&gt;</code>
+All of user's friends.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Default**: <code>[]</code>  
+**Access**: public  
+<a name="TraX.downRotation"></a>
+
+### TraX.downRotation : <code>Object</code>
+Rotation where -Z is down.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Default**: <code>{&quot;a&quot;:0,&quot;b&quot;:0,&quot;g&quot;:0}</code>  
+**Access**: public  
 <a name="TraX.goBack"></a>
 
 ### TraX.goBack()
@@ -1087,8 +1626,17 @@ Go to previous page.
 
 * [Canvases](#Canvases) ⇐ [<code>TraX</code>](#TraX)
     * [new Canvases()](#new_Canvases_new)
+    * [.Sphere3d](#Canvases.Sphere3d)
+        * [new Canvases.Sphere3d([radius])](#new_Canvases.Sphere3d_new)
+    * [.rotation](#Canvases.rotation) : <code>Object</code>
+    * [.drawAccel](#Canvases.drawAccel) : <code>Object</code>
+    * [.forwardVector](#Canvases.forwardVector) : <code>Object</code>
+    * [.headingOffset](#Canvases.headingOffset) : <code>number</code>
+    * [.rotationRate](#Canvases.rotationRate) : <code>Object</code>
+    * [.init()](#Canvases.init)
     * [.renderGyro([makeDown])](#Canvases.renderGyro)
     * [.renderAccel([externalDevice])](#Canvases.renderAccel)
+    * [.resetEstimatedVelocity(gpsSpeed, gpsHeading)](#Canvases.resetEstimatedVelocity)
 
 <a name="new_Canvases_new"></a>
 
@@ -1096,6 +1644,78 @@ Go to previous page.
 The script that control the canvases on the pages that visualize G-Force as
 well as the Orientation.
 
+<a name="Canvases.Sphere3d"></a>
+
+### Canvases.Sphere3d
+**Kind**: static class of [<code>Canvases</code>](#Canvases)  
+**Access**: public  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| point | <code>Array.&lt;TraX.Common.Point3d&gt;</code> | Points that make up the sphere. |
+| color | <code>string</code> | Color of all points in the sphere. |
+| radius | <code>number</code> | The radius of the sphere. |
+| numberOfVertexes | <code>number</code> | The number of points defining the sphere. |
+
+<a name="new_Canvases.Sphere3d_new"></a>
+
+#### new Canvases.Sphere3d([radius])
+Class storing information about how to draw a sphere on the canvas.
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| [radius] | <code>number</code> | <code>20</code> | The radius of the sphere. |
+
+<a name="Canvases.rotation"></a>
+
+### Canvases.rotation : <code>Object</code>
+Current given rotation of device.
+
+**Kind**: static property of [<code>Canvases</code>](#Canvases)  
+**Default**: <code>{&quot;a&quot;:0,&quot;b&quot;:0,&quot;g&quot;:0}</code>  
+**Access**: public  
+<a name="Canvases.drawAccel"></a>
+
+### Canvases.drawAccel : <code>Object</code>
+Current acceleration being exerted on device.
+
+**Kind**: static property of [<code>Canvases</code>](#Canvases)  
+**Default**: <code>[0,0,0]</code>  
+**Access**: public  
+<a name="Canvases.forwardVector"></a>
+
+### Canvases.forwardVector : <code>Object</code>
+Vector where +X is forwards.
+
+**Kind**: static property of [<code>Canvases</code>](#Canvases)  
+**Default**: <code>[0,1,0]</code>  
+**Access**: public  
+<a name="Canvases.headingOffset"></a>
+
+### Canvases.headingOffset : <code>number</code>
+Calculated offset between what we think is forwards and the direction GPS
+tells us we are going.
+
+**Kind**: static property of [<code>Canvases</code>](#Canvases)  
+**Default**: <code>0</code>  
+**Access**: public  
+<a name="Canvases.rotationRate"></a>
+
+### Canvases.rotationRate : <code>Object</code>
+The current rate at which the device is rotating.
+
+**Kind**: static property of [<code>Canvases</code>](#Canvases)  
+**Default**: <code>{&quot;a&quot;:0,&quot;b&quot;:0,&quot;g&quot;:0}</code>  
+**Access**: public  
+<a name="Canvases.init"></a>
+
+### Canvases.init()
+Initialize Canvases
+
+**Kind**: static method of [<code>Canvases</code>](#Canvases)  
+**Access**: public  
 <a name="Canvases.renderGyro"></a>
 
 ### Canvases.renderGyro([makeDown])
@@ -1117,6 +1737,20 @@ Draw data on canvas showing acceleration data.
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | [externalDevice] | <code>boolean</code> | <code>false</code> | Is this device a different device from the one recording the data. |
+
+<a name="Canvases.resetEstimatedVelocity"></a>
+
+### Canvases.resetEstimatedVelocity(gpsSpeed, gpsHeading)
+Take the passed in values as the current correct speed and heading, and reset
+our estimated velocity.
+
+**Kind**: static method of [<code>Canvases</code>](#Canvases)  
+**Access**: public  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| gpsSpeed | <code>number</code> | The speed reported by the GPS. (m/s?) |
+| gpsHeading | <code>number</code> | The heading reported by the GPS. (deg cw of N?) |
 
 <a name="Video"></a>
 
@@ -1815,6 +2449,10 @@ Add a listener to a Panes Event.
         * [new DataView.Track(name, id, ownerId)](#new_DataView.Track_new)
     * [.Config](#DataView.Config)
         * [new DataView.Config(name, id, track, ownerId)](#new_DataView.Config_new)
+    * [.coordAverage](#DataView.coordAverage) : <code>Object</code>
+    * [.trackData](#DataView.trackData) : <code>Object</code>
+    * [.trackList](#DataView.trackList) : <code>Array</code>
+    * [.configList](#DataView.configList) : <code>Object.&lt;Array&gt;</code>
     * [.init()](#DataView.init)
     * [.handleOpening()](#DataView.handleOpening)
     * [.handleClosing()](#DataView.handleClosing)
@@ -1920,6 +2558,40 @@ Class for necessary info about a config.
 | track | <code>TraX~DataView~Track</code> | The track this config is a child of. |
 | ownerId | <code>string</code> | The id of the owner of this config. |
 
+<a name="DataView.coordAverage"></a>
+
+### DataView.coordAverage : <code>Object</code>
+Average of all coordinates received for session.
+
+**Kind**: static property of [<code>DataView</code>](#DataView)  
+**Default**: <code>{}</code>  
+**Access**: public  
+**Read only**: true  
+<a name="DataView.trackData"></a>
+
+### DataView.trackData : <code>Object</code>
+Data about a track and it's configuration.
+
+**Kind**: static property of [<code>DataView</code>](#DataView)  
+**Default**: <code>{}</code>  
+**Access**: public  
+**Read only**: true  
+<a name="DataView.trackList"></a>
+
+### DataView.trackList : <code>Array</code>
+List of all tracks.
+
+**Kind**: static property of [<code>DataView</code>](#DataView)  
+**Default**: <code>[]</code>  
+**Access**: public  
+<a name="DataView.configList"></a>
+
+### DataView.configList : <code>Object.&lt;Array&gt;</code>
+List of configs arranged by track id and user id in object.
+
+**Kind**: static property of [<code>DataView</code>](#DataView)  
+**Default**: <code>{}</code>  
+**Access**: public  
 <a name="DataView.init"></a>
 
 ### DataView.init()
@@ -2634,3 +3306,113 @@ Must be open in order to record video.
 | --- | --- | --- |
 | [force] | <code>boolean</code> | Set video state or toggle with undefined. |
 
+<a name="Agrav"></a>
+
+## Agrav : <code>number</code>
+Absolute acceleration due to gravity. (m/s)
+
+**Kind**: global constant  
+**Default**: <code>9.80665</code>  
+<a name="maxGapInSession"></a>
+
+## maxGapInSession : <code>number</code>
+Milliseconds between timestamps to assume isMultiSession.
+
+**Kind**: global constant  
+<a name="minLapTime"></a>
+
+## minLapTime : <code>number</code>
+Minimum milliseconds a lap is allowed to be.
+
+**Kind**: global constant  
+**Default**: <code>7000</code>  
+<a name="noStatus"></a>
+
+## noStatus : <code>number</code>
+No relationship
+
+**Kind**: global constant  
+<a name="oneRequestStatus"></a>
+
+## oneRequestStatus : <code>number</code>
+User 1 requested to be friends.
+
+**Kind**: global constant  
+**Default**: <code>0</code>  
+<a name="twoRequestStatus"></a>
+
+## twoRequestStatus : <code>number</code>
+User 2 requested to be friends.
+
+**Kind**: global constant  
+**Default**: <code>1</code>  
+<a name="friendStatus"></a>
+
+## friendStatus : <code>number</code>
+Users are friends.
+
+**Kind**: global constant  
+**Default**: <code>2</code>  
+<a name="oneBlockedStatus"></a>
+
+## oneBlockedStatus : <code>number</code>
+User 1 blocked user 2.
+
+**Kind**: global constant  
+**Default**: <code>3</code>  
+<a name="twoBlockedStatus"></a>
+
+## twoBlockedStatus : <code>number</code>
+User 2 blocked user 1.
+
+**Kind**: global constant  
+**Default**: <code>4</code>  
+<a name="bothBlockedStatus"></a>
+
+## bothBlockedStatus : <code>number</code>
+Both users blocked eachother.
+
+**Kind**: global constant  
+**Default**: <code>5</code>  
+<a name="onePullRequestCrew"></a>
+
+## onePullRequestCrew : <code>number</code>
+User 1 requested User 2 to be crew for 1.
+
+**Kind**: global constant  
+**Default**: <code>6</code>  
+<a name="onePushRequestCrew"></a>
+
+## onePushRequestCrew : <code>number</code>
+User 1 requested to be crew for 2.
+
+**Kind**: global constant  
+**Default**: <code>7</code>  
+<a name="twoPushRequestCrew"></a>
+
+## twoPushRequestCrew : <code>number</code>
+user 2 requested 1 to be crew for 2.
+
+**Kind**: global constant  
+**Default**: <code>8</code>  
+<a name="twoPullRequestCrew"></a>
+
+## twoPullRequestCrew : <code>number</code>
+User 2 requested to be crew for 1.
+
+**Kind**: global constant  
+**Default**: <code>9</code>  
+<a name="oneCrewStatus"></a>
+
+## oneCrewStatus : <code>number</code>
+User 1 is crew for 2.
+
+**Kind**: global constant  
+**Default**: <code>10</code>  
+<a name="twoCrewStatus"></a>
+
+## twoCrewStatus : <code>number</code>
+User 2 is crew for 1.
+
+**Kind**: global constant  
+**Default**: <code>11</code>  

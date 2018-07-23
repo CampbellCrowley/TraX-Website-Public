@@ -1,34 +1,106 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
-// milliseconds to check signed in state.
+/**
+ * Milliseconds to check signed in state.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const signInStateCheckFrequency = 500;
 
-// The open socket to the server.
+/**
+ * The open socket to the server.
+ *
+ * @public
+ * @type {SocketIO}
+ */
 TraX.socket;
 
 let messageBoxDom;
 let messageBoxWrapperDom;
 
 // Message Box //
-// Queue of messages.
+/**
+ * Queue of messages.
+ * @default
+ * @private
+ * @type {Array.<{message: string, time: number}>}
+ */
 let messageBoxQueue = [];
-// Timeout for current open message box.
+/**
+ * Timeout for current open message box.
+ * @private
+ * @type {Timeout}
+ */
 let messageBoxTimeout;
-// Timeout for closing current message box.
+/**
+ * Timeout for closing current message box.
+ * @private
+ * @type {Timeout}
+ */
 let messageBoxClearTimeout;
 
-// All of user's friends.
+/**
+ * All of user's friends.
+ * @default
+ * @public
+ * @type {Array.<Object>}
+ */
 TraX.friendsList = [];
+/**
+ * List of summaries organized by id.
+ * @default
+ * @public
+ * @type {Object}
+ */
 TraX.summaryList = {};
 
+/**
+ * Is the user currently signed in.
+ * @default
+ * @public
+ * @readonly
+ * @type {boolean}
+ */
 TraX.isSignedIn = false;
+/**
+ * The driver's account ID.
+ * @default
+ * @private
+ * @type {string}
+ */
 let driverId = '';
+/**
+ * The driver's full name.
+ * @default
+ * @private
+ * @type {string}
+ */
 let driverName = '';
+/**
+ * The driver's current account token.
+ * @default
+ * @private
+ * @type {string}
+ */
 let token = '';
 
+/**
+ * Current TraXEvent registered listeners.
+ * @default
+ * @private
+ * @type {Array.<Object>}
+ */
 let listeners = [];
 
+/**
+ * Prevent sending information to servers.
+ * @default
+ * @public
+ * @type {boolean}
+ */
 TraX.preventSend = false;
 
 /**

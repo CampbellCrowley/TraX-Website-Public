@@ -5,26 +5,87 @@
  * @class Panes
  */
 (function(Panes, undefined) {
-const swipeThreshold = 100; // Minimum pixels traveled to be considered swipe.
-const swipeDuration = 200; // Maximum milliseconds of finger down to be swipe.
-const dragElasticity = 1 / 60.0;  // Ratio of distance finger moved vs UI moves
-                                  // to simulate elstic feel.
+/**
+ * Minimum pixels traveled to be considered swipe.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
+const swipeThreshold = 100;
+/**
+ * Maximum milliseconds of finger down to be swipe.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
+const swipeDuration = 200;
+/**
+ * Ratio of distance finger moved vs UI moves to simulate elstic feel.
+ * @default
+ * @private
+ * @constant
+ * @type {number}
+ */
+const dragElasticity = 1 / 60.0;
 
-// Finger down attributes.
+/**
+ * The time at which the finger was placed on the screen to start a swipe.
+ * @private
+ * @type {number}
+ */
 let swipeStartTime;
+/**
+ * The starting X coordinate on the screen of the swipe.
+ * @private
+ * @type {number}
+ */
 let startX;
+/**
+ * The starting Y coordinate on the screen of the swipe/
+ * @private
+ * @type {number}
+ */
 let startY;
+/**
+ * Has the swipe been canceled.
+ * @private
+ * @type {boolean}
+ */
 let cancelSwipe;
-// Currently visible pane index, and target to go to when panes open.
+/**
+ * Currently visible pane index.
+ * @private
+ * @default
+ * @type {number}
+ */
 let currentPane = -1;
+/**
+ * The target to go to when panes open.
+ * @default
+ * @private
+ * @type {number}
+ */
 let targetPane = 0;
-// Number of fingers currently placed on screen.
+/**
+ * Number of fingers currently placed on screen.
+ * @private
+ * @default
+ * @type {number}
+ */
 let numFingers = 0;
 
 // DOM Elements
 let paneContainerDom;
 let panesList;
 
+/**
+ * All paneEvent listeners currently registered.
+ * @private
+ * @default
+ * @type {Array.<Object>}
+ */
 let listeners = [];
 
 /**

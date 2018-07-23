@@ -9,6 +9,14 @@
 (function() {
 window.onload = preinit;
 
+/**
+ * Additional scripts to fetch after page has loaded.
+ *
+ * @default
+ * @constant
+ * @private
+ * @type {Array.<{url: string, init: ?Array.<string>}>}
+ */
 const additionalScripts = [
   {
     url: 'https://dev.campbellcrowley.com/trax/traxCommon.js',

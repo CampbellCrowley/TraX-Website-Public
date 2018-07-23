@@ -18,9 +18,17 @@
  * @augments TraX
  */
 (function(Export, undefined) {
-// JS Object to XML converter instance.
+/**
+ * JS Object to XML converter instance.
+ * @private
+ */
 let x2js;
-// Settings for converting to XML/GPX format.
+/**
+ * Settings for converting to XML/GPX format.
+ * @private
+ * @default
+ * @type {Object}
+ */
 const gpxOpts = {
   useDoubleQuotes: true,
 };
