@@ -1,6 +1,15 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
+/**
+ * Manages phone cameras, capturing the media, and then streaming the media to
+ * server.
+ *
+ * This may NOT be used with the other Video class.
+ *
+ * @class Video
+ * @augments TraX
+ */
 (function(Video, undefined) {
 // var SESSION_STATUS;
 // var STREAM_STATUS;
@@ -243,7 +252,7 @@ Video.stopRecording = function() {
 };
 /**
  * Pause a recording without completely eding the file.
- * TODO: Remove?
+ * @TODO: Remove?
  *
  * @public
  */

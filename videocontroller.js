@@ -1,6 +1,15 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
+/**
+ * Manages phone cameras, capturing the media, and then recording the media to
+ * the client's device.
+ *
+ * This may NOT be used with the other Video class.
+ *
+ * @class Video
+ * @augments TraX
+ */
 (function(Video, undefined) {
 // DOM Elements
 let enableVideoDom;

@@ -2,6 +2,11 @@
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
 (function(DataView, undefined) {
+/**
+ * Controls the map in DataView.
+ * @class MyMap
+ * @augments DataView
+ */
 (function(MyMap, undefined) {
 // Default options for a polyline on the map.
 let polyLineOpts = {

@@ -1,5 +1,9 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
+/**
+ * The base class for all TraX related things.
+ * @class TraX
+ */
 (function(TraX, undefined) {
 // Prevent navigating away from page if not all data was sent saved.
 window.onbeforeunload = function() {
@@ -400,7 +404,7 @@ function resume() {
   updateServerLights();
 
   // Prevent device from sleeping.
-  keepAwake(true);
+  KeepAwake.keepAwake(true);
 
   // Record video.
   if (TraX.Video) TraX.Video.startRecording();
@@ -449,7 +453,7 @@ function pause() {
   updateServerLights();
 
   // Allow device to sleep.
-  keepAwake(false);
+  KeepAwake.keepAwake(false);
 
   // End video recording.
   if (TraX.Video) TraX.Video.stopRecording();
@@ -1043,21 +1047,21 @@ function checkDeviceOptions() {
     xAxisFlipDom.checked = false;
     yAxisFlipDom.checked = false;
     zAxisFlipDom.checked = false;
-    keepAwakeSetting('pageload');
+    KeepAwake.keepAwakeSetting('pageload');
   } else if (browserType == 'Chrome') {
     xAxisFlipDom.checked = true;
     yAxisFlipDom.checked = true;
     zAxisFlipDom.checked = true;
-    keepAwakeSetting('video');
+    KeepAwake.keepAwakeSetting('video');
   } else if (browserType == 'Firefox') {
     xAxisFlipDom.checked = true;
     yAxisFlipDom.checked = true;
     zAxisFlipDom.checked = true;
-    keepAwakeSetting('video');
+    KeepAwake.keepAwakeSetting('video');
     Trax.showMessageBox(
         'Firefox does not allow me to keep your phone on while recording.');
   } else {
-    keepAwakeSetting('video');
+    KeepAwake.keepAwakeSetting('video');
   }
 }
 /**
@@ -1316,7 +1320,7 @@ function updateServerLights() {
  * @private
  * @param {{lat: number, lng: number}} coord The coordinates to determine the
  * closest track to.
- * @return {?TraX~Track} The track, or null if unable to determine track.
+ * @return {?DataView.Track} The track, or null if unable to determine track.
  */
 function determineTrack(coord) {
   if (!trackList || (!coord && !DataView.coordAverage.coord)) {
@@ -1362,7 +1366,7 @@ function fetchTrackList() {
  * Request the list of configs from the server.
  *
  * @private
- * @param {TraX~Track} track The track to request the configs for.
+ * @param {DataView.Track} track The track to request the configs for.
  */
 function fetchTrackConfigList(track) {
   TraX.socket.emit('requesttracklist', track.id, track.ownerId);

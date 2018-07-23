@@ -1,5 +1,19 @@
-let Util = {};
-Util.base64 = function(mimeType, base64) {
+/**
+ * Keeps devices from falling asleep or turning off their displays while
+ * recording data.
+ * @class KeepAwake
+ */
+(function(KeepAwake, undefined) {
+/**
+ * Formats a string with given mimeType and data for a src value in a source
+ * element for a video.
+ *
+ * @private
+ * @param {string} mimeType The mime type.
+ * @param {string} base64 The base 64 data.
+ * @return {string} THe formatted string.
+ */
+function base64(mimeType, base64) {
   return 'data:' + mimeType + ';base64,' + base64;
 };
 
@@ -24,7 +38,7 @@ function addSourceToVideo(element, type, dataURI) {
 
 addSourceToVideo(
     video, 'webm',
-    Util.base64(
+    base64(
         'video/webm',
         'GkXfo0AgQoaBAUL3gQFC8oEEQvOBCEKCQAR3ZWJtQoeBAkKFgQIYU4BnQI0VSalmQCgq' +
             '17FAAw9CQE2AQAZ3aGFtbXlXQUAGd2hhbW15RIlACECPQAAAAAAAFlSua0AxrkAu' +
@@ -32,7 +46,7 @@ addSourceToVideo(
             'tnVAIueBAKNAHIEAAIAwAQCdASoIAAgAAUAmJaQAA3AA/vz0AAA='));
 addSourceToVideo(
     video, 'mp4',
-    Util.base64(
+    base64(
         'video/mp4',
         'AAAAHGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAAhmcmVlAAAAG21kYXQAAAGzABAH' +
             'AAABthADAowdbb9/AAAC6W1vb3YAAABsbXZoZAAAAAB8JbCAfCWwgAAAA+gAAAAA' +
@@ -55,18 +69,20 @@ addSourceToVideo(
 /**
  * Set method for keeping device awake.
  *
+ * @public
  * @param {string} mode The method to use.
  */
-function keepAwakeSetting(mode) { // eslint-disable-line no-unused-vars
+KeepAwake.keepAwakeSetting = function(mode) {
   keepAwakeMode = mode;
-}
+};
 /**
  * Enable/Disable keeping device awake.
- * TODO: Fix pageload leak.
+ * @TODO: Fix pageload leak.
  *
+ * @public
  * @param {boolean} setting Enable or Disable.
  */
-function keepAwake(setting) { // eslint-disable-line no-unused-vars
+KeepAwake.keepAwake = function(setting) {
   try {
     if (keepAwakeMode == 'video') {
       // Play a video to keep the device awake. (Chrome)
@@ -81,4 +97,5 @@ function keepAwake(setting) { // eslint-disable-line no-unused-vars
   } catch (err) {
     console.error(err);
   }
-}
+};
+}(window.KeepAwake = window.KeepAwake || {}));

@@ -49,6 +49,11 @@ const twoCrewStatus = 11;
 /* eslint-enable no-unused-vars */
 
 (function(TraX, undefined) {
+/**
+ * Unit conversion helper functions.
+ * @class Units
+ * @augments TraX
+ */
 (function(Units, undefined) {
 // If this is implemented, others should override this with the DOM element that
 // selects the units.
@@ -141,7 +146,26 @@ Units.latLngToMeters = function(one, two) {
   return Units.coordToMeters(one.lat, one.lng, two.lat, two.lng);
 };
 }(TraX.Units = TraX.Units || {}));
+/**
+ * Other common helper functions.
+ * @class Common
+ * @augments TraX
+ */
 (function(Common, undefined) {
+/**
+ * Defines a point in space with a color.
+ *
+ * @public
+ * @class
+ * @param {number|Common.Point3d} x X Coord or instance of Point3d to copy.
+ * @param {number} [y] Y Coord.
+ * @param {number} [z] Z Coord.
+ * @param {string} [color]
+ * @property {number} x X Coord.
+ * @property {number} y Y Coord.
+ * @property {number} z Z Coord.
+ * @property {string} color The color of the point.
+ */
 Common.Point3d = function(x, y, z, color) {
   this.x = 0;
   this.y = 0;
@@ -161,6 +185,18 @@ Common.Point3d = function(x, y, z, color) {
   }
 };
 
+/**
+ * Rotates a vector by a given rotation by applying a z->x->y Tait-Bryan
+ * rotation. Enabling flip applies the inverse of this rotation.
+ *
+ * @public
+ * @param {Common.Point3d|Array} vector The point to flip defined by xyz values,
+ * or 0 1 2 elements in the order of x y z.
+ * @param {Array|{a: number, b: number, g: number}} rotation Rotation in alpha
+ * beta gamma rotations.
+ * @param {boolean} [flip=false] Applies the inverse of the given rotation.
+ * @return {Common.Point3d} The rotated vector.
+ */
 Common.rotateVector = function(vector, rotation, flip) {
   let point;
   if (vector instanceof Common.Point3d) {
@@ -244,22 +280,54 @@ Common.rotateVector = function(vector, rotation, flip) {
   return point;
 };
 
+/**
+ * Rotates a vector around the X axis by a certain angle in radians. Rotation is
+ * applied in-place.
+ *
+ * @public
+ * @param {Common.Point3d} point The vector to rotate.
+ * @param {number} rad The angle in radians.
+ */
 Common.rotateX = function(point, rad) {
   let y = point.y;
   point.y = (y * Math.cos(rad)) + (point.z * Math.sin(rad) * -1.0);
   point.z = (y * Math.sin(rad)) + (point.z * Math.cos(rad));
 };
+/**
+ * Rotates a vector around the Y axis by a certain angle in radians. Rotation is
+ * applied in-place.
+ *
+ * @public
+ * @param {Common.Point3d} point The vector to rotate.
+ * @param {number} rad The angle in radians.
+ */
 Common.rotateY = function(point, rad) {
   let x = point.x;
   point.x = (x * Math.cos(rad)) + (point.z * Math.sin(rad) * -1.0);
   point.z = (x * Math.sin(rad)) + (point.z * Math.cos(rad));
 };
+/**
+ * Rotates a vector around the Z axis by a certain angle in radians. Rotation is
+ * applied in-place.
+ *
+ * @public
+ * @param {Common.Point3d} point The vector to rotate.
+ * @param {number} rad The angle in radians.
+ */
 Common.rotateZ = function(point, rad) {
   let x = point.x;
   point.x = (x * Math.cos(rad)) + (point.y * Math.sin(rad) * -1.0);
   point.y = (x * Math.sin(rad)) + (point.y * Math.cos(rad));
 };
 
+/**
+ * Calculates the cross product of two vectors.
+ *
+ * @public
+ * @param {Common.Point3d|Array} a First vector.
+ * @param {Common.Point3d|Array} b Second vector.
+ * @return {Array} Array of length 3 defining the vector as xyz.
+ */
 Common.cross = function(a, b) {
   if (a instanceof Common.Point3d) {
     a[0] = a.x;
@@ -277,6 +345,17 @@ Common.cross = function(a, b) {
   ];
 };
 
+/**
+ * Formats a duration in milliseconds as a human-readable string.
+ *
+ * @public
+ * @param {number} msecs The duration in milliseconds to format.
+ * @param {boolean} [plusSign=false] Whether to unclude the plus sign on
+ * positive numbers or not.
+ * @param {number} [minSections=0] Minimum sections of digits to show. <=0 shows
+ * seconds and milliseconds, >0 shows minutes, >1 shows hours, >2 shows days.
+ * @return {string} The formatted string.
+ */
 Common.formatMsec = function(msecs, plusSign, minSections) {
   msecs = Math.floor(msecs);
   let sign = msecs >= 0 ? (plusSign ? '+' : '') : '-';
@@ -301,13 +380,31 @@ Common.formatMsec = function(msecs, plusSign, minSections) {
   }
 };
 
+/**
+ * Formats a time givin in milliseconds since epoch as a human readable string.
+ *
+ * @public
+ * @param {number} msecs Time as millisconds since epoch.
+ * @param {boolean} [showSeconds=false] Whether to show seconds on the time or
+ * not.
+ * @return {string} Formatted time as a string.
+ */
 Common.formatTime = function(msecs, showSeconds) {
   let date = new Date(msecs);
   return TraX.Common.pad(date.getHours(), 2) + ':' +
       TraX.Common.pad(date.getMinutes(), 2) +
-      (showSeconds ? ('.' + TraX.Common.pad(date.getSeconds(), 2)) : '');
+      (showSeconds ? (':' + TraX.Common.pad(date.getSeconds(), 2)) : '');
 };
 
+/**
+ * Pad a number with leading zeros to a minimum length of given digits.
+ *
+ * @public
+ * @param {number|string} num Number to pad with leading zeroes.
+ * @param {number} digits Number of digits long to make the final string at a
+ * minimum.
+ * @return {string} Number with leading zeroes to match specified length.
+ */
 Common.pad = function(num, digits) {
   let str = String(num);
   while (str.length < digits) {
@@ -316,21 +413,59 @@ Common.pad = function(num, digits) {
   return str;
 };
 
+/**
+ * Linearly interpolates between two coordinates. Does not take into account
+ * curvature of Earth. Individually interpolates latitude and longitude.
+ *
+ * @public
+ * @param {{lat: number, lng: number}} one The first coordinate.
+ * @param {{lat: number, lng: number}} two The second coordinate.
+ * @param {number} val The value from 0 to 1 inclusive to interpolate between
+ * the coordinates.
+ * @return {{lat: number, lng: number}} The interpolated coord.
+ */
 Common.interpolateCoord = function(one, two, val) {
   let latitude = Common.lerp(one['lat'], two['lat'], val);
   let longitude = Common.lerp(one['lng'], two['lng'], val);
   return {lat: latitude, lng: longitude};
 };
 
+/**
+ * Linearly interpolate between two numbers.
+ *
+ * @public
+ * @param {number} one The first number.
+ * @param {number} two The second number.
+ * @param {number} val Value from 0 to 1 inclusive to interpolate between the
+ * given numbers.
+ * @return {number} The interpolated value.
+ */
 Common.lerp = function(one, two, val) {
  return (1.0 - val) * one + val * two;
 };
 
+/**
+ * Uses the Pythagorean theorem to calculate distance between coordinates as if
+ * they were on a flat plane.
+ *
+ * @public
+ * @param {{lat: number, lng: number}} one Coordinate one.
+ * @param {{lat: number, lng: number}} two Coordinate one.
+ * @return {number} Distance in original latitude and longitude units.
+ */
 Common.coordDistance = function(one, two) {
   return Math.sqrt(
       Math.pow(two.lat - one.lat, 2) + Math.pow(two.lng - one.lng, 2));
 };
 
+/**
+ * Compare two version strings to see which version is a higher value.
+ *
+ * @public
+ * @param {string} a Version separated by decimals.
+ * @param {string} b Version in same format as a.
+ * @return {number} -1 if a < b, 0 if a == b, +1 if a > b;
+ */
 Common.compareVersion = function(a, b) {
   let as = a.split('.');
   let bs = b.split('.');

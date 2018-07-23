@@ -1,6 +1,11 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 
+/**
+ * Loads page's necessary scripts after page has loaded to help with
+ * initial load times, and possibly to later allow for better caching control.
+ * @module ScriptLoader/
+ */
 (function() {
 window.onload = preinit;
 

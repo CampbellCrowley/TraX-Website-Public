@@ -1,5 +1,9 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
+/**
+ * Controls a sidebar menu.
+ * @class Sidebar
+ */
 (function(Sidebar, undefined) {
 // Screen size (x/y) in pixels.
 let w = window; let d = document; let e = d.documentElement;

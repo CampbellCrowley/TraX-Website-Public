@@ -1,6 +1,12 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
+/**
+ * The script that control the canvases on the pages that visualize G-Force as
+ * well as the Orientation.
+ * @class Canvases
+ * @augments TraX
+ */
 (function(Canvases, undefined) {
 // Number of points to draw to show a line.
 const numAccelPoints = 15;
@@ -8,9 +14,11 @@ const numAccelPoints = 15;
 const pointAngleDelta = Math.PI / 5.0;
 
 // DOM Elements.
-let gyroCanvas; let accelCanvas;
+let gyroCanvas;
+let accelCanvas;
 // Canvas contexts.
-let gyroCtx; let accelCtx;
+let gyroCtx;
+let accelCtx;
 // Sphere being drawn in canvas.
 let sphere;
 // Rotation where -Z is down.
@@ -154,7 +162,7 @@ Canvases.renderGyro = function(makeDown) {
 
       point = TraX.Common.rotateVector(point, downRotationAdjusted, false);
 
-    rotatedPoints.push(point);
+      rotatedPoints.push(point);
     }
   }
   // Calculated forwards vector
@@ -207,7 +215,7 @@ Canvases.renderGyro = function(makeDown) {
  * Sort points by z-index to draw things in back first. Points are sorted
  * in-place.
  *
- * @param {Array.<TraX~Common~Point3d>} points The points to sort.
+ * @param {Array.<Common.Point3d>} points The points to sort.
  */
 function sortPoints(points) {
   points.sort(function(a, b) {
@@ -310,7 +318,7 @@ Canvases.renderAccel = function(externalDevice) {
 /**
  * Draw a point on the canvas with given settings.
  *
- * @param {Canvas~Context2d} ctx The canvas context to draw on.
+ * @param {Canvas.Context2d} ctx The canvas context to draw on.
  * @param {number} x The X coordinate to draw the point.
  * @param {number} y The Y coordinate to draw the point.
  * @param {number} size The size of the point to draw.
