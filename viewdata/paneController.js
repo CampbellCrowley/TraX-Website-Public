@@ -1,5 +1,9 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
+/**
+ * Controls a pane system for viewing data.
+ * @class Panes
+ */
 (function(Panes, undefined) {
 const swipeThreshold = 100; // Minimum pixels traveled to be considered swipe.
 const swipeDuration = 200; // Maximum milliseconds of finger down to be swipe.

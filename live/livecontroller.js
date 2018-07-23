@@ -1,10 +1,11 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
+(function(TraX, undefined) {
 /**
  * Controls live data viewing page.
- * TraX~Live
+ * @class Live
+ * @augments TraX
  */
-(function(TraX, undefined) {
 (function(Live, undefined) {
 // Constants //
 // milliseconds to check for stale data.

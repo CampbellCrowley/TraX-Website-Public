@@ -1,6 +1,11 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
+/**
+ * Controls the data viewing page.
+ * @class DataView
+ * @augments TraX
+ */
 (function(DataView, undefined) {
 // Folders to show user for organizing sessions. "#friends#" shows list of all
 // friends.
@@ -679,7 +684,7 @@ function fileArraysEqual(one, two) {
 
 /**
  * Received chunk of session from server.
- * TODO: Decompress/parse chunks asynchronously while receiving data.
+ * @TODO: Decompress/parse chunks asynchronously while receiving data.
  *
  * @private
  * @param {number} size Number of bytes this chunk size is.

@@ -31,6 +31,11 @@ let listeners = [];
 
 TraX.preventSend = false;
 
+/**
+ * Defines the an init function for the common functions which get
+ * added directly to TraX.
+ * @see {Common}
+ */
 (function(Common, undefined) {
   /**
    * Initialize TraX.Common

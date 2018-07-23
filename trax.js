@@ -2,9 +2,10 @@
 // Author: Campbell Crowley (web@campbellcrowley.com)
 
 /* eslint-env node, es6, browser:false */
+
 /**
- * The server side of TraX.
- * @module TraXServer
+ * The Server side of TraX.
+ * @module TraXServerModule
  */
 
 const auth = require('/var/www/servers/auth.js');
@@ -129,7 +130,7 @@ function handler(req, res) {
  * side of TraX.
  * @class
  */
-function TraX() {
+function TraXServer() {
   // All connected sockets.
   let sockets = [];
   // All connected sockets requesting live data streams.
@@ -1997,4 +1998,4 @@ function TraX() {
   } */
 }
 
-module.exports = TraX;
+module.exports = TraXServer;

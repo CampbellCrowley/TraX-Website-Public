@@ -2,13 +2,21 @@
 // Author: Campbell Crowley (web@campbellcrowley.com)
 
 (function(TraX, undefined) {
-// Import into TraX. //
-// TODO: Do this.
+/**
+ * Import into TraX.
+ * @TODO: Do this.
+ * @class Import
+ * @augments TraX
+ */
 (function(Import, undefined) {
 
 }(window.TraX.Import = window.TraX.Import || {}));
 
-// Export from TraX. //
+/**
+ * Export from TraX.
+ * @class Export
+ * @augments TraX
+ */
 (function(Export, undefined) {
 // JS Object to XML converter instance.
 let x2js;

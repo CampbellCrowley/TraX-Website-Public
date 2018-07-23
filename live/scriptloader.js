@@ -4,7 +4,7 @@
 /**
  * Loads page's necessary scripts after page has loaded to help with
  * initial load times, and possibly to later allow for better caching control.
- * @module ScriptLoader
+ * @module ScriptLoader/live
  */
 (function ScriptLoader() {
 window.onload = preinit;
