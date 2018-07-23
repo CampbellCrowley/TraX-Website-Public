@@ -8,21 +8,45 @@
  * @augments DataView
  */
 (function(MyMap, undefined) {
-// Default options for a polyline on the map.
+/**
+ * Default options for a polyline on the map.
+ * @default
+ * @private
+ * @type {google.maps.PolylineOptions}
+ */
 let polyLineOpts = {
   strokeColor: '#000000',
   strokeWeight: 5,
   clickable: true,
   editable: false,
 };
-// List of possible colors the polyline can be.
+/**
+ * List of possible colors the polyline can be.
+ * @default
+ * @constant
+ * @private
+ * @type {string[]}
+ */
 const colorList = [
   '#000000', '#0000FF', '#00FF00', '#FF0000', '#FF00FF', '#FF8800', '#00FFFF',
   '#88FF00', '#888888', '#FF8888', '#880000', '#000088',
 ];
 
-// Pause and play characters to show on playback toggle button.
+/**
+ * Play character to show on playback toggle button.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const playChar = '&#9658;';
+/**
+ * Pause character to show on playback toggle button.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const pauseChar = '&#10074;&#10074;';
 // DOM Elements.
 let overlayDom;
@@ -35,53 +59,166 @@ let colorOverlayDom;
 let mapSliderOverlayDom;
 let playbackSliderDom;
 
-// Map markers and other items.
+// Map markers and other items. //
+/**
+ * Circles drawn on map.
+ * @default
+ * @private
+ * @type {google.maps.Circle}
+ */
 let myMapCircles = [];
+/**
+ * Marker marking start line.
+ * @private
+ * @type {google.maps.Marker}
+ */
 let startMarker;
+/**
+ * Marker marking finish line.
+ * @private
+ * @type {google.maps.Marker}
+ */
 let finishMarker;
+/**
+ * Marker marking start line placed by user.
+ * @private
+ * @type {google.maps.Marker}
+ */
 let placedStartMarker;
+/**
+ * Marker marking finish line placed by user.
+ * @private
+ * @type {google.maps.Marker}
+ */
 let placedFinishMarker;
+/**
+ * Image to show as the start line marker.
+ * @private
+ * @type {google.maps.Icon}
+ */
 let startImg;
+/**
+ * Image to show as the finish line marker.
+ * @private
+ * @type {google.maps.Icon}
+ */
 let finishImg;
+/**
+ * Marker marking the track center.
+ * @private
+ * @type {google.maps.Marker}
+ */
 let trackMarker;
+/**
+ * Array of all polylines on the map.
+ * @default
+ * @private
+ * @type {google.maps.Polyline[]}
+ */
+let myPolyLines = [];
+
 let trackDoneButton;
 let configDoneButton;
-let myPolyLines = [];
 let infoWindow;
 
-// Current start and end index of visible data on map.
+/**
+ * Current start index of visible data on map.
+ * @private
+ * @type {number}
+ */
 let currentStartIndex;
+/**
+ * Current end index of visible data on map.
+ * @private
+ * @type {number}
+ */
 let currentEndIndex;
 
-// Are we currently playing back data?
+/**
+ * Are we currently playing back data?
+ * @private
+ * @default
+ * @type {boolean}
+ */
 let currentlyPlaying = false;
-// The interval refreshing visible data.
+/**
+ * The interval refreshing visible data.
+ * @private
+ * @type {Interval}
+ */
 let playbackInterval;
-// The frequency in milliseconds to refresh visible data.
+/**
+ * The frequency in milliseconds to refresh visible data.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const playbackFrequency = 48;
-// The current time in milliseconds after session start shown on map.
+/**
+ * The current time in milliseconds after session start shown on map.
+ * @default
+ * @private
+ * @type {number}
+ */
 let playbackTime = 0;
-// The number of milliseconds after session start that the current playback data
-// starts.
+/**
+ * The number of milliseconds after session start that the current playback data
+ * starts.
+ * @default
+ * @private
+ * @type {number}
+ */
 let playbackStartTime = 0;
-// The number of milliseconds after session start that the current playback data
-// ends.
+/**
+ * The number of milliseconds after session start that the current playback data
+ * ends.
+ * @default
+ * @private
+ * @type {number}
+ */
 let playbackEndTime = 0;
 
-// Current mode for dropping points onto map for choosing start and finish. Can
-// be "none", "start", "finish", or "center".
+/**
+ * Current mode for dropping points onto map for choosing start and finish. Can
+ * be "none", "start", "finish", or "center".
+ * @default
+ * @private
+ * @type {string}
+ */
 let pointMode = 'none';
-// Current mode for which data is being edited. Can be "none", "track", or
-// "config".
+/**
+ * Current mode for which data is being edited. Can be "none", "track", or
+ * "config".
+ * @default
+ * @private
+ * @type {string}
+ */
 let trackMode = 'none';
-// Current mode whether we are editing or creating a new track or config. Can be
-// "create", or "edit".
+/**
+ * Current mode whether we are editing or creating a new track or config. Can be
+ * "create", or "edit".
+ * @default
+ * @private
+ * @type {string}
+ */
 let editMode = 'create';
 
-// TODO: Change this to data key to allow coloring of any data.
-// The current way the polyline is being colored.
+/**
+ * The current way the polyline is being colored.
+ * @TODO: Change this to data key to allow coloring of any data.
+ * @private
+ * @default
+ * @type {string}
+ */
 let lineColorMode = 'laps';
 
+/**
+ * Is the info window open currently.
+ * @private
+ * @default
+ * @type {boolean}
+ */
 let infoWindowOpen = false;
 
 /**

@@ -8,32 +8,100 @@
  */
 (function(Live, undefined) {
 // Constants //
-// milliseconds to check for stale data.
+/**
+ * milliseconds to check for stale data.
+ * @constant
+ * @default
+ * @private
+ * @type {number}
+ */
 const purgeFrequency = 1000;
-// Maximum number of milliseconds without new data until data is deleted for a
-// user.
+/**
+ * Maximum number of milliseconds without new data until data is deleted for a
+ * user.
+ * @constant
+ * @default
+ * @private
+ * @type {number}
+ */
 const maxDataAge = 60000;
-// After this much time without new data for a user, the data is considered
-// stale.
+/**
+ * After this much time without new data for a user, the data is considered
+ * stale.
+ * @constant
+ * @default
+ * @private
+ * @type {number}
+ */
 const staleDelay = 5000;
-// Milliseconds to update the driver list table.
+/**
+ * Milliseconds to update the driver list table.
+ * @constant
+ * @default
+ * @private
+ * @type {number}
+ */
 const listUpdateFrequency = 51;
-// Milliseconds to check for number of viewers.
+/**
+ * Milliseconds to check for number of viewers.
+ * @constant
+ * @default
+ * @private
+ * @type {number}
+ */
 const viewerUpdateFrequency = 15000;
-
+/**
+ * The alphabet in upper case first then lowercase.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-
+/**
+ * The columns to show in the driver list.
+ * @default
+ * @constant
+ * @private
+ * @type {Array.<string>}
+ */
 const listCols = ['label', 'name', 'speed', 'lapTimeExt', 'bestLapTime'];
+/**
+ * The columns to show in the standings list.
+ * @default
+ * @constant
+ * @private
+ * @type {Array.<string>}
+ */
 const standingsCols = ['rank', 'bestLapTime', 'name', 'predLapTime'];
-
+/**
+ * The title to show in notifications.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const notifTitle = 'TraX';
+/**
+ * The default notification options to be passed into the notification manager.
+ * @default
+ * @constant
+ * @private
+ * @type {{body: string, icon: string}}
+ */
 const notifOpts = {
   body: 'Notification body!',
   icon: 'https://dev.campbellcrowley.com/favicon.ico',
 };
 
-// Default options for a polyline on the map.
-let polyLineOpts = {
+/**
+ * Default options for a polyline on the map.
+ * @constant
+ * @default
+ * @private
+ * @type {google.maps.PolylineOptions}
+ */
+const polyLineOpts = {
   strokeColor: '#000000',
   strokeWeight: 5,
   clickable: false,
@@ -69,15 +137,54 @@ let showLessSensorsDom;
 TraX.unitDropdownDom = {value: 'imperial'};
 
 // Buffered data.
+/**
+ * All received data about friends.
+ * @private
+ * @type {Object}
+ */
 let friendsData = {length: 0};
+/**
+ * The friends in order of their standings on a track by best lap time.
+ * @private
+ * @type {Array}
+ */
 let friendStandings = [];
+/**
+ * Array storing all markers for all friends.
+ * @private
+ * @type {Array.<google.maps.Marker>}
+ */
 let friendMarkers = [];
 
+/**
+ * The next index to look for the label for a marker.
+ * @default
+ * @private
+ * @type {number}
+ */
 let nextLabelIndex = 0;
+/**
+ * The ID of the currently selected user in the UI.
+ * @default
+ * @private
+ * @type {string}
+ */
 let selectedId = '';
 
+/**
+ * The interval that is checking for a new viewer count number.
+ * @private
+ * @type {Interval}
+ */
 let viewerNumUpdateInterval;
 
+/**
+ * The last time we requested a summary to prevent flooding the server with too
+ * many requests all at once.
+ * @default
+ * @private
+ * @type {number}
+ */
 let lastSummaryRequestTime = 0;
 
 /**

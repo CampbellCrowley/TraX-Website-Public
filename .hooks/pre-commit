@@ -4,14 +4,12 @@ STAGED_SCRIPTS=$(git diff --cached --name-only --diff-filter=ACM | grep ".js$" |
 STAGED_DATA=$(git diff --cached --name-only --diff-filter=ACM | grep ".json$" | tr '\n' ' ')
 
 if [[ "$STAGED_SCRIPTS" != "" || "$STAGED_DATA" != "" ]]; then
-  echo "Linting disabled"
-  # DISABLED WHILE LINTING IS FAILING. WILL BE ENABLED ONCE LINTING PASSES ON ALL FILES.
-  # echo "Linting"
-  # npm run lint
-  # if [[ "$?" != 0 ]]; then
-  #   echo -e "\033[41mCOMMIT FAILED:\033[0m Failed to pass linting."
-  #   exit 1
-  # fi
+  echo "Linting"
+  npm run lint
+  if [[ "$?" != 0 ]]; then
+    echo -e "\033[41mCOMMIT FAILED:\033[0m Failed to pass linting."
+    exit 1
+  fi
 
   echo "Creating docs"
   bash .hooks/make-docs.sh

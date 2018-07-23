@@ -17,13 +17,33 @@ let videoPreviewDom;
 let videoCanvasesDom;
 
 // States and objects //
-// Streams from cameras currently open.
+/**
+ * Streams from cameras currently open.
+ * @default
+ * @private
+ * @type {Array.<MediaStream>}
+ */
 let localStreams = [];
-// Media recorders receiving streams and buffering data.
+/**
+ * Media recorders receiving streams and buffering data.
+ * @default
+ * @private
+ * @type {Array}
+ */
 let mediaRecorders = [];
-// Are we currently recording cameras.
+/**
+ * Are we currently recording cameras.
+ * @default
+ * @private
+ * @type {boolean}
+ */
 let recording = false;
-// Currentl lap number.
+/**
+ * Current lap number.
+ * @default
+ * @private
+ * @type {number}
+ */
 let lapNum = -1;
 
 /**

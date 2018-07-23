@@ -4,46 +4,135 @@
 /* eslint-disable no-unused-vars */
 
 // Global Constants //
-// Filesize conversions.
-const byteTokByte = 1 / 1000.0;
-const byteToMByte = byteTokByte / 1000.0;
-const byteToGByte = byteToMByte / 1000.0;
-const byteToTByte = byteToGByte / 1000.0;
-const byteToPByte = byteToTByte / 1000.0;
-const byteToEByte = byteToPByte / 1000.0;
-// Absolute acceleration due to gravity. (m/s)
+/**
+ * Absolute acceleration due to gravity. (m/s)
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const Agrav = 9.80665;
-// Milliseconds between timestamps to assume isMultiSession.
+/**
+ * Milliseconds between timestamps to assume isMultiSession.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const maxGapInSession = 5 * 60 * 1000;
-// Minimum milliseconds a lap is allowed to be.
+/**
+ * Minimum milliseconds a lap is allowed to be.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const minLapTime = 7000;
 
 // Relationship Status //
-// No relationship
+/**
+ * No relationship
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const noStatus = -1;
-// User 1 requested to be friends.
+/**
+ * User 1 requested to be friends.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const oneRequestStatus = 0;
-// User 2 requested to be friends.
+/**
+ * User 2 requested to be friends.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const twoRequestStatus = 1;
-// Users are friends.
+/**
+ * Users are friends.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const friendStatus = 2;
-// User 1 blocked user 2.
+/**
+ * User 1 blocked user 2.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const oneBlockedStatus = 3;
-// User 2 blocked user 1.
+/**
+ * User 2 blocked user 1.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const twoBlockedStatus = 4;
-// Both users blocked eachother.
+/**
+ * Both users blocked eachother.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const bothBlockedStatus = 5;
-// User 1 requested User 2 to be crew for 1.
+/**
+ * User 1 requested User 2 to be crew for 1.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const onePullRequestCrew = 6;
-// User 1 requested to be crew for 2.
+/**
+ * User 1 requested to be crew for 2.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const onePushRequestCrew = 7;
-// user 2 requested 1 to be crew for 2.
+/**
+ * user 2 requested 1 to be crew for 2.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const twoPushRequestCrew = 8;
-// User 2 requested to be crew for 1.
+/**
+ * User 2 requested to be crew for 1.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const twoPullRequestCrew = 9;
-// User 1 is crew for 2.
+/**
+ * User 1 is crew for 2.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const oneCrewStatus = 10;
-// User 2 is crew for 1.
+/**
+ * User 2 is crew for 1.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const twoCrewStatus = 11;
 
 /* eslint-enable no-unused-vars */
@@ -55,18 +144,42 @@ const twoCrewStatus = 11;
  * @augments TraX
  */
 (function(Units, undefined) {
-// If this is implemented, others should override this with the DOM element that
-// selects the units.
+/**
+ * If this is implemented, others should override this with the DOM element that
+ * selects the units.
+ *
+ * @default
+ * @public
+ * @type {{value: string}|Element}
+ */
 TraX.unitDropdownDom = {value: 'imperial'};
 
-// Meters per second to miles per hour or kilometers per hour
+/**
+ * Meters per second to miles per hour or kilometers per hour.
+ *
+ * @public
+ * @param {number} input Speed in meters per second.
+ * @param {string} [units] The units system to convert to, default uses
+ * TraX.unitDropdownDom.value
+ * @return {number} Number rounded to tenths place in unit.
+ */
 Units.speedToUnit = function(input, units) {
   return Math.round(
              Units.distanceToLargeUnit(input * 60.0 * 60.0, units, true) *
              10.0) /
       10.0;
 };
-// Meters to mile or kilometer
+/**
+ * Meters to mile or kilometer
+ *
+ * @public
+ * @param {number} input Distance in meters.
+ * @param {string} [units] Unit system to convert to, default uses
+ * TraX.unitDropdownDom.value
+ * @param {boolean} [noround=false] Disable rounding final value to tenths
+ * place.
+ * @return {number} Converted value.
+ */
 Units.distanceToLargeUnit = function(input, units, noround) {
   if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
@@ -82,7 +195,15 @@ Units.distanceToLargeUnit = function(input, units, noround) {
   }
   return Math.round(val * 10.0) / 10.0;
 };
-// Kilometers per hour to MPH or KPH.
+/**
+ * Kilometers per hour to MPH or KPH.
+ *
+ * @public
+ * @param {number} input Speed in kilometers per hour.
+ * @param {string} [units] The unit system to convert to, default uses
+ * TraX.unitDropdownDom.value
+ * @return {number} Converted value.
+ */
 Units.speedToLargeUnit = function(input, units) {
   if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
@@ -95,7 +216,15 @@ Units.speedToLargeUnit = function(input, units) {
   }
   return Math.round(val * 10.0) / 10.0;
 };
-// Meters to feet or meters.
+/**
+ * Meters to feet or meters.
+ *
+ * @public
+ * @param {number} input Input in meters.
+ * @param {string} [units] The unit system to convert to, default uses
+ * TraX.unitDropdownDom.value
+ * @return {number} Converted value.
+ */
 Units.distanceToSmallUnit = function(input, units) {
   if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
@@ -106,7 +235,14 @@ Units.distanceToSmallUnit = function(input, units) {
     return input;
   }
 };
-// Get feet or meters unit.
+/**
+ * Get feet or meters unit.
+ *
+ * @public
+ * @param {string} [units] The unit system to get the units for, default uses
+ * TraX.unitDropdownDom.value
+ * @return {string} The unit names. (ft or m)
+ */
 Units.getSmallDistanceUnit = function(units) {
   if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
@@ -117,7 +253,14 @@ Units.getSmallDistanceUnit = function(units) {
     return 'm';
   }
 };
-// Get miles per hour, or kilometers per hour unit.
+/**
+ * Get miles per hour, or kilometers per hour unit.
+ *
+ * @public
+ * @param {string} [units] The units system to get the unit for, default uses
+ * TraX.unitDropdownDom.value
+ * @return {string} The unit names. (kmh or mph)
+ */
 Units.getLargeSpeedUnit = function(units) {
   if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
@@ -128,8 +271,17 @@ Units.getLargeSpeedUnit = function(units) {
     return 'kmh';
   }
 };
-// Convert given two points latitude and longitude, get the distance between the
-// two.
+/**
+ * Convert given two points latitude and longitude, get the distance between the
+ * two. Treats Earth as a sphere with radius 6378.137km.
+ *
+ * @public
+ * @param {number} lat1 The first latitude.
+ * @param {number} lng1 The first longitude.
+ * @param {number} lat2 The second latitude.
+ * @param {number} lng2 The second longitude.
+ * @return {number} Distance in meters between the two coords.
+ */
 Units.coordToMeters = function(lat1, lng1, lat2, lng2) {
   let R = 6378.137;  // Radius of earth in KM
   let dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
@@ -141,7 +293,15 @@ Units.coordToMeters = function(lat1, lng1, lat2, lng2) {
   let d = R * c;
   return d * 1000;
 };
-// Given two coords, find distance in meters between the two.
+/**
+ * Given two coords, find distance in meters between the two.
+ * @see {Units~coordToMeters}
+ *
+ * @public
+ * @param {{lat: number, lng: number}} one First coordinate.
+ * @param {{lat: number, lng: number}} two Second coordinate.
+ * @return {number} Distance in meters between the two coords.
+ */
 Units.latLngToMeters = function(one, two) {
   return Units.coordToMeters(one.lat, one.lng, two.lat, two.lng);
 };

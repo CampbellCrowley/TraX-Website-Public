@@ -27,13 +27,33 @@ let videoPreviewDom;
 let videoCanvasesDom;
 
 // States and objects //
-// Streams from cameras currently open.
+/**
+ * Streams from cameras currently open.
+ * @default
+ * @private
+ * @type {Array.<MediaStream>}
+ */
 let localStreams = [];
-// Media recorders receiving streams and buffering data.
+/**
+ * Media recorders receiving streams and buffering data.
+ * @private
+ * @default
+ * @type {Array}
+ */
 let mediaRecorders = [];
-// The user has given permission to stream to YouTube.
+/**
+ * The user has given permission to stream to YouTube.
+ * @private
+ * @default
+ * @type {boolean}
+ */
 let havePerms = false;
-// Are we currently recording cameras.
+/**
+ * Are we currently recording cameras.
+ * @private
+ * @default
+ * @type {boolean}
+ */
 let recording = false;
 // The access token for managing YouTube data.
 // var accessToken = "";

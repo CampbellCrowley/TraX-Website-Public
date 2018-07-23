@@ -30,51 +30,213 @@ const getSize = require('get-folder-size');
 const gal = require('google-auth-library');
 const client = new gal.OAuth2Client(CLIENT_ID, '', '');
 
+/**
+ * String defining which version this script is.
+ * @private
+ * @constant
+ * @type {string}
+ */
 const versionType = __dirname == '/var/www/trax.campbellcrowley.com' ?
     'release' :
     'development';
 
+/**
+ * Directory to find and store user data.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const userdata = '/var/www/data/user/';
+/**
+ * Subdirectory in specific user's filder where we store our data.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const traxsubdir = '/TraX/';
+/**
+ * Subdirectory within the user's TraX folder to store session data.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const sessionsubdir = 'sessions/';
+/**
+ * Subdirectory within the user's TraX folder to store track data.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const usertracksubdir = 'tracks/';
+/**
+ * Subdirectory within user's TraX folder to store summary data.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const usersummariessubdir = 'summaries/';
+/**
+ * Folder paths to find public track data.
+ * @default
+ * @constant
+ * @private
+ * @type {Object.<string>}
+ */
 const trackdataDirs = {
   development: '/var/www/dev.campbellcrowley.com/trax/trackdata/',
   release: '/var/www/trax.campbellcrowley.com/trackdata/',
 };
+/**
+ * Selected path from trackdataDirs to use for this version of the script.
+ * @constant
+ * @private
+ * @type {string}
+ */
 const trackdata = trackdataDirs[versionType];
 
+/**
+ * The table where account data is stored about users.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const accountsTable = 'Accounts';
+/**
+ * The table where relationship statuses are stored.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const friendTable = 'Friends';
+/**
+ * The column within the friendTable to look for the relationship value between
+ * the users.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const statusColumn = 'relationship';
-// No relationship
+/**
+ * No relationship.
+ * @TODO: Move relationship values to enum-like structure.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const noStatus = -1;
-// User 1 requested to be friends.
+/**
+ * User 1 requested to be friends.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const oneRequestStatus = 0;
-// User 2 requested to be friends.
+/**
+ * User 2 requested to be friends.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const twoRequestStatus = 1;
-// Users are friends.
+/**
+ * Users are friends.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const friendStatus = 2;
-// User 1 blocked user 2.
+/**
+ * User 1 blocked user 2.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const oneBlockedStatus = 3;
-// User 2 blocked user 1.
+/**
+ * User 2 blocked user 1.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const twoBlockedStatus = 4;
-// Both users blocked eachother.
+/**
+ * Both users blocked eachother.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 const bothBlockedStatus = 5;
-// User 1 requested User 2 to be crew for 1.
+/**
+ * User 1 requested User 2 to be crew for 1.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 // const onePullRequestCrew = 6;
-// User 1 requested to be crew for 2.
+/**
+ * User 1 requested to be crew for 2.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 // const onePushRequestCrew = 7;
-// user 2 requested 1 to be crew for 2.
+/**
+ * user 2 requested 1 to be crew for 2.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 // const twoPushRequestCrew = 8;
-// User 2 requested to be crew for 1.
+/**
+ * User 2 requested to be crew for 1.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 // const twoPullRequestCrew = 9;
-// User 1 is crew for 2.
+/**
+ * User 1 is crew for 2.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 // const oneCrewStatus = 10;
-// User 2 is crew for 1.
+/**
+ * User 2 is crew for 1.
+ * @default
+ * @constant
+ * @private
+ * @type {number}
+ */
 // const twoCrewStatus = 11;
 
+/**
+ * File to find the current version of the project.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
 const versionNumFile = './version.txt';
 
 
@@ -87,6 +249,11 @@ if (versionType == 'development') {
 }
 app.listen(process.argv[2]);
 
+/**
+ * Stores the information about the SQL server connection.
+ * @private
+ * @type {sql.ConnectionConfig}
+ */
 let sqlCon;
 /**
  * Connect to SQL server. Only used for initial connection test or to reconnect
@@ -131,12 +298,35 @@ function handler(req, res) {
  * @class
  */
 function TraXServer() {
-  // All connected sockets.
+  /**
+   * All connected sockets.
+   * @private
+   * @default
+   * @type {Array.<io.Client>}
+   */
   let sockets = [];
-  // All connected sockets requesting live data streams.
+  /**
+   * All connected sockets requesting live data streams.
+   * @default
+   * @private
+   * @type {Array.<io.Client>}
+   */
   let liveSockets = [];
 
+  /**
+   * The current version read from file.
+   * @see {TraXServerModule~versionNumFile}
+   * @private
+   * @default
+   * @type {string}
+   */
   let versionNum = 'Unknown';
+  /**
+   * The last time at which the version number was read from file.
+   * @private
+   * @default
+   * @type {number}
+   */
   let versionNumLastUpdate = 0;
   setInterval(updateVersionNum, 15000);
   updateVersionNum();
@@ -158,12 +348,9 @@ function TraXServer() {
 
     return list;
   }
-  let lastReceiveTime = 0;
-  let lastReceiveName = '';
-
   /**
    * Stores the current Patreon tier benefits read from patreon.json
-   *
+   * @default
    * @private
    * @type {Array}
    */
@@ -200,6 +387,8 @@ function TraXServer() {
 
   // TODO: Move events to functions.
   io.on('connection', function(socket) {
+    let lastReceiveTime = 0;
+    let lastReceiveName = '';
     let userId = '';
     let token = parseCookies(socket.handshake.headers)['token'];
     let hastoken =
@@ -1519,6 +1708,7 @@ function TraXServer() {
   /**
    * Sets two users relation in the database.
    *
+   * @private
    * @param {string} user User id of the current user.
    * @param {string} friend User id of the other user in the relationship.
    * @param {number} relation Relation between the users we are setting.
@@ -1572,6 +1762,7 @@ function TraXServer() {
   /**
    * Checks if the two users are friends.
    *
+   * @private
    * @param {string} user The current user's id.
    * @param {string} friend The other user's id we are comparing.
    * @param {permCallback} callback
@@ -1610,11 +1801,11 @@ function TraXServer() {
   /**
    * Checks if the given userId has permission to view the given filename.
    *
+   * @private
    * @param {string} filename The filename to check if userId has perms.
    * @param {number} userId The user id we are checking permissions for.
    * @param {number} otherId A friend Id that must be provided if the filename
-   * is
-   * in a different user's userdata.
+   * is in a different user's userdata.
    * @param {permCallback} callback
    */
   function checkFilePerms(filename, userId, otherId, callback) {
@@ -1639,6 +1830,7 @@ function TraXServer() {
   /**
    * Checks if the given userId has permission to view otherId's data.
    *
+   * @private
    * @param {string} filename The filename to check if userId has perms.
    * @param {number} userId The user id we are checking permissions for.
    * @param {number} otherId A friend Id to check if we have perms.
@@ -1660,6 +1852,7 @@ function TraXServer() {
   /**
    * Checks if the given userId has permission to view the given filenames.
    *
+   * @private
    * @param {array} fileList Array of filenames to check.
    * @param {number} userId The user id we are checking permissions for.
    * @param {number} otherId A friend Id that must be provided if the filename
@@ -1682,9 +1875,9 @@ function TraXServer() {
    * Appends a given session chunk to its file. Creates parent directories if
    * necessary. Responds to socket.
    *
+   * @private
    * @param {number} attempts Number of different failure recovery options we
-   * have
-   * remaining to try.
+   * have remaining to try.
    * @param {string} filename The base name of the file we are writing to.
    * @param {string} dirname The directory we are writing filename to.
    * @param {string} chunkId The id of the chunk we are writing in order to tell
@@ -1727,6 +1920,7 @@ function TraXServer() {
   /**
    * Appends a given session chunk to its file. Responds to socket.
    *
+   * @private
    * @param {string} filename The base name of the file we are writing to.
    * @param {string} chunkId The id of the chunk we are writing in order to tell
    * the client the status of this chunk.
@@ -1749,12 +1943,12 @@ function TraXServer() {
   /**
    * Forwards received chunk data to all clients requesting live data.
    *
+   * @private
    * @param {string} userId The Id of the user sending the data.
    * @param {string} chunkId The id of the chunk we are forwarding.
    * @param {string} buffer The data to forward.
    * @param {boolean} [isPublic=false] Should this stream be sent to everybody
-   * not
-   * just friends?
+   * not just friends?
    */
   function forwardChunk(userId, chunkId, buffer, isPublic) {
     if (liveSockets.length == 0) return;
@@ -1784,6 +1978,7 @@ function TraXServer() {
    * Takes an array of directories describing a track, and returns an array of
    * objects of the names and ids of the tracks.
    *
+   * @private
    * @param {array} idArray The array of absolute paths to tracks and configs.
    * @param {callback} callback Callback containing only the returned object as
    * an
@@ -1826,6 +2021,7 @@ function TraXServer() {
   /**
    * Gets list of all users with relation to userId.
    *
+   * @private
    * @param {string} userId The id of the user we are looking up.
    * @param {number} relation Relation number to filter for.
    * @param {rowCallback} callback
@@ -1894,6 +2090,7 @@ function TraXServer() {
   /**
    * Gets the relation between two users.
    *
+   * @private
    * @param {string} user The id of the user we are looking up.
    * @param {string} friend The id of the other user we are comparing.
    * @param {rowCallback} callback
@@ -1919,6 +2116,8 @@ function TraXServer() {
 
   /**
    * Checks the versionNumFile for updated current app version.
+   *
+   * @private
    */
   function updateVersionNum() {
     fs.stat(versionNumFile, function(err, stats) {
@@ -1950,6 +2149,8 @@ function TraXServer() {
   }
   /**
    * Sends the version number to all connected clients.
+   *
+   * @private
    */
   function sendVersionToAll() {
     for (let i = 0; i < sockets.length; i++) {

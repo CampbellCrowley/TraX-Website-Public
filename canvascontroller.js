@@ -8,43 +8,131 @@
  * @augments TraX
  */
 (function(Canvases, undefined) {
-// Number of points to draw to show a line.
+/**
+ * Number of points to draw to show a line.
+ * @private
+ * @default
+ * @constant
+ * @type {number}
+ */
 const numAccelPoints = 15;
-// The delta angle between points to draw a sphere in radians.
+/**
+ * The delta angle between points to draw a sphere in radians.
+ * @private
+ * @default
+ * @constant
+ * @type {number}
+ */
 const pointAngleDelta = Math.PI / 5.0;
 
 // DOM Elements.
 let gyroCanvas;
 let accelCanvas;
-// Canvas contexts.
+/**
+ * Canvas context for orientation sphere.
+ * @private
+ * @type {Canvas.Context2d}
+ */
 let gyroCtx;
+/**
+ * Canvas context for acceleration graph.
+ * @private
+ * @type {Canvas.Context2d}
+ */
 let accelCtx;
-// Sphere being drawn in canvas.
+/**
+ * Sphere being drawn in canvas.
+ * @private
+ * @type {Canvases.Sphere3d}
+ */
 let sphere;
-// Rotation where -Z is down.
+/**
+ * Rotation where -Z is down.
+ * @default
+ * @public
+ * @type {{a: number, b: number, g: number}}
+ */
 TraX.downRotation = {a: 0, b: 0, g: 0};
-// Current given rotation of device.
+/**
+ * Current given rotation of device.
+ * @default
+ * @public
+ * @type {{a: number, b: number, g: number}}
+ */
 Canvases.rotation = {a: 0, b: 0, g: 0};
-// Current acceleration being exerted on device.
+/**
+ * Current acceleration being exerted on device.
+ * @default
+ * @public
+ * @type {{0: number, 1: number, 2: number}}
+ */
 Canvases.drawAccel = [0, 0, 0];
-// Vector where +X is forwards.
+/**
+ * Vector where +X is forwards.
+ * @default
+ * @public
+ * @type {{0: number, 1: number, 2: number}}
+ */
 Canvases.forwardVector = [0, 1, 0];
-// Accumulator for resetting forward vector.
+/**
+ * Accumulator for resetting forward vector.
+ * @private
+ * @default
+ * @type {number}
+ */
 let forwardAcc = 0;
-// Calculated offset between what we think is forwards and the direction GPS
-// tells us we are going.
+/**
+ * Calculated offset between what we think is forwards and the direction GPS
+ * tells us we are going.
+ * @default
+ * @public
+ * @type {number}
+ */
 Canvases.headingOffset = 0;
-// The current rate at which the device is rotating.
+/**
+ * The current rate at which the device is rotating.
+ * @public
+ * @default
+ * @type {{a: number, b: number, g: number}}
+ */
 Canvases.rotationRate = {a: 0, b: 0, g: 0};
-// The distance the sphere is away from front of page. (Depth into screen)
+/**
+ * The distance the sphere is away from front of page. (Depth into screen)
+ * @default
+ * @private
+ * @type {number}
+ */
 let distance = 100;
-// Dimensions of canvases.
+/**
+ * Width of orientation canvas context.
+ * @private
+ * @type {number}
+ */
 let gyroWidth;
+/**
+ * Height of orientation canvas context.
+ * @private
+ * @type {number}
+ */
 let gyroHeight;
+/**
+ * Width of acceleration canvas context.
+ * @private
+ * @type {number}
+ */
 let accelWidth;
+/**
+ * Height of acceleration canvas context.
+ * @private
+ * @type {number}
+ */
 let accelHeight;
 
-// Initialize
+/**
+ * Initialize Canvases
+ *
+ * @public
+ */
 Canvases.init = function() {
   gyroCanvas = document.getElementById('realtimeGyroSphere');
   accelCanvas = document.getElementById('realtimeAccelCanvas');
@@ -62,7 +150,17 @@ Canvases.init = function() {
   Canvases.renderAccel();
 };
 
-// Class storing information about how to draw a sphere on the canvas.
+/**
+ * Class storing information about how to draw a sphere on the canvas.
+ * @class
+ *
+ * @public
+ * @param {number} [radius=20] The radius of the sphere.
+ * @property {TraX.Common.Point3d[]} point Points that make up the sphere.
+ * @property {string} color Color of all points in the sphere.
+ * @property {number} radius The radius of the sphere.
+ * @property {number} numberOfVertexes The number of points defining the sphere.
+ */
 Canvases.Sphere3d = function(radius) {
   this.point = [];
   this.color = '#000000';
@@ -333,6 +431,14 @@ function drawPoint(ctx, x, y, size, color) {
   ctx.restore();
 }
 
+/**
+ * Take the passed in values as the current correct speed and heading, and reset
+ * our estimated velocity.
+ *
+ * @public
+ * @param {number} gpsSpeed The speed reported by the GPS. (m/s?)
+ * @param {number} gpsHeading The heading reported by the GPS. (deg cw of N?)
+ */
 Canvases.resetEstimatedVelocity = function(gpsSpeed, gpsHeading) {
   // Need to be moving faster than 1m/s, otherwise the UI will go a little
   // crazy.
