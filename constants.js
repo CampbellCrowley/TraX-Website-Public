@@ -1,69 +1,190 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 
+/* eslint-disable no-unused-vars */
+
 // Global Constants //
-// Filesize conversions.
-const byteTokByte = 1 / 1000.0;
-const byteToMByte = byteTokByte / 1000.0;
-const byteToGByte = byteToMByte / 1000.0;
-const byteToTByte = byteToGByte / 1000.0;
-const byteToPByte = byteToTByte / 1000.0;
-const byteToEByte = byteToPByte / 1000.0;
-// Absolute acceleration due to gravity. (m/s)
+/**
+ * Absolute acceleration due to gravity. (m/s)
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const Agrav = 9.80665;
-// Milliseconds between timestamps to assume isMultiSession.
+/**
+ * Milliseconds between timestamps to assume isMultiSession.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const maxGapInSession = 5 * 60 * 1000;
-// Minimum milliseconds a lap is allowed to be.
+/**
+ * Minimum milliseconds a lap is allowed to be.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const minLapTime = 7000;
 
 // Relationship Status //
-// No relationship
+/**
+ * No relationship
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const noStatus = -1;
-// User 1 requested to be friends.
+/**
+ * User 1 requested to be friends.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const oneRequestStatus = 0;
-// User 2 requested to be friends.
+/**
+ * User 2 requested to be friends.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const twoRequestStatus = 1;
-// Users are friends.
+/**
+ * Users are friends.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const friendStatus = 2;
-// User 1 blocked user 2.
+/**
+ * User 1 blocked user 2.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const oneBlockedStatus = 3;
-// User 2 blocked user 1.
+/**
+ * User 2 blocked user 1.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const twoBlockedStatus = 4;
-// Both users blocked eachother.
+/**
+ * Both users blocked eachother.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const bothBlockedStatus = 5;
-// User 1 requested User 2 to be crew for 1.
+/**
+ * User 1 requested User 2 to be crew for 1.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const onePullRequestCrew = 6;
-// User 1 requested to be crew for 2.
+/**
+ * User 1 requested to be crew for 2.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const onePushRequestCrew = 7;
-// user 2 requested 1 to be crew for 2.
+/**
+ * user 2 requested 1 to be crew for 2.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const twoPushRequestCrew = 8;
-// User 2 requested to be crew for 1.
+/**
+ * User 2 requested to be crew for 1.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const twoPullRequestCrew = 9;
-// User 1 is crew for 2.
+/**
+ * User 1 is crew for 2.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const oneCrewStatus = 10;
-// User 2 is crew for 1.
+/**
+ * User 2 is crew for 1.
+ * @default
+ * @constant
+ * @global
+ * @type {number}
+ */
 const twoCrewStatus = 11;
 
+/* eslint-enable no-unused-vars */
+
 (function(TraX, undefined) {
+/**
+ * Unit conversion helper functions.
+ * @class Units
+ * @augments TraX
+ */
 (function(Units, undefined) {
+/**
+ * If this is implemented, others should override this with the DOM element that
+ * selects the units.
+ *
+ * @default
+ * @public
+ * @type {{value: string}|Element}
+ */
+TraX.unitDropdownDom = {value: 'imperial'};
 
-// If this is implemented, others should override this with the DOM element that
-// selects the units.
-TraX.unitDropdownDom = {value: "imperial"};
-
-// Meters per second to miles per hour or kilometers per hour
+/**
+ * Meters per second to miles per hour or kilometers per hour.
+ *
+ * @public
+ * @param {number} input Speed in meters per second.
+ * @param {string} [units] The units system to convert to, default uses
+ * TraX.unitDropdownDom.value
+ * @return {number} Number rounded to tenths place in unit.
+ */
 Units.speedToUnit = function(input, units) {
   return Math.round(
              Units.distanceToLargeUnit(input * 60.0 * 60.0, units, true) *
              10.0) /
       10.0;
 };
-// Meters to mile or kilometer
+/**
+ * Meters to mile or kilometer
+ *
+ * @public
+ * @param {number} input Distance in meters.
+ * @param {string} [units] Unit system to convert to, default uses
+ * TraX.unitDropdownDom.value
+ * @param {boolean} [noround=false] Disable rounding final value to tenths
+ * place.
+ * @return {number} Converted value.
+ */
 Units.distanceToLargeUnit = function(input, units, noround) {
-  if (typeof units === "undefined") {
+  if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
   }
-  var val;
+  let val;
   if (units) {
     val = input / 1609.34;
   } else {
@@ -74,12 +195,20 @@ Units.distanceToLargeUnit = function(input, units, noround) {
   }
   return Math.round(val * 10.0) / 10.0;
 };
-// Kilometers per hour to MPH or KPH.
+/**
+ * Kilometers per hour to MPH or KPH.
+ *
+ * @public
+ * @param {number} input Speed in kilometers per hour.
+ * @param {string} [units] The unit system to convert to, default uses
+ * TraX.unitDropdownDom.value
+ * @return {number} Converted value.
+ */
 Units.speedToLargeUnit = function(input, units) {
-  if (typeof units === "undefined") {
+  if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
   }
-  var val;
+  let val;
   if (units) {
     val = input / 0.621371;
   } else {
@@ -87,9 +216,17 @@ Units.speedToLargeUnit = function(input, units) {
   }
   return Math.round(val * 10.0) / 10.0;
 };
-// Meters to feet or meters.
+/**
+ * Meters to feet or meters.
+ *
+ * @public
+ * @param {number} input Input in meters.
+ * @param {string} [units] The unit system to convert to, default uses
+ * TraX.unitDropdownDom.value
+ * @return {number} Converted value.
+ */
 Units.distanceToSmallUnit = function(input, units) {
-  if (typeof units === "undefined") {
+  if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
   }
   if (units) {
@@ -98,56 +235,104 @@ Units.distanceToSmallUnit = function(input, units) {
     return input;
   }
 };
-// Get feet or meters unit.
+/**
+ * Get feet or meters unit.
+ *
+ * @public
+ * @param {string} [units] The unit system to get the units for, default uses
+ * TraX.unitDropdownDom.value
+ * @return {string} The unit names. (ft or m)
+ */
 Units.getSmallDistanceUnit = function(units) {
-  if (typeof units === "undefined") {
+  if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
   }
   if (units) {
-    return "ft";
+    return 'ft';
   } else {
-    return "m";
+    return 'm';
   }
 };
-// Get miles per hour, or kilometers per hour unit.
+/**
+ * Get miles per hour, or kilometers per hour unit.
+ *
+ * @public
+ * @param {string} [units] The units system to get the unit for, default uses
+ * TraX.unitDropdownDom.value
+ * @return {string} The unit names. (kmh or mph)
+ */
 Units.getLargeSpeedUnit = function(units) {
-  if (typeof units === "undefined") {
+  if (typeof units === 'undefined') {
     units = TraX.unitDropdownDom.value == 'imperial';
   }
   if (units) {
-    return "mph";
+    return 'mph';
   } else {
-    return "kmh";
+    return 'kmh';
   }
 };
-// Convert given two points latitude and longitude, get the distance between the
-// two.
+/**
+ * Convert given two points latitude and longitude, get the distance between the
+ * two. Treats Earth as a sphere with radius 6378.137km.
+ *
+ * @public
+ * @param {number} lat1 The first latitude.
+ * @param {number} lng1 The first longitude.
+ * @param {number} lat2 The second latitude.
+ * @param {number} lng2 The second longitude.
+ * @return {number} Distance in meters between the two coords.
+ */
 Units.coordToMeters = function(lat1, lng1, lat2, lng2) {
-  var R = 6378.137;  // Radius of earth in KM
-  var dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
-  var dLon = lng2 * Math.PI / 180 - lng1 * Math.PI / 180;
-  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+  let R = 6378.137;  // Radius of earth in KM
+  let dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
+  let dLon = lng2 * Math.PI / 180 - lng1 * Math.PI / 180;
+  let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
           Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  var d = R * c;
+  let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  let d = R * c;
   return d * 1000;
 };
-// Given two coords, find distance in meters between the two.
+/**
+ * Given two coords, find distance in meters between the two.
+ * @see {Units~coordToMeters}
+ *
+ * @public
+ * @param {{lat: number, lng: number}} one First coordinate.
+ * @param {{lat: number, lng: number}} two Second coordinate.
+ * @return {number} Distance in meters between the two coords.
+ */
 Units.latLngToMeters = function(one, two) {
   return Units.coordToMeters(one.lat, one.lng, two.lat, two.lng);
 };
-
 }(TraX.Units = TraX.Units || {}));
+/**
+ * Other common helper functions.
+ * @class Common
+ * @augments TraX
+ */
 (function(Common, undefined) {
-
-Common.point3d = function(x, y, z, color) {
+/**
+ * Defines a point in space with a color.
+ *
+ * @public
+ * @class
+ * @param {number|Common.Point3d} x X Coord or instance of Point3d to copy.
+ * @param {number} [y] Y Coord.
+ * @param {number} [z] Z Coord.
+ * @param {string} [color]
+ * @property {number} x X Coord.
+ * @property {number} y Y Coord.
+ * @property {number} z Z Coord.
+ * @property {string} color The color of the point.
+ */
+Common.Point3d = function(x, y, z, color) {
   this.x = 0;
   this.y = 0;
   this.z = 0;
-  this.color = "black";
+  this.color = 'black';
 
-  if (x instanceof Common.point3d) {
+  if (x instanceof Common.Point3d) {
     this.x = x.x;
     this.y = x.y;
     this.z = x.z;
@@ -160,14 +345,26 @@ Common.point3d = function(x, y, z, color) {
   }
 };
 
+/**
+ * Rotates a vector by a given rotation by applying a z->x->y Tait-Bryan
+ * rotation. Enabling flip applies the inverse of this rotation.
+ *
+ * @public
+ * @param {Common.Point3d|Array} vector The point to flip defined by xyz values,
+ * or 0 1 2 elements in the order of x y z.
+ * @param {Array|{a: number, b: number, g: number}} rotation Rotation in alpha
+ * beta gamma rotations.
+ * @param {boolean} [flip=false] Applies the inverse of the given rotation.
+ * @return {Common.Point3d} The rotated vector.
+ */
 Common.rotateVector = function(vector, rotation, flip) {
-  var point;
-  if (vector instanceof Common.point3d) {
-    point = new Common.point3d(vector);
+  let point;
+  if (vector instanceof Common.Point3d) {
+    point = new Common.Point3d(vector);
   } else {
-    point = new Common.point3d(vector[0], vector[1], vector[2]);
+    point = new Common.Point3d(vector[0], vector[1], vector[2]);
   }
-  var xRot, yRot, zRot;
+  let xRot; let yRot; let zRot;
   if (typeof rotation[0] === 'undefined') {
     zRot = rotation.a;
     xRot = rotation.b;
@@ -192,17 +389,17 @@ Common.rotateVector = function(vector, rotation, flip) {
     [s1, -s2 * c1, c2 * c1]
   ]; */
 
-  var c1 = Math.cos(zRot);
-  var s1 = Math.sin(zRot);
-  var c2 = Math.cos(xRot);
-  var s2 = Math.sin(xRot);
-  var c3 = Math.cos(yRot);
-  var s3 = Math.sin(yRot);
+  let c1 = Math.cos(zRot);
+  let s1 = Math.sin(zRot);
+  let c2 = Math.cos(xRot);
+  let s2 = Math.sin(xRot);
+  let c3 = Math.cos(yRot);
+  let s3 = Math.sin(yRot);
   // Rotation matrix (z,x,y) Tait-Bryan
-  var A = [
+  let A = [
     [c1 * c3 - s1 * s2 * s3, -c2 * s1, c1 * s3 + c3 * s1 * s2],
     [c3 * s1 + c1 * s2 * s3, c1 * c2, s1 * s3 - c1 * c3 * s2],
-    [-c2 * s3, s2, c2 * c3]
+    [-c2 * s3, s2, c2 * c3],
   ];
   // Rotation matrix (x,y,z) Tair-Bryan
   /* var A = [
@@ -213,12 +410,12 @@ Common.rotateVector = function(vector, rotation, flip) {
 
   // Apply inverse rotation instead.
   if (flip) {
-    var det = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
+    let det = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
         A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]) +
         A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
-    var invdet = 1 / det;
+    let invdet = 1 / det;
 
-    var iA = [[], [], []];
+    let iA = [[], [], []];
     iA[0][0] = (A[1][1] * A[2][2] - A[2][1] * A[1][2]) * invdet;
     iA[0][1] = (A[0][2] * A[2][1] - A[0][1] * A[2][2]) * invdet;
     iA[0][2] = (A[0][1] * A[1][2] - A[0][2] * A[1][1]) * invdet;
@@ -232,9 +429,9 @@ Common.rotateVector = function(vector, rotation, flip) {
     A = iA;
   }
 
-  var x = (point.x * A[0][0]) + (point.y * A[1][0]) + (point.z * A[2][0]);
-  var y = (point.x * A[0][1]) + (point.y * A[1][1]) + (point.z * A[2][1]);
-  var z = (point.x * A[0][2]) + (point.y * A[1][2]) + (point.z * A[2][2]);
+  let x = (point.x * A[0][0]) + (point.y * A[1][0]) + (point.z * A[2][0]);
+  let y = (point.x * A[0][1]) + (point.y * A[1][1]) + (point.z * A[2][1]);
+  let z = (point.x * A[0][2]) + (point.y * A[1][2]) + (point.z * A[2][2]);
 
   point.x = x;
   point.y = y;
@@ -243,102 +440,202 @@ Common.rotateVector = function(vector, rotation, flip) {
   return point;
 };
 
+/**
+ * Rotates a vector around the X axis by a certain angle in radians. Rotation is
+ * applied in-place.
+ *
+ * @public
+ * @param {Common.Point3d} point The vector to rotate.
+ * @param {number} rad The angle in radians.
+ */
 Common.rotateX = function(point, rad) {
-  var y = point.y;
+  let y = point.y;
   point.y = (y * Math.cos(rad)) + (point.z * Math.sin(rad) * -1.0);
   point.z = (y * Math.sin(rad)) + (point.z * Math.cos(rad));
 };
+/**
+ * Rotates a vector around the Y axis by a certain angle in radians. Rotation is
+ * applied in-place.
+ *
+ * @public
+ * @param {Common.Point3d} point The vector to rotate.
+ * @param {number} rad The angle in radians.
+ */
 Common.rotateY = function(point, rad) {
-  var x = point.x;
+  let x = point.x;
   point.x = (x * Math.cos(rad)) + (point.z * Math.sin(rad) * -1.0);
   point.z = (x * Math.sin(rad)) + (point.z * Math.cos(rad));
 };
+/**
+ * Rotates a vector around the Z axis by a certain angle in radians. Rotation is
+ * applied in-place.
+ *
+ * @public
+ * @param {Common.Point3d} point The vector to rotate.
+ * @param {number} rad The angle in radians.
+ */
 Common.rotateZ = function(point, rad) {
-  var x = point.x;
+  let x = point.x;
   point.x = (x * Math.cos(rad)) + (point.y * Math.sin(rad) * -1.0);
   point.y = (x * Math.sin(rad)) + (point.y * Math.cos(rad));
 };
 
+/**
+ * Calculates the cross product of two vectors.
+ *
+ * @public
+ * @param {Common.Point3d|Array} a First vector.
+ * @param {Common.Point3d|Array} b Second vector.
+ * @return {Array} Array of length 3 defining the vector as xyz.
+ */
 Common.cross = function(a, b) {
-  if (a instanceof Common.point3d) {
+  if (a instanceof Common.Point3d) {
     a[0] = a.x;
     a[1] = a.y;
     a[2] = a.z;
   }
-  if (b instanceof Common.point3d) {
+  if (b instanceof Common.Point3d) {
     b[0] = b.x;
     b[1] = b.y;
     b[2] = b.z;
   }
   return [
     a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
-    a[0] * b[1] - a[1] * b[0]
+    a[0] * b[1] - a[1] * b[0],
   ];
 };
 
+/**
+ * Formats a duration in milliseconds as a human-readable string.
+ *
+ * @public
+ * @param {number} msecs The duration in milliseconds to format.
+ * @param {boolean} [plusSign=false] Whether to unclude the plus sign on
+ * positive numbers or not.
+ * @param {number} [minSections=0] Minimum sections of digits to show. <=0 shows
+ * seconds and milliseconds, >0 shows minutes, >1 shows hours, >2 shows days.
+ * @return {string} The formatted string.
+ */
 Common.formatMsec = function(msecs, plusSign, minSections) {
   msecs = Math.floor(msecs);
-  var sign = msecs >= 0 ? (plusSign ? "+" : "") : "-";
+  let sign = msecs >= 0 ? (plusSign ? '+' : '') : '-';
   if (msecs < 0) msecs *= -1;
-  var milliseconds = msecs % 1000;
-  var seconds = Math.floor(msecs / 1000) % 60;
-  var minutes = Math.floor(msecs / 1000 / 60) % 60;
-  var hours = Math.floor(msecs / 1000 / 60 / 60) % 24;
-  var days = Math.floor(msecs / 1000 / 60 / 60 / 24);
+  let milliseconds = msecs % 1000;
+  let seconds = Math.floor(msecs / 1000) % 60;
+  let minutes = Math.floor(msecs / 1000 / 60) % 60;
+  let hours = Math.floor(msecs / 1000 / 60 / 60) % 24;
+  let days = Math.floor(msecs / 1000 / 60 / 60 / 24);
   if (minSections > 2 || days > 0) {
-    return sign + Common.pad(days, 2) + ":" + Common.pad(hours, 2) + ":" +
-        Common.pad(minutes, 2) + ":" + Common.pad(seconds, 2) + "." +
+    return sign + Common.pad(days, 2) + ':' + Common.pad(hours, 2) + ':' +
+        Common.pad(minutes, 2) + ':' + Common.pad(seconds, 2) + '.' +
         Common.pad(milliseconds, 3);
   } else if (minSections > 1 || hours > 0) {
-    return sign + Common.pad(hours, 2) + ":" + Common.pad(minutes, 2) + ":" +
-        Common.pad(seconds, 2) + "." + Common.pad(milliseconds, 3);
+    return sign + Common.pad(hours, 2) + ':' + Common.pad(minutes, 2) + ':' +
+        Common.pad(seconds, 2) + '.' + Common.pad(milliseconds, 3);
   } else if (minSections > 0 || minutes > 0) {
-    return sign + Common.pad(minutes, 2) + ":" + Common.pad(seconds, 2) + "." +
+    return sign + Common.pad(minutes, 2) + ':' + Common.pad(seconds, 2) + '.' +
         Common.pad(milliseconds, 3);
   } else {
-    return sign + Common.pad(seconds, 2) + "." + Common.pad(milliseconds, 3);
+    return sign + Common.pad(seconds, 2) + '.' + Common.pad(milliseconds, 3);
   }
 };
 
+/**
+ * Formats a time givin in milliseconds since epoch as a human readable string.
+ *
+ * @public
+ * @param {number} msecs Time as millisconds since epoch.
+ * @param {boolean} [showSeconds=false] Whether to show seconds on the time or
+ * not.
+ * @return {string} Formatted time as a string.
+ */
 Common.formatTime = function(msecs, showSeconds) {
-  var date = new Date(msecs);
-  return TraX.Common.pad(date.getHours(), 2) + ":" +
+  let date = new Date(msecs);
+  return TraX.Common.pad(date.getHours(), 2) + ':' +
       TraX.Common.pad(date.getMinutes(), 2) +
-      (showSeconds ? ("." + TraX.Common.pad(date.getSeconds(), 2)) : "");
+      (showSeconds ? (':' + TraX.Common.pad(date.getSeconds(), 2)) : '');
 };
 
+/**
+ * Pad a number with leading zeros to a minimum length of given digits.
+ *
+ * @public
+ * @param {number|string} num Number to pad with leading zeroes.
+ * @param {number} digits Number of digits long to make the final string at a
+ * minimum.
+ * @return {string} Number with leading zeroes to match specified length.
+ */
 Common.pad = function(num, digits) {
-  var str = String(num);
+  let str = String(num);
   while (str.length < digits) {
-    str = "0" + str;
+    str = '0' + str;
   }
   return str;
 };
 
+/**
+ * Linearly interpolates between two coordinates. Does not take into account
+ * curvature of Earth. Individually interpolates latitude and longitude.
+ *
+ * @public
+ * @param {{lat: number, lng: number}} one The first coordinate.
+ * @param {{lat: number, lng: number}} two The second coordinate.
+ * @param {number} val The value from 0 to 1 inclusive to interpolate between
+ * the coordinates.
+ * @return {{lat: number, lng: number}} The interpolated coord.
+ */
 Common.interpolateCoord = function(one, two, val) {
-  var latitude = Common.lerp(one["lat"], two["lat"], val);
-  var longitude = Common.lerp(one["lng"], two["lng"], val);
+  let latitude = Common.lerp(one['lat'], two['lat'], val);
+  let longitude = Common.lerp(one['lng'], two['lng'], val);
   return {lat: latitude, lng: longitude};
 };
 
-Common.lerp = function(one, two, val) { return (1.0 - val) * one + val * two; };
+/**
+ * Linearly interpolate between two numbers.
+ *
+ * @public
+ * @param {number} one The first number.
+ * @param {number} two The second number.
+ * @param {number} val Value from 0 to 1 inclusive to interpolate between the
+ * given numbers.
+ * @return {number} The interpolated value.
+ */
+Common.lerp = function(one, two, val) {
+ return (1.0 - val) * one + val * two;
+};
 
+/**
+ * Uses the Pythagorean theorem to calculate distance between coordinates as if
+ * they were on a flat plane.
+ *
+ * @public
+ * @param {{lat: number, lng: number}} one Coordinate one.
+ * @param {{lat: number, lng: number}} two Coordinate one.
+ * @return {number} Distance in original latitude and longitude units.
+ */
 Common.coordDistance = function(one, two) {
   return Math.sqrt(
       Math.pow(two.lat - one.lat, 2) + Math.pow(two.lng - one.lng, 2));
 };
 
+/**
+ * Compare two version strings to see which version is a higher value.
+ *
+ * @public
+ * @param {string} a Version separated by decimals.
+ * @param {string} b Version in same format as a.
+ * @return {number} -1 if a < b, 0 if a == b, +1 if a > b;
+ */
 Common.compareVersion = function(a, b) {
-  var as = a.split('.');
-  var bs = b.split('.');
-  for (var i = 0; i < a.length && i < b.length; i++) {
-    a[i] = Number(a[i]);
-    b[i] = Number(b[i]);
-    if (a[i] < b[i]) return -1;
-    if (a[i] > b[i]) return 1;
+  let as = a.split('.');
+  let bs = b.split('.');
+  for (let i = 0; i < as.length && i < bs.length; i++) {
+    as[i] = Number(as[i]);
+    bs[i] = Number(bs[i]);
+    if (as[i] < bs[i]) return -1;
+    if (as[i] > bs[i]) return 1;
   }
   return 0;
 };
-
 }(TraX.Common = TraX.Common || {}));
 }(window.TraX = window.TraX || {}));

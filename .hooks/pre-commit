@@ -1,0 +1,28 @@
+#!/bin/bash
+
+STAGED_SCRIPTS=$(git diff --cached --name-only --diff-filter=ACM | grep ".js$" | tr '\n' ' ')
+STAGED_DATA=$(git diff --cached --name-only --diff-filter=ACM | grep ".json$" | tr '\n' ' ')
+
+if [[ "$STAGED_SCRIPTS" != "" || "$STAGED_DATA" != "" ]]; then
+  echo "Linting"
+  npm run lint
+  if [[ "$?" != 0 ]]; then
+    echo -e "\033[41mCOMMIT FAILED:\033[0m Failed to pass linting."
+    exit 1
+  fi
+
+  echo "Creating docs"
+  bash .hooks/make-docs.sh
+  if [[ "$?" != 0 ]]; then
+    echo -e "\033[41mCOMMIT FAILED:\033[0m Failed to create documentation."
+    exit 1
+  fi
+
+  git add docs/
+
+  if [[ "$?" != 0 ]]; then
+    echo -e "\033[41mCOMMIT FAILED:\033[0m Failed to add documentation to commit."
+    exit 1
+  fi
+fi
+exit 0
