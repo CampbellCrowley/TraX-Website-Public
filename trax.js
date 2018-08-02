@@ -533,6 +533,10 @@ function TraXServer() {
             configOwnerId: configOwnerId,
           });
           checkFilePerms(filename, userId, undefined, function(err2, perms) {
+            if (err2 || !perms) {
+              socket.emit('fail', err2);
+              return;
+            }
             mkdirp(mydir, {mode: 700}, function(err3) {
               if (err3) {
                 socket.emit('fail', 'writeerror');
