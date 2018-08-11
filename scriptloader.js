@@ -42,7 +42,7 @@ const additionalScripts = [
     url: 'https://dev.campbellcrowley.com/trax/sidebarcontroller.js',
     init: ['Sidebar'],
   },
-  {url: 'https://c6.patreon.com/becomePatronButton.bundle.js'},
+  {url: 'https://c6.patreon.com/becomePatronButton.bundle.js', nowait: true},
 ];
 let numInit = 0;
 
@@ -57,7 +57,11 @@ function preinit() {
     let newScript = document.createElement('script');
     newScript.src = additionalScripts[i].url;
     newScript.type = 'text/javascript';
-    newScript.onload = handleScriptLoad;
+    if (additionalScripts[i].nowait) {
+      numInit++;
+    } else {
+      newScript.onload = handleScriptLoad;
+    }
     head.appendChild(newScript);
   }
 }

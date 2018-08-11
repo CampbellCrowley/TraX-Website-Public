@@ -642,7 +642,7 @@ function TraXServer() {
         }
         lastReceiveTime = Date.now();
         forwardChunk(userId, chunkId, buffer, streamIsPublic);
-        if (buffer.length + dataSize > dataLimit && dataLimit > 0) {
+        if (buffer.length * 2 + dataSize > dataLimit && dataLimit > 0) {
           socket.emit('fail', 'nostorage');
           return;
         }
