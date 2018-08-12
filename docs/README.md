@@ -142,7 +142,7 @@ The Server side of TraX.
         * [~checkIfFriends(user, friend, callback)](#module_TraXServerModule..TraXServer..checkIfFriends) ℗
         * [~checkFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFilePerms) ℗
         * [~checkFriendFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFriendFilePerms) ℗
-        * [~appendChunk(filename, chunkId, buffer, socket)](#module_TraXServerModule..TraXServer..appendChunk) ℗
+        * [~appendChunk(filename, chunkId, buffer, socket, [retry])](#module_TraXServerModule..TraXServer..appendChunk) ℗
         * [~forwardChunk(userId, chunkId, buffer, [isPublic])](#module_TraXServerModule..TraXServer..forwardChunk) ℗
         * [~trackIdsToNames(idArray, callback)](#module_TraXServerModule..TraXServer..trackIdsToNames) ℗
         * [~getFriendsList(userId, relation, callback)](#module_TraXServerModule..TraXServer..getFriendsList) ℗
@@ -195,7 +195,7 @@ side of TraX.
     * [~checkIfFriends(user, friend, callback)](#module_TraXServerModule..TraXServer..checkIfFriends) ℗
     * [~checkFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFilePerms) ℗
     * [~checkFriendFilePerms(filename, userId, otherId, callback)](#module_TraXServerModule..TraXServer..checkFriendFilePerms) ℗
-    * [~appendChunk(filename, chunkId, buffer, socket)](#module_TraXServerModule..TraXServer..appendChunk) ℗
+    * [~appendChunk(filename, chunkId, buffer, socket, [retry])](#module_TraXServerModule..TraXServer..appendChunk) ℗
     * [~forwardChunk(userId, chunkId, buffer, [isPublic])](#module_TraXServerModule..TraXServer..forwardChunk) ℗
     * [~trackIdsToNames(idArray, callback)](#module_TraXServerModule..TraXServer..trackIdsToNames) ℗
     * [~getFriendsList(userId, relation, callback)](#module_TraXServerModule..TraXServer..getFriendsList) ℗
@@ -326,18 +326,19 @@ Checks if the given userId has permission to view otherId's data.
 
 <a name="module_TraXServerModule..TraXServer..appendChunk"></a>
 
-#### TraXServer~appendChunk(filename, chunkId, buffer, socket) ℗
+#### TraXServer~appendChunk(filename, chunkId, buffer, socket, [retry]) ℗
 Appends a given session chunk to its file. Responds to socket.
 
 **Kind**: inner method of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
 **Access**: private  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| filename | <code>string</code> | The base name of the file we are writing to. |
-| chunkId | <code>string</code> | The id of the chunk we are writing in order to tell the client the status of this chunk. |
-| buffer | <code>string</code> | The data to write to the file. |
-| socket | <code>socket</code> | The socket.io socket to respond to with status updates. |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| filename | <code>string</code> |  | The base name of the file we are writing to. |
+| chunkId | <code>string</code> |  | The id of the chunk we are writing in order to tell the client the status of this chunk. |
+| buffer | <code>string</code> |  | The data to write to the file. |
+| socket | <code>socket</code> |  | The socket.io socket to respond to with status updates. |
+| [retry] | <code>boolean</code> | <code>true</code> | Attempt to create the directory and retry writing if the first try fails. |
 
 <a name="module_TraXServerModule..TraXServer..forwardChunk"></a>
 

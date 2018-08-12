@@ -1931,13 +1931,28 @@ function TraXServer() {
    * @param {string} buffer The data to write to the file.
    * @param {socket} socket The socket.io socket to respond to with status
    * updates.
+   * @param {boolean} [retry=true] Attempt to create the directory and retry
+   * writing if the first try fails.
    */
-  function appendChunk(filename, chunkId, buffer, socket) {
+  function appendChunk(filename, chunkId, buffer, socket, retry = true) {
     fs.appendFile(filename, buffer, {mode: 0o600}, function(err) {
       if (err) {
-        common.error(
-            'Failed to append file: "' + filename + '" ' + err, socket.id);
-        socket.emit('fail', 'writeerror', chunkId);
+        if (retry) {
+          mkdirp(path.dirname(filename), {mode: 700}, function(err2) {
+            if (err2) {
+              common.error(
+                  'Failed to create directory: "' + filename + '" ' + err2,
+                  socket.id);
+              socket.emit('fail', 'writeerror', chunkId);
+            } else {
+              appendChunk(filename, chunkId, buffer, socket, false);
+            }
+          });
+        } else {
+          common.error(
+              'Failed to append file: "' + filename + '" ' + err, socket.id);
+          socket.emit('fail', 'writeerror', chunkId);
+        }
       } else {
         socket.emit('success', chunkId);
       }
