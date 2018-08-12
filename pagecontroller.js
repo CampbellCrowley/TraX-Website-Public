@@ -1185,6 +1185,38 @@ function socketInit() {
           console.error(
               'Server says we are not sending sessionId', sessionId,
               getSessionId(), extraInfo);
+        } else if (reason === 'createsession') {
+          console.log(
+              'Re-sending session creation per server request.', extraInfo);
+          if (extraInfo == sessionId) {
+            if (!preventSend && TraX.isSignedIn) {
+              if (isConnected) {
+                TraX.socket.emit(
+                    'newsession', sessionName, trackId, trackOwnerId, configId,
+                    configOwnerId, sessionId);
+              } else {
+                socketMessageQueue.push([
+                  'newsession',
+                  sessionName,
+                  trackId,
+                  trackOwnerId,
+                  configId,
+                  configOwnerId,
+                  sessionId,
+                ]);
+              }
+            } else if (!preventSend) {
+              socketMessageQueue.push([
+                'newsession',
+                sessionName,
+                trackId,
+                trackOwnerId,
+                configId,
+                configOwnerId,
+                sessionId,
+              ]);
+            }
+          }
         } else if (reason === 'nostorage') {
           console.log('User has run out of storage space on server.');
           TraX.showMessageBox(

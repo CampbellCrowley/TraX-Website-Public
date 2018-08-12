@@ -391,8 +391,7 @@ function TraXServer() {
     let lastReceiveName = '';
     let userId = '';
     let token = parseCookies(socket.handshake.headers)['token'];
-    let hastoken =
-        typeof token !== 'undefined' && token !== '' && token !== 'undefined';
+    let hastoken = token && token !== 'undefined' && token !== 'null';
     let dirname;
     let streaming = false;
     let streamIsPublic = false;
@@ -414,7 +413,9 @@ function TraXServer() {
               } else if (typeof login !== 'undefined') {
                 let payload = login.getPayload();
                 let userid = payload['sub'];
-                common.log('ID CHANGE: ' + userId + ' to ' + userid, socket.id);
+                common.log(
+                    'ID: ' + (userId ? userId + ' to ' : '') + userid,
+                    socket.id);
                 userId = userid;
                 socket.userId = userId;
                 updateDirname(userId);
@@ -480,14 +481,13 @@ function TraXServer() {
     });
 
     socket.on('newtoken', function(token) {
-      hastoken =
-          typeof token !== 'undefined' && token !== '' && token !== 'undefined';
+      hastoken = token && token !== 'undefined' && token !== 'null';
       if (hastoken) {
         try {
           client.verifyIdToken(
               {idToken: token, audience: CLIENT_ID}, function(e, login) {
                 if (e) {
-                  common.log(e, socket.id);
+                  common.log(e + token, socket.id);
                 } else if (typeof login !== 'undefined') {
                   let payload = login.getPayload();
                   let userid = payload['sub'];
@@ -646,7 +646,7 @@ function TraXServer() {
           socket.emit('fail', 'nostorage');
           return;
         }
-        appendChunk(filename, chunkId, buffer, socket);
+        appendChunk(filename, sessionId, chunkId, buffer, socket);
         dataSize += buffer.length * 2;
       });
     });
@@ -711,7 +711,7 @@ function TraXServer() {
       let patreonParsed;
       let accountParsed;
 
-      requestsComplete = function() {
+      let requestsComplete = function() {
         let currentTier = -1;
         const pledgeAmount = accountParsed || patreonParsed.pledge || 0;
         for (let i = 0; i < patreonTiers.length; i++) {
@@ -726,6 +726,7 @@ function TraXServer() {
         } else {
           dataLimit = 100 * 1000 * 1000;  // 100MB
         }
+        socket.emit('datalimit', dataLimit);
       };
       let numRes = 0;
       const resCount = 2;
@@ -1926,6 +1927,8 @@ function TraXServer() {
    *
    * @private
    * @param {string} filename The base name of the file we are writing to.
+   * @param {string} sessionId The session id the client requested to append to,
+   * in case it doesn't exist and we need to inform them of such.
    * @param {string} chunkId The id of the chunk we are writing in order to tell
    * the client the status of this chunk.
    * @param {string} buffer The data to write to the file.
@@ -1934,7 +1937,8 @@ function TraXServer() {
    * @param {boolean} [retry=true] Attempt to create the directory and retry
    * writing if the first try fails.
    */
-  function appendChunk(filename, chunkId, buffer, socket, retry = true) {
+  function appendChunk(
+      filename, sessionId, chunkId, buffer, socket, retry = true) {
     fs.appendFile(filename, buffer, {mode: 0o600}, function(err) {
       if (err) {
         if (retry) {
@@ -1945,7 +1949,19 @@ function TraXServer() {
                   socket.id);
               socket.emit('fail', 'writeerror', chunkId);
             } else {
-              appendChunk(filename, chunkId, buffer, socket, false);
+              fs.writeFile(filename, buffer, {mode: 0o600}, function(err3) {
+                if (err3) {
+                  common.error(
+                      'Failed to write file in directory: "' + filename + '" ' +
+                          err3,
+                      socket.id);
+                } else {
+                  common.log(
+                      'Created directory and file for session: ' + filename,
+                      socket.id);
+                  socket.emit('fail', 'createsession', sessionId);
+                }
+              });
             }
           });
         } else {
