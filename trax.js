@@ -829,7 +829,7 @@ function TraXServer() {
               callback();
             });
           }
-          if (files.length == 0) socket.emit('sessionlist', [], sessionId);
+          if (files.length == 0) socket.emit('sessionlist', []);
         });
       });
     });
