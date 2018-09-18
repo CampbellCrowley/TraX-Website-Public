@@ -1393,8 +1393,15 @@ function checkURLOptions() {
     TraX.toggleFriendsView(true);
     friendsIdInputDom.value = options['friendId'];
     TraX.showMessageBox(
-        'Click Send Request at the bottom to confirm sending request.');
+        'Click Send Request at the bottom to confirm sending request.', 15000);
     TraX.setURLOption('friendId');
+
+    friendsIdInputDom.parentNode.style.backgroundColor = 'yellow';
+    friendsIdInputDom.parentNode.style.transition =
+        'background-color 1.5s cubic-bezier(0.01, 1.18, 1, -0.04) 0s';
+    setTimeout(function() {
+      friendsIdInputDom.parentNode.style.backgroundColor = '';
+    }, 2000);
   }
   if (options['docompression'] > 0) {
     doCompressionDom.checked = true;
