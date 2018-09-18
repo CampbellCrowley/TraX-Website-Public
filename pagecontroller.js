@@ -230,7 +230,7 @@ let friendmapEnabled = false;
  * @default
  * @type {number}
  */
-let visibleHUD = 0;
+let visibleHUD = 1;
 
 // Socket //
 /**
@@ -1009,6 +1009,17 @@ TraX.init = function() {
   extraDataDom = document.getElementById('extraDataCheckbox');
   dataViewButtonDom = document.getElementById('viewDataToggle');
   streamIsPublicDom = document.getElementById('streamIsPublicCheckbox');
+
+  let detectTrackButton = document.createElement('button');
+  detectTrackButton.onclick = function() {
+    navigator.geolocation.getCurrentPosition(
+        handleNewPosition, handlePosError, geoOptions);
+  };
+  detectTrackButton.innerHTML = '<span>Detect Track</span>';
+  detectTrackButton.classList.add('links');
+  detectTrackButton.classList.add('smaller');
+  detectTrackButton.classList.add('nohover');
+  timersTrackTitleDom.appendChild(detectTrackButton);
 
   streamIsPublicDom.onchange = function() {
     if (this.checked) {
@@ -3147,7 +3158,7 @@ TraX.handleClickBigButton = function() {
   timersHUDDom.classList.remove('visibleHUD');
   // customHUDDom.classList.add("hiddenHUD");
   // customHUDDom.classList.remove("visibleHUD");
-  TraX.setURLOption('hud');
+  TraX.setURLOption('hud', 0);
 };
 /**
  * User chose HUD 1, realtime timers.
@@ -3165,7 +3176,7 @@ TraX.handleClickTimers = function() {
   timersHUDDom.classList.remove('hiddenHUD');
   // customHUDDom.classList.add("hiddenHUD");
   // customHUDDom.classList.remove("visibleHUD");
-  TraX.setURLOption('hud', 1);
+  TraX.setURLOption('hud');
 };
 /**
  * User chose HUD 2, custom.

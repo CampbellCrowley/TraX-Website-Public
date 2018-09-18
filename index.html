@@ -40,12 +40,12 @@
     </div>
     <div class="contentsection transparentcontent" style="text-align: center;">
       <div id="chooseHUDWrapper">
-        <button id="chooseBigButton" class="links smaller nohover selected" onclick="TraX.handleClickBigButton();" disabled><span>Big Button</span></button>
-        <button id="chooseTimers" class="links smaller nohover" onclick="TraX.handleClickTimers();" disabled><span>Times</span></button>
+        <button id="chooseBigButton" class="links smaller nohover" onclick="TraX.handleClickBigButton();" disabled><span>Big Button</span></button>
+        <button id="chooseTimers" class="links smaller nohover selected" onclick="TraX.handleClickTimers();" disabled><span>Times</span></button>
         <button id="chooseCustom" class="links smaller nohover" onclick="TraX.handleClickCustom();" disabled style="display: none;"><span>Custom</span></button>
       </div>
     </div>
-    <div id="bigButtonHUD" class="contentsection HUD visibleHUD">
+    <div id="bigButtonHUD" class="contentsection HUD hiddenHUD">
       <button class="links square nohover hudfstoggle" onclick="TraX.toggleHUDFullscreen();"><span>&#x2922;</span></button>
       <button id="mainStatusLightContainer" onclick="TraX.toggleStatus();">
         <img id="greenLightLarge" class="green largelight">
@@ -101,11 +101,11 @@
         </div>
       </div>
     </div>
-    <div id="timersHUD" class="contentsection HUD hiddenHUD">
+    <div id="timersHUD" class="contentsection HUD visibleHUD">
       <button class="links square nohover hudfstoggle" onclick="TraX.toggleHUDFullscreen();"><span>&#x2922;</span></button>
       <!-- <strong>Times are estimates.</strong><br> -->
-      <strong>Track: </strong>
-      <a id="timersTitle">---/---</a>
+      <!-- <strong>Track: </strong> -->
+      <a id="timersTitle"></a>
       <div id="littleTimer0">
         <a class="timerTitle">Session Total</a>
         <span class="timerBody">
