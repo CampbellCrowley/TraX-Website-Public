@@ -266,7 +266,7 @@ function connectSQL() {
   sqlCon = new sql.createConnection({
     user: auth.sqlUsername,
     password: auth.sqlPassword,
-    host: 'campbell-pi-2.local',
+    host: auth.sqlHost,
     database: 'appusers',
     port: 3306,
   });
