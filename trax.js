@@ -507,7 +507,7 @@ function TraXServer() {
           common.error(e);
         }
       } else {
-        common.log('New token attempted without sending token.', socket.id);
+        // common.log('New token attempted without sending token.', socket.id);
         userId = '';
         socket.userId = '';
       }
