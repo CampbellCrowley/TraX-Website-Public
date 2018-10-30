@@ -137,7 +137,7 @@ function formatXml(xml, addPrefix) {
   let reg = /(>)(<)(\/*)/g;
   xml = xml.replace(reg, '$1\n$2$3');
   let pad = 0;
-  jQuery.each(xml.split('\n'), function(index, node) {
+  xml.split('\n').forEach(function(node, index) {
     let indent = 0;
     if (node.match(/.+<\/\w[^>]*>$/)) {
       indent = 0;
