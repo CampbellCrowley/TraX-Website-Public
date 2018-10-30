@@ -32,6 +32,30 @@ let x2js;
 const gpxOpts = {
   useDoubleQuotes: true,
 };
+
+let version = 'Unknown';
+
+/**
+ * Request the server's version number.
+ *
+ * @private
+ */
+function requestVersionNum() {
+  let xhr = new XMLHttpRequest();
+  xhr.open('GET', 'https://dev.campbellcrowley.com/trax/version.txt');
+  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  xhr.onload = function() {
+    if (xhr.status == 200) {
+      version = xhr.responseText.trim();
+      console.log('Version', version);
+    } else {
+      console.warn(
+          'Failed to get current client version!', xhr.status, xhr.response);
+    }
+  };
+  xhr.send();
+}
+requestVersionNum();
 /**
  * Download given sessionData between durations as a GPX formatted file.
  *
@@ -194,31 +218,49 @@ Export.exportFormattedCSV = function(
     intData = sessionData;
     exportScope = 'Session start';
   }
-  let driverName = intData[0]['driverName'] ? intData[0]['driverName'] : '';
+  let driverName = intData[0]['driverName'] || '';
   let finalData = [
-    ['This file was created using TraX v' + TraX.getVersion() + ' ( ' +
-     location.href + ' ).'],
-    [], ['Session title', '"' + sessionName + '"'],
-    ['Session type', 'Data logging'], ['', ''], ['Driver name', driverName],
+    ['This file was created using TraX v' + version + ' ( ' + location.href +
+     ' ).'],
+    [],
+    ['Session title', '"' + sessionName + '"'],
+    ['Session type', 'Data logging'],
+    ['', ''],
+    ['Driver name', driverName],
     ['Export scope', exportScope],
     [
-      'Created', now.getUTCDate() + '/' + (now.getUTCMonth() + 1) + '/' +
+      'Created',
+      now.getUTCDate() + '/' + (now.getUTCMonth() + 1) + '/' +
           now.getUTCFullYear(),
       now.getUTCHours() + ':' + TraX.Common.pad(now.getUTCMinutes(), 2),
     ],
     [
-      'Note', (intData[0]['traxVersion'] ?
-                   ('Recorded with TraX v' +
-                    intData[0]['traxVersion'].replace('\n', '')) :
-                   ''),
+      'Note',
+      (intData[0]['traxVersion'] ?
+           ('Recorded with TraX v' +
+            intData[0]['traxVersion'].replace('\n', '')) :
+           ''),
     ],
     [],
     [
-      'Lap #', 'Timestamp (s)', 'Distance (m)', 'Distance (km)',
-      'Locked satellites', 'Latitude (deg)', 'Longitude (deg)', 'Speed (m/s)',
-      'Speed (kph)', 'Speed (mph)', 'Altitude (m)', 'Bearing (deg)',
-      'Longitudinal Acceleration (G)', 'Lateral Acceleration (G)',
-      'X-position (m)', 'Y-position (m)', 'RPM (rpm)', 'Throttle Position (%)',
+      'Lap #',
+      'Timestamp (s)',
+      'Distance (m)',
+      'Distance (km)',
+      'Locked satellites',
+      'Latitude (deg)',
+      'Longitude (deg)',
+      'Speed (m/s)',
+      'Speed (kph)',
+      'Speed (mph)',
+      'Altitude (m)',
+      'Bearing (deg)',
+      'Longitudinal Acceleration (G)',
+      'Lateral Acceleration (G)',
+      'X-position (m)',
+      'Y-position (m)',
+      'RPM (rpm)',
+      'Throttle Position (%)',
       'Trap name',
     ],
   ];

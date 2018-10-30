@@ -286,7 +286,7 @@ DataView.init = function() {
   // Show sort mode buttons.
   let sortModes = document.createElement('div');
   sortModes.innerHTML = '&nbsp;Sort:<br>';
-  for (let i=0; i< sessionSorts.length; i++) {
+  for (let i = 0; i < sessionSorts.length; i++) {
     let newItem = document.createElement('input');
     newItem.type = 'button';
     newItem.className = 'links smaller nohover';
