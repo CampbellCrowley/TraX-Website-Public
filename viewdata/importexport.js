@@ -216,16 +216,16 @@ Export.exportFormattedCSV = function(
     exportScope = 'Partial session';
   } else {
     intData = sessionData;
-    exportScope = 'Session start';
+    exportScope = 'Whole session';
   }
   let driverName = intData[0]['driverName'] || '';
   let finalData = [
-    ['This file was created using TraX v' + version + ' ( ' + location.href +
-     ' ).'],
+    ['This file is created using RaceChrono ' +
+     'v4.1.5 ( http://www.racechrono.com/ ).'],
     [],
-    ['Session title', '"' + sessionName + '"'],
-    ['Session type', 'Data logging'],
-    ['', ''],
+    ['Session title', sessionName.replace(/,/g, '')],
+    ['Session type', 'Lap timing'],
+    ['Track name', ''],
     ['Driver name', driverName],
     ['Export scope', exportScope],
     [
@@ -240,6 +240,8 @@ Export.exportFormattedCSV = function(
            ('Recorded with TraX v' +
             intData[0]['traxVersion'].replace('\n', '')) :
            ''),
+      'File created using TraX v' + version + ' ( ' + location.href + ' ).',
+      'Using RaceChrono style for import into Serious-Racing.com',
     ],
     [],
     [
@@ -276,6 +278,7 @@ Export.exportFormattedCSV = function(
   let distTotal = 0;
   for (let i = 0; i < intData.length; i++) {
     let dat = intData[i];
+    if (!dat['longitude'] || !dat['latitude']) continue;
     let gF = TraX.DataView.transformSensors(dat);
     if (lastLng && dat['longitude']) {
       distTotal += TraX.Units.coordToMeters(
@@ -289,20 +292,20 @@ Export.exportFormattedCSV = function(
     lastHed = dat['heading'] || lastHed;
     if (lastLng && !startPos) startPos = {lat: lastLat, lng: lastLng};
     finalData.push([
-      dat['lap'] || 'N/A',                     // Lap #
-      dat['clientTimestamp'] / 1000.0,         // Timestamp (s)
-      distTotal,                               // Distance (m)
-      distTotal / 1000.0,                      // Distance (km)
-      lastLng ? '10' : '0',                    // Locked satellites
-      lastLat,                                 // Latitude (deg)
-      lastLng,                                 // Longitude (deg)
-      lastSpd,                                 // Speed (m/s)
-      TraX.Units.speedToUnit(lastSpd, false),  // Speed (kph)
-      TraX.Units.speedToUnit(lastSpd, true),   // Speed (mph)
-      lastAlt,                                 // Altitude (m)
-      lastHed,                                 // Bearing (deg)
-      gF.y / Agrav,                            // Longutudinal Acceleration (g)
-      gF.x / Agrav,                            // Lateral Acceleration (g)
+      dat['lap'] > 0 ? dat['lap'] : 'N/A',          // Lap #
+      Math.round(dat['clientTimestamp'] / 1000.0),  // Timestamp (s)
+      distTotal,                                    // Distance (m)
+      distTotal / 1000.0,                           // Distance (km)
+      lastLng ? '10' : '0',                         // Locked satellites
+      lastLat,                                      // Latitude (deg)
+      lastLng,                                      // Longitude (deg)
+      lastSpd,                                      // Speed (m/s)
+      TraX.Units.speedToUnit(lastSpd, false),       // Speed (kph)
+      TraX.Units.speedToUnit(lastSpd, true),        // Speed (mph)
+      lastAlt,                                      // Altitude (m)
+      lastHed,                                      // Bearing (deg)
+      gF.y / Agrav,  // Longutudinal Acceleration (g)
+      gF.x / Agrav,  // Lateral Acceleration (g)
       startPos ?
           TraX.Units.latLngToMeters(
               startPos, {lat: lastLat, lng: startPos.lng}) :
@@ -313,10 +316,15 @@ Export.exportFormattedCSV = function(
           0,  // Y-position (m)
       '',     // RPM (rpm)
       '',     // Throttle Position (%)
-      '',      // Trap name
+      '',     // Trap name
     ]);
   }
+  let longestRow = 0;
   for (let i = 0; i < finalData.length; i++) {
+    if (finalData[i].length > longestRow) longestRow = finalData[i].length;
+  }
+  for (let i = 0; i < finalData.length; i++) {
+    while (finalData[i].length < longestRow) finalData[i].push('');
     finalData[i] = finalData[i].join(',');
   }
   Export.download(

@@ -287,13 +287,6 @@ let configId;
  */
 let configOwnerId;
 /**
- * Name of current user.
- * @default
- * @private
- * @type {string}
- */
-let driverName = '';
-/**
  * Queue of messages to send once we have connected to the server.
  * @private
  * @default
@@ -1052,10 +1045,6 @@ TraX.init = function() {
                 .currentUser.get()
                 .getAuthResponse()
                 .id_token;
-    driverName = gapi.auth2.getAuthInstance()
-                     .currentUser.get()
-                     .getBasicProfile()
-                     .getName();
   } catch (e) {  // Page probably not loaded yet or user not signed in.
   }
 
@@ -1183,10 +1172,12 @@ function socketInit() {
         connectionDead = false;
         // console.log("Server failed. Reason:", reason, extraInfo);
         if (reason === 'noid' && TraX.isSignedIn) {
-          console.log('Re-sending token');
-          TraX.socket.emit('newtoken', token);
-          tokenSent = true;
-          TraX.requestFriendsList();
+          if (token) {
+            console.log('Re-sending token');
+            TraX.socket.emit('newtoken', token);
+            tokenSent = true;
+            TraX.requestFriendsList();
+          }
         } else if (TraX.isSignedIn && !isPaused && reason === 'writeerror') {
           console.log('Writing failed due to session not created yet.');
         } else if (reason === 'readerr') {
@@ -2773,7 +2764,7 @@ function popPreSendBuffer() {
     'selectedTrack': trackNameSelectDom.value,
     'selectedConfig': configNameSelectDom.value,
     'sessionId': sessionId,
-    'driverName': driverName,
+    'driverName': TraX.getDriverName(),
     'peripherals': [],
     'videoUrl': '',
     'userAgent': userAgent,
@@ -2901,29 +2892,6 @@ function popSendBuffer(chunkid) {
   }
   console.log('FAILED TO POP', chunkid, 'FROM SENDBUFFER!');
 }
-/**
- * Check if user is signed in.
- *
- * @private
- * @return {?boolean} True if signed in, false otherwise.
- */
-// function signedIn() {
-//   token = getToken();
-//   return token && String(token).length > 0;
-// }
-
-/**
- * Gets signed in user's token.
- *
- * @private
- * @return {string} Token of current signed in user.
- */
-// function getToken() {
-//   return gapi.auth2.getAuthInstance()
-//       .currentUser.get()
-//       .getAuthResponse()
-//       .id_token;
-// }
 
 /**
  * Update friendmap markers and zoom.
