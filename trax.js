@@ -247,7 +247,7 @@ if (versionType == 'development') {
   common.begin(false, true);
   common.log('STARTING IN RELEASE MODE!');
 }
-app.listen(process.argv[2]);
+app.listen(process.argv[2], '127.0.0.1');
 
 /**
  * Stores the information about the SQL server connection.
