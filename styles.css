@@ -1,5 +1,397 @@
 // Copyright 2018 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com) {}
+body {
+  font-family: 'Roboto', sans-serif;
+  font-size: 1em;
+  width: 100%;
+  margin: auto;
+  background: #fff;
+  z-index: 0;
+}
+div.container {
+  width: 100%;
+}
+#mainheader, #mainfooter {
+  display: block;
+  background: #0af;
+  margin: auto;
+  margin-top: 0px;
+  z-index: 900;
+}
+#mainheader {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 40px;
+}
+#mainfooter {
+  position: fixed;
+  box-shadow: 0px -20px 110px rgba(0, 0, 0, 1.0);
+  text-align: center;
+  font-size: 0.8em;
+  width: 100%;
+  bottom: 0;
+}
+#mainheader.trax, #mainfooter.trax {
+  // background: #07f;
+  box-shadow: none;
+  text-shadow: 2px 7px 20px rgba(0, 0, 0, 0.5), -2px 7px 20px rgba(0, 0, 0, 0.5);
+  background: transparent;
+  position: relative;
+  display: block;
+}
+#mainfooter.trax {
+  position: relative;
+  display: block;
+  bottom: 0;
+  z-index: 0;
+}
+#headtext {
+  font-size: 32px;
+  text-decoration: none;
+}
+#headtext a {
+  transition: all 0.2s ease-out;
+}
+#headtext a:link, #headtext a:visited {
+  text-decoration: none;
+  color: black;
+}
+#headtext a:hover {
+  text-shadow: 2px 7px 20px rgba(0, 0, 0, 0.5), -2px 7px 20px rgba(0, 0, 0, 0.5);
+}
+#statusLights {
+  right: 165px;
+  top: 0;
+  position: absolute;
+  height: 36px;
+}
+#statusLights img {
+  height: 16px;
+  margin-top: 13px;
+}
+#account {
+  height: 40px;
+  width: 165px;
+  background-color: transparent;
+  font-size: 12px;
+  position: fixed;
+  display: block;
+  right: 0;
+  top: 0;
+  z-index: 1200;
+}
+#account.trax {
+  box-shadow: 2px 7px 20px rgba(0, 0, 0, 0.5), -2px 7px 20px rgba(0, 0, 0, 0.5);
+}
+#signin {
+  position: fixed;
+  top:1px;
+  right: 1px;
+}
+#signout {
+  height: 17px;
+  max-width: 100px;
+  position: fixed;
+  display: block;
+  top: 0;
+  right: 40px;
+}
+#profilepic {
+  width: 40px;
+  height: 40px;
+  position: fixed;
+  top: 0;
+  right: 0;
+}
+#maincontent {
+  position: absolute;
+  text-align: center;
+  top: 80px;
+  margin: auto;
+  padding-bottom: 45px;
+  width: 100%;
+  background: #fff;
+  z-index: 90;
+  overflow: auto;
+}
+#maincontent.trax {
+  position: relative;
+  display: block;
+  top: 0;
+}
+#content {
+  text-align: left;
+  display: inline-block;
+  width: calc(100% - 20px);
+  max-width: 1000px;
+  overflow: auto;
+  z-index: 100;
+  padding-left: 10px;
+  padding-right: 10px;
+  margin-bottom: auto;
+}
+.homecontent {
+  background: white;
+  box-shadow: 0px 0px 100px rgba(0, 0, 0, 0.5);
+}
+.contentsection {
+  padding: 4px;
+  margin-bottom: 25px;
+  background: #bdf;
+  box-shadow: 2px 7px 20px rgba(0, 0, 0, 0.2), -2px 7px 20px rgba(0, 0, 0, 0.2);
+}
+.transparentcontent {
+  background-color: transparent;
+  text-align: center;
+  box-shadow: 0 0 0;
+  text-shadow: 2px 7px 20px rgba(0, 0, 0, 0.5), -2px 7px 20px rgba(0, 0, 0, 0.5);
+  margin-top: 25px;
+}
+#maintitle {
+  position: fixed;
+  height: calc(100vh - 70px);
+  top: 40px;
+  width: 100%;
+  z-index: -1;
+  vertical-align: middle;
+}
+#helloworld {
+  position: relative;
+  top: 50%;
+  text-shadow: 2px 2px 3px #ddd;
+}
+#scrolldown {
+  position: fixed;
+  bottom: calc(3% + 100px);
+  width: 100%;
+}
+#scrolldown img {
+  width: 3%;
+  filter: drop-shadow(2px 2px 3px #ddd);
+}
+#video-container {
+  position: relative;
+  z-index: -2;
+  top:0;
+}
+#background-video {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top:0;
+  left:0;
+}
+#beforeImage {
+  background-color: white;
+  opacity: 1.0;
+}
+#afterImage {
+  background-color: transparent;
+  opacity: 0.0;
+}
+.overlayImage {
+  position: fixed;
+  width: 100%;
+  top:0;
+  left:0;
+  z-index: -1;
+  transition: background-color 2s ease-in, opacity 2s ease-in;
+}
+.line {
+  position: relative;
+  display: inline-block;
+  margin: auto;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  width: 100%;
+  height: 0;
+  border-bottom: 2px solid black;
+}
+.whiteline {
+  position: relative;
+  display: inline-block;
+  margin: auto;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  width: 100%;
+  height: 0;
+  border-bottom: 2px solid white;
+}
+#loading {
+  position: absolute;
+  -webkit-transform: matrix(1, 0, 0, -1, 0, 0);
+}
+.links {
+  margin: 5px;
+  border: 2px solid #0af;
+  border-radius: 2px;
+  background: #07f;
+  color: black;
+  display: inline-block;
+  cursor: pointer;
+  font-size: 1.2em;
+  width: 140px;
+  height: 65px;
+  padding: 5px;
+  transition: all 0.4s;
+  text-align: center;
+}
+.links:not(.nohover):not(disabled):not([disabled]):hover {
+  background-color: white;
+  color: black;
+  border: 2px solid #07f;
+  border-radius: 10px;
+  box-shadow: 2px 7px 20px rgba(0, 0, 0, 0.2), -2px 7px 20px rgba(0, 0, 0, 0.2);
+}
+.links span {
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.5s;
+}
+.links[disabled],
+.links:disabled {
+  background-color: grey;
+  border: 2px solid #f00;
+  color: #909090;
+}
+.tiny {
+  width: 54px;
+  height: 18px;
+  font-size: 0.8em;
+}
+.mini {
+  width: 60px;
+  height: 20px;
+  font-size: 0.8em;
+}
+.small {
+  width: 140px;
+  height: 40px;
+  font-size: 0.9em;
+}
+.smaller {
+  width: 110px;
+  height: 30px;
+  font-size: 0.85em;
+}
+.square {
+  width: 40px;
+  height: 40px;
+  font-size: 0.85em;
+}
+.wide {
+  width: 175px;
+}
+.larger {
+  width: 300px;
+  height: 130px;
+  font-size: 1.8em;
+}
+.dropzone {
+  transition: background 0.5s ease-out;
+}
+
+#top {
+  position: fixed;
+  display: inline-block;
+  top: 40px;
+  background: #07f;
+  width: 100%;
+  height: 40px;
+  z-index: 1000;
+  overflow: auto;
+  white-space: nowrap;
+  box-shadow: 2px 7px 20px rgba(0, 0, 0, 0.2), -2px 7px 20px rgba(0, 0, 0, 0.2);
+}
+#left {
+  background: #ddd;
+  max-width: 200px;
+  margin-right: 3px;
+}
+#version {
+  position: fixed;
+  bottom: 14px;
+  font-size: 9px;
+  z-index: 1000;
+}
+.navlinks {
+  margin: 2px;
+  margin-right: 0;
+  border: 2px solid #09f;
+  border-radius: 2px;
+  background: #07f;
+  color: black;
+  text-align: center;
+  display: inline-block;
+  cursor: pointer;
+  font-size: 1.2em;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+  transition: all 0.4s;
+  height: 22px;
+}
+.navlinks:not(.nohover):hover {
+  background-color: #09f;
+  color: black;
+  border: 2px solid #fff;
+  border-radius: 10px;
+  box-shadow: 2px 7px 20px rgba(0, 0, 0, 0.2), -2px 7px 20px rgba(0, 0, 0, 0.2);
+}
+input[type=submit] {
+  margin-top: 0px;
+  padding: 1px;
+}
+input[type=number] {
+  margin: 5px;
+  margin-bottom: 0px;
+  width: 150px;
+  height: 14px;
+}
+table {
+  box-shadow: 2px -2px 20px rgba(0, 0, 0, 0.5), -2px 7px 20px rgba(0, 0, 0, 0.2);
+}
+table, td, tr {
+  position: relative;
+  border: 1px solid black;
+  border-collapse: collapse;
+  padding: 2px;
+  background-color: #bdf;
+  transition: 0.2s ease-out;
+}
+// td:not(.nohover):hover {
+//   z-index: 2;
+// }
+// tr:not(.nohover):hover td {
+//   background-color: #def;
+//   box-shadow: 0px -2px 20px rgba(0, 0, 0, 0.5), 0px 7px 20px rgba(0, 0, 0, 0.2);
+//   z-index: 1;
+// }
+@media screen and (max-width: 720px) {
+  #headtext:not(.trax) {
+    display: none;
+  }
+  #top {
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+    width: calc(100% - 165px);
+  }
+  #maincontent {
+    top: 40px;
+  }
+  #account:not(.trax) {
+    background-color: #07f;
+  }
+}
+iframe {
+  border-width: 0;
+}
 nav#top {
   display: none;
 }
