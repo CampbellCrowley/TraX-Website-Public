@@ -1,4 +1,4 @@
-// Copyright 2018 Campbell Crowley. All rights reserved.
+// Copyright 2018-2019 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 /**
  * The base class for all TraX related things.
@@ -223,7 +223,6 @@ let friendViewOpen = false;
  * @type {boolean}
  */
 let friendmapEnabled = false;
-
 /**
  * The currently visible HUD.
  * @private
@@ -388,6 +387,7 @@ let blockedListDom;
 let extraDataDom;
 let dataViewButtonDom;
 let streamIsPublicDom;
+let secretURLDom;
 
 // Device Info //
 // Buffered data to send
@@ -712,6 +712,13 @@ let friendPositions = [];
  * @type {Array.<google.maps.Marker>}
  */
 let friendMarkers = [];
+/**
+ * The user's current secret.
+ * @private
+ * @default
+ * @type {string}
+ */
+let secret = '';
 
 /**
  * List of available tracks to select
@@ -1002,6 +1009,7 @@ TraX.init = function() {
   extraDataDom = document.getElementById('extraDataCheckbox');
   dataViewButtonDom = document.getElementById('viewDataToggle');
   streamIsPublicDom = document.getElementById('streamIsPublicCheckbox');
+  secretURLDom = document.getElementById('secretURL');
 
   let detectTrackButton = document.createElement('button');
   detectTrackButton.onclick = function() {
@@ -1133,6 +1141,8 @@ function socketInit() {
     fetchTrackList();
     TraX.requestFilesize();
 
+    TraX.socket.emit('fetchSecret');
+
     console.log('Flushing unsent messages:', socketMessageQueue);
     for (let i = 0; i < socketMessageQueue.length; i++) {
       TraX.socket.emit(...socketMessageQueue[i]);
@@ -1144,6 +1154,7 @@ function socketInit() {
     tokenSent = false;
     connectionDead = true;
     updateServerLights();
+    handleSecret();
   });
   TraX.socket.on('reconnect', function(attempts) {
     // 'connected' also fires when this happens.
@@ -1271,6 +1282,7 @@ function socketInit() {
           TraX.showMessageBox('Sending friend request failed: ' + fail);
         }
       });
+  TraX.socket.on('secret', handleSecret);
   TraX.socket.on('pong_', console.log);
 }
 /**
@@ -3513,6 +3525,65 @@ TraX.copyFriendLink = function() {
     TraX.showMessageBox('Must be signed in to share your id.');
   }
 };
+
+/**
+ * Copy the current live view URL with this user's secret.
+ *
+ * @public
+ */
+TraX.copySecretURL = function() {
+  if (secret && secret.length > 0) {
+    let text = document.createElement('input');
+    text.type = 'text';
+    text.value = 'https://' + location.hostname +
+        (location.pathname + '/live/?s=').replace(/\/\//g, '/') + secret;
+    document.body.appendChild(text);
+    copy = function() {
+      text.select();
+      document.execCommand('copy');
+      TraX.showMessageBox('Copied link!');
+      text.outerHTML = '';
+    };
+    setTimeout(copy);
+  } else {
+    if (!TraX.isSignedIn) {
+      TraX.showMessageBox('Please sign in and create a new link first.');
+    } else {
+      TraX.showMessageBox('Please create a new link first.');
+    }
+  }
+};
+
+/**
+ * Handle receiving the current user's secret.
+ *
+ * @private
+ * @param {?string} s The current user's secret, or null if none.
+ */
+function handleSecret(s) {
+  secret = s || '';
+  secretURLDom.textContent = 'https://' + location.hostname +
+      (location.pathname + '/live/?s=').replace(/\/\//g, '/') + secret;
+}
+
+/**
+ * Handle user requesting new secret.
+ *
+ * @public
+ */
+TraX.resetSecret = function() {
+  if (!TraX.isSignedIn) {
+    TraX.showMessageBox('Please sign in first.');
+    return;
+  }
+  if (!secret ||
+      confirm(
+          'Are you sure you wish to create a new link?\n\nThe current link ' +
+          'will stop working.')) {
+    TraX.socket.emit('resetSecret');
+  }
+};
+
 /**
  * Click add bluetooth device.
  *

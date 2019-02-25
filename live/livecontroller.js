@@ -1,4 +1,4 @@
-// Copyright 2018 Campbell Crowley. All rights reserved.
+// Copyright 2018-2019 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
 /**
@@ -134,6 +134,7 @@ let simpleSensorViewDom;
 let fullSensorViewDom;
 let showMoreSensorsDom;
 let showLessSensorsDom;
+let userMaskDom;
 TraX.unitDropdownDom = {value: 'imperial'};
 
 // Buffered data.
@@ -219,6 +220,7 @@ Live.init = function() {
   fullSensorViewDom = document.getElementById('allData');
   showMoreSensorsDom = document.getElementById('showMoreData');
   showLessSensorsDom = document.getElementById('showLessData');
+  userMaskDom = document.getElementById('userMask');
 
   socketInit();
 
@@ -269,6 +271,10 @@ function socketInit() {
     TraX.socket.emit('setliveview');
     connected = true;
     updateViewerNum();
+
+    const s = TraX.getURLOptions()['s'];
+    console.log('Secret:', s);
+    if (s) TraX.socket.emit('setSecret', s);
   });
   TraX.socket.on('disconnect', function(reason) {
     connected = false;
@@ -283,6 +289,7 @@ function socketInit() {
   TraX.socket.on('numliveview', handleNewViewerNum);
   TraX.socket.on('newsummary', handleNewSummary);
   TraX.socket.on('fail', console.warn);
+  TraX.socket.on('secretUser', handleUserMask);
 }
 /**
  * Requests a summary for a track config from the server.
@@ -906,6 +913,34 @@ function updateViewerNum() {
 function handleNewViewerNum(num/* , friendId*/) {
   viewerNumDom.innerHTML = num;
   viewerNumParentDom.style.display = 'block';
+}
+
+/**
+ * Handles server notifying us that we will only be receiving data for a
+ * specific user from now on.
+ *
+ * @private
+ * @param {string} maskId The ID of the user we will be receiving data of.
+ */
+function handleUserMask(maskId) {
+  console.log('Mask set for user', maskId);
+  if (!maskId) return;
+  const friend = TraX.friendsList.find(function(el) {
+    return el.id == maskId;
+  });
+  if (friend) {
+    userMask.textContent = 'Only showing user ' + maskId + '(' +
+        friend.firstName + ' ' + friend.lastNam + ')';
+  } else {
+    userMask.textContent = 'Only showing user ' + maskId;
+  }
+  if (friendStandings && friendStandings.find(function(el) {
+        return el.userId == maskId;
+      })) {
+    handleSelectUser(maskId, true);
+  } else {
+    selectedId = maskId;
+  }
 }
 
 /**

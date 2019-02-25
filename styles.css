@@ -1,4 +1,4 @@
-// Copyright 2018 Campbell Crowley. All rights reserved.
+// Copyright 2018-2019 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com) {}
 body {
   font-family: 'Roboto', sans-serif;
@@ -266,6 +266,11 @@ div.container {
 .mini {
   width: 60px;
   height: 20px;
+  font-size: 0.8em;
+}
+.tallmini {
+  width: 60px;
+  height: 30px;
   font-size: 0.8em;
 }
 .small {

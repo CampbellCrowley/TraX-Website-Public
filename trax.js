@@ -1,4 +1,4 @@
-// Copyright 2018 Campbell Crowley. All rights reserved.
+// Copyright 2018-2019 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 
 /* eslint-env node, es6, browser:false */
@@ -26,6 +26,7 @@ const mkdirp = require('mkdirp');
 const rimraf = require('rimraf');
 const getSize = require('get-folder-size');
 // var LZString = require('lz-string');
+const crypto = require('crypto');
 
 const gal = require('google-auth-library');
 const client = new gal.OAuth2Client(CLIENT_ID, '', '');
@@ -80,6 +81,15 @@ const usertracksubdir = 'tracks/';
  * @type {string}
  */
 const usersummariessubdir = 'summaries/';
+/**
+ * Filename where secret keys are stored. These keys work as a revokable random
+ * password and identifier for viewing a user's live data.
+ * @default
+ * @constant
+ * @private
+ * @type {string}
+ */
+const secretFile = './secrets.json';
 /**
  * Folder paths to find public track data.
  * @default
@@ -304,14 +314,14 @@ function TraXServer() {
    * @default
    * @type {Array.<io.Client>}
    */
-  let sockets = [];
+  const sockets = [];
   /**
    * All connected sockets requesting live data streams.
    * @default
    * @private
    * @type {Array.<io.Client>}
    */
-  let liveSockets = [];
+  const liveSockets = [];
 
   /**
    * The current version read from file.
@@ -338,11 +348,11 @@ function TraXServer() {
    * @return {object} list Object of key-pairs for each cookie.
    */
   function parseCookies(headers) {
-    let list = {};
-    let rc = headers.cookie;
+    const list = {};
+    const rc = headers.cookie;
 
     rc && rc.split(';').forEach(function(cookie) {
-      let parts = cookie.split('=');
+      const parts = cookie.split('=');
       list[parts.shift().trim()] = decodeURI(parts.join('='));
     });
 
@@ -369,7 +379,7 @@ function TraXServer() {
         return;
       }
       try {
-        let parsed = JSON.parse(data);
+        const parsed = JSON.parse(data);
         if (parsed) {
           patreonTiers = parsed;
         }
@@ -384,15 +394,64 @@ function TraXServer() {
     updatePatreonTiers();
   });
 
+  /**
+   * All secret keys currently available. These are the password and identifier
+   * for viewing a user's live data.
+   * @private
+   * @type {Object.<string>}
+   */
+  let secretKeys = {};
+  /**
+   * True if keys have been modified since last saving them to file.
+   * @private
+   * @type {boolean}
+   * @default
+   */
+  let secretsUpdated = false;
+  try {
+    fs.readFile(secretFile, function(err, data) {
+      if (err) {
+        if (err.code !== 'ENOENT') {
+          common.error('Failed to read secrets from file.');
+          console.error(err);
+        }
+        return;
+      }
+      try {
+        secretKeys = JSON.parse(data);
+      } catch (err) {
+        common.error('Failed to parse secrets from file.');
+        console.error(err);
+      }
+    });
+  } catch (err) {
+    if (err.code === 'ENOENT') return;
+    common.error('Failed to read and parse secret key file:' + secretFile);
+    console.error(err);
+  }
+
+  setInterval(function() {
+    if (!secretsUpdated) return;
+    secretsUpdated = false;
+    fs.writeFile(secretFile, JSON.stringify(secretKeys), function(err) {
+      if (err) {
+        secretsUpdated = true;
+        common.error('Failed to save secrets to file.');
+        console.error(err);
+      }
+    });
+  }, 5 * 60 * 1000);
+
 
   // TODO: Move events to functions.
   io.on('connection', function(socket) {
     let lastReceiveTime = 0;
     let lastReceiveName = '';
     let userId = '';
-    let token = parseCookies(socket.handshake.headers)['token'];
+    const token = parseCookies(socket.handshake.headers)['token'];
     let hastoken = token && token !== 'undefined' && token !== 'null';
     let dirname;
+    let userDir;
     let streaming = false;
     let streamIsPublic = false;
     let dataLimit;
@@ -401,8 +460,9 @@ function TraXServer() {
     const ip = common.getIPName(
         socket.handshake.headers['x-forwarded-for'] ||
         socket.handshake.address);
-    updateDirname = function(userId) {
-      dirname = userdata + userId + traxsubdir + sessionsubdir;
+    const updateDirname = function(userId) {
+      userDir = userdata + userId + traxsubdir;
+      dirname = userDir + sessionsubdir;
     };
 
     if (hastoken) {
@@ -411,8 +471,8 @@ function TraXServer() {
             {idToken: token, audience: CLIENT_ID}, function(e, login) {
               if (e) {
               } else if (typeof login !== 'undefined') {
-                let payload = login.getPayload();
-                let userid = payload['sub'];
+                const payload = login.getPayload();
+                const userid = payload['sub'];
                 common.log(
                     'ID: ' + (userId ? userId + ' to ' : '') + userid,
                     socket.id);
@@ -489,8 +549,8 @@ function TraXServer() {
                 if (e) {
                   common.log(e + token, socket.id);
                 } else if (typeof login !== 'undefined') {
-                  let payload = login.getPayload();
-                  let userid = payload['sub'];
+                  const payload = login.getPayload();
+                  const userid = payload['sub'];
                   if (userid != userId) {
                     userId = userid;
                     socket.userId = userId;
@@ -515,8 +575,8 @@ function TraXServer() {
 
     socket.on(
         'newsession', function(
-                          sessionName, trackId, trackOwnerId, configId,
-                          configOwnerId, sessionId) {
+            sessionName, trackId, trackOwnerId, configId,
+            configOwnerId, sessionId) {
           if (typeof sessionId !== 'string' || sessionId.length <= 0) {
             sessionId = Date.now() + socket.id;
           }
@@ -570,8 +630,8 @@ function TraXServer() {
 
     socket.on(
         'editsession', function(
-                           sessionName, trackId, trackOwnerId, configId,
-                           configOwnerId, sessionId) {
+            sessionName, trackId, trackOwnerId, configId,
+            configOwnerId, sessionId) {
           const mydir = path.normalize(dirname + sessionId);
           const filename = path.normalize(mydir + '/data.json');
           checkFilePerms(filename, userId, undefined, function(err, perms) {
@@ -656,6 +716,27 @@ function TraXServer() {
       socket.public = value;
     });
 
+    socket.on('fetchSecret', function() {
+      if (!userId) return;
+      socket.emit('secret', secretKeys[userId]);
+    });
+    socket.on('resetSecret', function() {
+      if (!userId) return;
+      let secret;
+      do {
+        secret = crypto.randomBytes(4).toString('hex');
+      } while (secretKeys[secret]);
+      const old = secretKeys[userId];
+      if (old) delete secretKeys[old];
+      secretKeys[userId] = secret;
+      secretKeys[secret] = userId;
+      socket.emit('secret', secretKeys[userId]);
+    });
+    socket.on('setSecret', function(secret) {
+      socket.userMask = secretKeys[secret];
+      socket.emit('secretUser', secretKeys[secret]);
+    });
+
     socket.on('requestsessionsize', function(sessionId, otherId) {
       let mydir = path.normalize(dirname + sessionId);
       if (typeof otherId !== 'undefined' && otherId !== userId &&
@@ -711,7 +792,7 @@ function TraXServer() {
       let patreonParsed;
       let accountParsed;
 
-      let requestsComplete = function() {
+      const requestsComplete = function() {
         let currentTier = -1;
         const pledgeAmount = accountParsed || patreonParsed.pledge || 0;
         for (let i = 0; i < patreonTiers.length; i++) {
@@ -736,7 +817,7 @@ function TraXServer() {
         path: '/fetchaccount/id/' + userId,
         headers: {'x-local-server-override-key': auth.localServerOverrideKey},
       };
-      let req1 = http.request(reqOpts1, function(res1) {
+      const req1 = http.request(reqOpts1, function(res1) {
         let data = '';
         res1.on('data', function(chunk) {
           data += chunk;
@@ -758,7 +839,7 @@ function TraXServer() {
         path: '/fetchuser/' + userId + '/patreonPledgeOverride',
         headers: {'x-local-server-override-key': auth.localServerOverrideKey},
       };
-      let req2 = http.request(reqOpts2, function(res2) {
+      const req2 = http.request(reqOpts2, function(res2) {
         let data = '';
         res2.on('data', function(chunk) {
           data += chunk;
@@ -802,7 +883,7 @@ function TraXServer() {
             return;
           }
           let responses = 0;
-          let callback = function() {
+          const callback = function() {
             responses++;
             if (responses == files.length) {
               trackIdsToNames(finalfiles, function(nameList) {
@@ -815,7 +896,7 @@ function TraXServer() {
               });
             }
           };
-          let finalfiles = [];
+          const finalfiles = [];
           for (let i = 0; i < files.length; i++) {
             const file = files[i];
             fs.stat(path.join(mydir, file), function(err3, stats) {
@@ -865,10 +946,10 @@ function TraXServer() {
               let bytessent = 0;
               const numbytes = stats['size'];
 
-              let options = {};
+              const options = {};
               if (typeof startByte !== 'undefined') options.start = startByte;
               if (typeof endByte !== 'undefined') options.end = endByte;
-              let stream = fs.createReadStream(sessionFile, options);
+              const stream = fs.createReadStream(sessionFile, options);
 
               common.log('Stream of ' + sessionFile + ' started', socket.id);
               stream.on('readable', function() {
@@ -1027,7 +1108,7 @@ function TraXServer() {
     });
 
     socket.on('requesttracklist', function(pathname, otherId) {
-      let origPath = pathname;
+      const origPath = pathname;
       if (typeof pathname == 'undefined' || pathname == 'track') pathname = '';
       const useUserDir = ((otherId && true) || false);
       const isFriendDir = useUserDir && otherId != 'myself';
@@ -1054,7 +1135,7 @@ function TraXServer() {
                 return;
               }
               let responses = 0;
-              let callback = function() {
+              const callback = function() {
                 responses++;
                 if (responses == files.length) {
                   trackIdsToNames(finalfiles, function(nameList) {
@@ -1068,7 +1149,7 @@ function TraXServer() {
                   });
                 }
               };
-              let finalfiles = [];
+              const finalfiles = [];
               for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 fs.stat(path.join(finalDir, file), function(err5, stats) {
@@ -1328,9 +1409,9 @@ function TraXServer() {
           common.error(err, socket.id);
           return;
         }
-        let newRel = friendStatus;
+        const newRel = friendStatus;
         if (row) {
-          let rel = row[statusColumn];
+          const rel = row[statusColumn];
           if ((row['user1'] == userId && rel != twoRequestStatus) ||
               (row['user2'] == userId && rel != oneRequestStatus)) {
             return;
@@ -1355,9 +1436,9 @@ function TraXServer() {
           common.error(err, socket.id);
           return;
         }
-        let newRel = noStatus;
+        const newRel = noStatus;
         if (row) {
-          let rel = row[statusColumn];
+          const rel = row[statusColumn];
           if ((row['user1'] == userId && rel != twoRequestStatus) ||
               (row['user2'] == userId && rel != oneRequestStatus)) {
             return;
@@ -1381,9 +1462,9 @@ function TraXServer() {
           common.error(err, socket.id);
           return;
         }
-        let newRel = noStatus;
+        const newRel = noStatus;
         if (row) {
-          let rel = row[statusColumn];
+          const rel = row[statusColumn];
           if (rel != friendStatus) {
             if (row['user1'] == userId && rel != oneRequestStatus) {
               if (row['user2'] == userId && rel != twoRequestStatus) {
@@ -1496,8 +1577,8 @@ function TraXServer() {
         }
         let newRel = oneRequestStatus;
         if (res && res.length > 0) {
-          let data = res[0];
-          let rel = data[statusColumn];
+          const data = res[0];
+          const rel = data[statusColumn];
           if (rel == friendStatus) {
             socket.emit('friendfail', 'alreadyfriends');
             return;
@@ -1798,7 +1879,7 @@ function TraXServer() {
         ]);
     sqlCon.query(toSend, function(err, res) {
       if (err) common.error(err);
-      let friends = (res && res.length && true) || false;
+      const friends = (res && res.length && true) || false;
       callback(friends ? null : 'notfriends', friends);
     });
   }
@@ -1988,6 +2069,11 @@ function TraXServer() {
   function forwardChunk(userId, chunkId, buffer, isPublic) {
     if (liveSockets.length == 0) return;
     if (!isPublic) {
+      for (let i = 0; i < liveSockets.length; i++) {
+        if (liveSockets[i].userMask == userId) {
+          liveSockets[i].emit('livefrienddata', userId, chunkId, buffer);
+        }
+      }
       getFriendsList(userId, friendStatus, function(err, rows) {
         if (err) {
           common.log('Failed to get friends list for ' + userId + ': ' + err);
@@ -1996,7 +2082,7 @@ function TraXServer() {
         for (let i = -1; i < rows.length; i++) {
           const friendId = (i < 0) ? userId : rows[i].id;
           for (let j = 0; j < liveSockets.length; j++) {
-            if (friendId == liveSockets[j].userId) {
+            if (friendId == liveSockets[j].userId && !liveSockets[j].userMask) {
               liveSockets[j].emit('livefrienddata', userId, chunkId, buffer);
             }
           }
@@ -2020,10 +2106,10 @@ function TraXServer() {
    * argument.
    */
   function trackIdsToNames(idArray, callback) {
-    let fileList = [];
+    const fileList = [];
     let numFail = 0;
     for (let i = 0; i < idArray.length; i++) {
-      let filename = path.normalize(idArray[i] + '/data.json');
+      const filename = path.normalize(idArray[i] + '/data.json');
       fs.readFile(filename, function(err, data) {
         if (err) {
           numFail++;
@@ -2077,15 +2163,15 @@ function TraXServer() {
           callback(null, []);
           return;
         }
-        let chunk = function(res) {
+        const chunk = function(res) {
           let friendsList = [];
           let numRes = 0;
-          let cb = function(data) {
+          const cb = function(data) {
             numRes++;
             friendsList = friendsList.concat(data);
             if (numRes == res.length) callback(null, friendsList);
           };
-          let query = function(res) {
+          const query = function(res) {
             const Id = res['user1'] == userId ? res['user2'] : res['user1'];
             const toSend = sqlCon.format(
                 'SELECT * FROM ?? WHERE ??=?', [accountsTable, 'id', Id]);
@@ -2160,7 +2246,7 @@ function TraXServer() {
         common.error(err);
         return;
       }
-      let mtime = stats['mtime'] + '';
+      const mtime = stats['mtime'] + '';
       if (versionNumLastUpdate === mtime &&
           typeof versionNumFile !== 'undefined') {
         return;

@@ -1,4 +1,4 @@
-// Copyright 2018 Campbell Crowley. All rights reserved.
+// Copyright 2018-2019 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
 /**
@@ -157,7 +157,7 @@ function postInit() {
  * @private
  */
 function checkURLOptions() {
-  let options = getURLOptions();
+  let options = TraX.getURLOptions();
   if (TraX.debugMode) console.log('Options:', options);
   if (options['debug'] > 0) {
     TraX.toggleDebug(options['debug'] - 1);
@@ -204,7 +204,7 @@ function editModePaneChange(event) {
  * @private
  * @return {Object.<string>} Object of URL query key-value pairs.
  */
-function getURLOptions() {
+TraX.getURLOptions = function() {
   let options = {};
   let optionString = document.URL.split('?')[1];
   if (typeof optionString === 'undefined') return options;
@@ -214,7 +214,7 @@ function getURLOptions() {
     options[pair[0]] = pair[1];
   }
   return options;
-}
+};
 /**
  * Set query option in URL.
  *
@@ -551,3 +551,4 @@ function triggerEvent(name, data) {
   }
 }
 }(window.TraX = window.TraX || {}));
+
