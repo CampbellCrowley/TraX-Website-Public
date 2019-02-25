@@ -730,6 +730,7 @@ function TraXServer() {
       if (old) delete secretKeys[old];
       secretKeys[userId] = secret;
       secretKeys[secret] = userId;
+      secretsUpdated = true;
       socket.emit('secret', secretKeys[userId]);
     });
     socket.on('setSecret', function(secret) {
