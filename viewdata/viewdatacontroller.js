@@ -1619,7 +1619,7 @@
      */
     DataView.transformSensors = function(data) {
       let gyro = data['gyro'];
-      const accelIncGrav = data['accelIncGrav'];
+      let accelIncGrav = data['accelIncGrav'];
       const browserType = TraX.getBrowser(data['userAgent']);
       const isOld = typeof data['traxVersion'] === 'undefined';
 
