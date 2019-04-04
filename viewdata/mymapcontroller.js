@@ -1,4 +1,4 @@
-// Copyright 2018 Campbell Crowley. All rights reserved.
+// Copyright 2018-2019 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
   (function(DataView, undefined) {
@@ -484,6 +484,68 @@
       };
 
       /**
+       * Increase radius of start line.
+       *
+       * @public
+       */
+      MyMap.handleClickEnlargeStart = function() {
+        const startLine = DataView.getStartLine();
+        if (!startLine) return;
+        startLine.radius += 0.0001;
+        const startRadius = TraX.Units.coordToMeters(
+            startLine.coord.lat, startLine.coord.lng,
+            startLine.coord.lat + startLine.radius * Math.cos(Math.PI / 4.0),
+            startLine.coord.lng + startLine.radius * Math.sin(Math.PI / 4.0));
+        myMapCircles[0].setRadius(startRadius);
+      };
+      /**
+       * Decrease radius of start line.
+       *
+       * @public
+       */
+      MyMap.handleClickShrinkStart = function() {
+        const startLine = DataView.getStartLine();
+        if (!startLine) return;
+        if (startLine.radius > 0.0001) startLine.radius -= 0.0001;
+        const startRadius = TraX.Units.coordToMeters(
+            startLine.coord.lat, startLine.coord.lng,
+            startLine.coord.lat + startLine.radius * Math.cos(Math.PI / 4.0),
+            startLine.coord.lng + startLine.radius * Math.sin(Math.PI / 4.0));
+        myMapCircles[0].setRadius(startRadius);
+      };
+
+      /**
+       * Increase radius of finish line.
+       *
+       * @public
+       */
+      MyMap.handleClickEnlargeFinish = function() {
+        const finishLine = DataView.getFinishLine();
+        if (!finishLine) return;
+        finishLine.radius += 0.0001;
+        const finishRadius = TraX.Units.coordToMeters(
+            finishLine.coord.lat, finishLine.coord.lng,
+            finishLine.coord.lat + finishLine.radius * Math.cos(Math.PI / 4.0),
+            finishLine.coord.lng + finishLine.radius * Math.sin(Math.PI / 4.0));
+        myMapCircles[1].setRadius(finishRadius);
+      };
+      /**
+       * Decrease radius of finish line.
+       *
+       * @public
+       */
+      MyMap.handleClickShrinkFinish = function() {
+        const finishLine = DataView.getFinishLine();
+        if (!finishLine) return;
+        if (finishLine.radius > 0.0001) finishLine.radius -= 0.0001;
+        const finishRadius = TraX.Units.coordToMeters(
+            finishLine.coord.lat, finishLine.coord.lng,
+            finishLine.coord.lat + finishLine.radius * Math.cos(Math.PI / 4.0),
+            finishLine.coord.lng + finishLine.radius * Math.sin(Math.PI / 4.0));
+        myMapCircles[1].setRadius(finishRadius);
+      };
+
+      /**
        * User has finished naming new track or config and placing markers.
        *
        * @public
@@ -521,7 +583,9 @@
               lat: pos.lat(),
               lng: pos.lng(),
             };
-            DataView.trackData.config.start.radius = 0.0004;
+            if (!DataView.trackData.config.start.radius) {
+              DataView.trackData.config.start.radius = 0.0004;
+            }
           }
           if (placedFinishMarker.getVisible()) {
             const pos = placedFinishMarker.getPosition();
@@ -532,7 +596,9 @@
               lat: pos.lat(),
               lng: pos.lng(),
             };
-            DataView.trackData.config.finish.radius = 0.0004;
+            if (!DataView.trackData.config.finish.radius) {
+              DataView.trackData.config.finish.radius = 0.0004;
+            }
           }
           const configName = overlayConfigNameInput.value;
           if (editMode == 'create') {

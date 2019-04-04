@@ -48,6 +48,28 @@
   width: 100px;
   height: auto;
 }
+#placeStart, #placeFinish {
+  display: inline-block;
+  position: relative;
+}
+.leftAbove, .rightAbove {
+  position: absolute;
+  width: 33px;
+  height: auto;
+  pointer-events: none;
+  bottom: 33px;
+  display: none;
+}
+.overlayButton.selected + .leftAbove, .overlayButton.selected + .leftAbove + .rightAbove {
+  display: inline-block;
+  pointer-events: auto;
+}
+.leftAbove {
+  left: 7px;
+}
+.rightAbove {
+  right: 7px;
+}
 #togglePlaybackButton {
   width: 35px;
   height: 35px;

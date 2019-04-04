@@ -163,8 +163,20 @@
             </div>
             <div id="mapOverlayButtons">
               <button id="cancelPlace" class="links overlayButton nohover selected" onclick="TraX.DataView.MyMap.handleClickEndPlace();"><span>X</span></button>
-              <button id="placeStart" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickPlaceStart();"><span>Start Line</span></button>
-              <button id="placeFinish" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickPlaceFinish();"><span>Finish Line</span></button>
+              <div id="placeStart">
+                <button class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickPlaceStart();">
+                  <span>Start Line</span>
+                </button>
+                <button class="links nohover leftAbove" onclick="TraX.DataView.MyMap.handleClickEnlargeStart();">+</button>
+                <button class="links nohover rightAbove" onclick="TraX.DataView.MyMap.handleClickShrinkStart();">-</button>
+              </div>
+              <div id="placeFinish">
+                <button class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickPlaceFinish();">
+                  <span>Finish Line</span>
+                </button>
+                <button class="links nohover leftAbove" onclick="TraX.DataView.MyMap.handleClickEnlargeFinish();">+</button>
+                <button class="links nohover rightAbove" onclick="TraX.DataView.MyMap.handleClickShrinkFinish();">-</button>
+              </div>
               <button id="donePlacing" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickDonePlacing();"><span>Done</span></button>
               <button id="cancelPlacing" class="links overlayButton nohover" onclick="TraX.DataView.MyMap.handleClickCancelPlacing();"><span>Cancel</span></button>
             </div>
