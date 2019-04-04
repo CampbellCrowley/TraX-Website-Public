@@ -131,11 +131,13 @@ The Server side of TraX.
 
 * [TraXServerModule](#module_TraXServerModule)
     * [~TraXServer](#module_TraXServerModule..TraXServer)
-        * [~sockets](#module_TraXServerModule..TraXServer..sockets) : <code>Array.&lt;io.Client&gt;</code> ℗
-        * [~liveSockets](#module_TraXServerModule..TraXServer..liveSockets) : <code>Array.&lt;io.Client&gt;</code> ℗
         * [~versionNum](#module_TraXServerModule..TraXServer..versionNum) : <code>string</code> ℗
         * [~versionNumLastUpdate](#module_TraXServerModule..TraXServer..versionNumLastUpdate) : <code>number</code> ℗
         * [~patreonTiers](#module_TraXServerModule..TraXServer..patreonTiers) : <code>Array</code> ℗
+        * [~secretKeys](#module_TraXServerModule..TraXServer..secretKeys) : <code>Object.&lt;string&gt;</code> ℗
+        * [~secretsUpdated](#module_TraXServerModule..TraXServer..secretsUpdated) : <code>boolean</code> ℗
+        * [~sockets](#module_TraXServerModule..TraXServer..sockets) : <code>Array.&lt;io.Client&gt;</code> ℗
+        * [~liveSockets](#module_TraXServerModule..TraXServer..liveSockets) : <code>Array.&lt;io.Client&gt;</code> ℗
         * [~parseCookies(headers)](#module_TraXServerModule..TraXServer..parseCookies) ⇒ <code>object</code>
         * [~updatePatreonTiers()](#module_TraXServerModule..TraXServer..updatePatreonTiers) ℗
         * [~setFriendRelation(user, friend, relation, exists, callback)](#module_TraXServerModule..TraXServer..setFriendRelation) ℗
@@ -156,6 +158,7 @@ The Server side of TraX.
     * [~sessionsubdir](#module_TraXServerModule..sessionsubdir) : <code>string</code> ℗
     * [~usertracksubdir](#module_TraXServerModule..usertracksubdir) : <code>string</code> ℗
     * [~usersummariessubdir](#module_TraXServerModule..usersummariessubdir) : <code>string</code> ℗
+    * [~secretFile](#module_TraXServerModule..secretFile) : <code>string</code> ℗
     * [~trackdataDirs](#module_TraXServerModule..trackdataDirs) : <code>Object.&lt;string&gt;</code> ℗
     * [~trackdata](#module_TraXServerModule..trackdata) : <code>string</code> ℗
     * [~accountsTable](#module_TraXServerModule..accountsTable) : <code>string</code> ℗
@@ -184,11 +187,13 @@ side of TraX.
 **Kind**: inner class of [<code>TraXServerModule</code>](#module_TraXServerModule)  
 
 * [~TraXServer](#module_TraXServerModule..TraXServer)
-    * [~sockets](#module_TraXServerModule..TraXServer..sockets) : <code>Array.&lt;io.Client&gt;</code> ℗
-    * [~liveSockets](#module_TraXServerModule..TraXServer..liveSockets) : <code>Array.&lt;io.Client&gt;</code> ℗
     * [~versionNum](#module_TraXServerModule..TraXServer..versionNum) : <code>string</code> ℗
     * [~versionNumLastUpdate](#module_TraXServerModule..TraXServer..versionNumLastUpdate) : <code>number</code> ℗
     * [~patreonTiers](#module_TraXServerModule..TraXServer..patreonTiers) : <code>Array</code> ℗
+    * [~secretKeys](#module_TraXServerModule..TraXServer..secretKeys) : <code>Object.&lt;string&gt;</code> ℗
+    * [~secretsUpdated](#module_TraXServerModule..TraXServer..secretsUpdated) : <code>boolean</code> ℗
+    * [~sockets](#module_TraXServerModule..TraXServer..sockets) : <code>Array.&lt;io.Client&gt;</code> ℗
+    * [~liveSockets](#module_TraXServerModule..TraXServer..liveSockets) : <code>Array.&lt;io.Client&gt;</code> ℗
     * [~parseCookies(headers)](#module_TraXServerModule..TraXServer..parseCookies) ⇒ <code>object</code>
     * [~updatePatreonTiers()](#module_TraXServerModule..TraXServer..updatePatreonTiers) ℗
     * [~setFriendRelation(user, friend, relation, exists, callback)](#module_TraXServerModule..TraXServer..setFriendRelation) ℗
@@ -203,22 +208,6 @@ side of TraX.
     * [~updateVersionNum()](#module_TraXServerModule..TraXServer..updateVersionNum) ℗
     * [~sendVersionToAll()](#module_TraXServerModule..TraXServer..sendVersionToAll) ℗
 
-<a name="module_TraXServerModule..TraXServer..sockets"></a>
-
-#### TraXServer~sockets : <code>Array.&lt;io.Client&gt;</code> ℗
-All connected sockets.
-
-**Kind**: inner property of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
-**Default**: <code>[]</code>  
-**Access**: private  
-<a name="module_TraXServerModule..TraXServer..liveSockets"></a>
-
-#### TraXServer~liveSockets : <code>Array.&lt;io.Client&gt;</code> ℗
-All connected sockets requesting live data streams.
-
-**Kind**: inner property of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
-**Default**: <code>[]</code>  
-**Access**: private  
 <a name="module_TraXServerModule..TraXServer..versionNum"></a>
 
 #### TraXServer~versionNum : <code>string</code> ℗
@@ -242,6 +231,38 @@ The last time at which the version number was read from file.
 Stores the current Patreon tier benefits read from patreon.json
 
 **Kind**: inner property of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Default**: <code>[]</code>  
+**Access**: private  
+<a name="module_TraXServerModule..TraXServer..secretKeys"></a>
+
+#### TraXServer~secretKeys : <code>Object.&lt;string&gt;</code> ℗
+All secret keys currently available. These are the password and identifier
+for viewing a user's live data.
+
+**Kind**: inner property of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Access**: private  
+<a name="module_TraXServerModule..TraXServer..secretsUpdated"></a>
+
+#### TraXServer~secretsUpdated : <code>boolean</code> ℗
+True if keys have been modified since last saving them to file.
+
+**Kind**: inner property of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Default**: <code>false</code>  
+**Access**: private  
+<a name="module_TraXServerModule..TraXServer..sockets"></a>
+
+#### TraXServer~sockets : <code>Array.&lt;io.Client&gt;</code> ℗
+All connected sockets.
+
+**Kind**: inner constant of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
+**Default**: <code>[]</code>  
+**Access**: private  
+<a name="module_TraXServerModule..TraXServer..liveSockets"></a>
+
+#### TraXServer~liveSockets : <code>Array.&lt;io.Client&gt;</code> ℗
+All connected sockets requesting live data streams.
+
+**Kind**: inner constant of [<code>TraXServer</code>](#module_TraXServerModule..TraXServer)  
 **Default**: <code>[]</code>  
 **Access**: private  
 <a name="module_TraXServerModule..TraXServer..parseCookies"></a>
@@ -465,6 +486,15 @@ Subdirectory within user's TraX folder to store summary data.
 
 **Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
 **Default**: <code>&quot;summaries/&quot;</code>  
+**Access**: private  
+<a name="module_TraXServerModule..secretFile"></a>
+
+### TraXServerModule~secretFile : <code>string</code> ℗
+Filename where secret keys are stored. These keys work as a revokable random
+password and identifier for viewing a user's live data.
+
+**Kind**: inner constant of [<code>TraXServerModule</code>](#module_TraXServerModule)  
+**Default**: <code>&quot;./secrets.json&quot;</code>  
 **Access**: private  
 <a name="module_TraXServerModule..trackdataDirs"></a>
 
@@ -853,6 +883,10 @@ Download data as file with given filename.
     * [.handleClickPlaceStart()](#MyMap.handleClickPlaceStart)
     * [.handleClickPlaceFinish()](#MyMap.handleClickPlaceFinish)
     * [.handleClickPlaceTrackCenter()](#MyMap.handleClickPlaceTrackCenter)
+    * [.handleClickEnlargeStart()](#MyMap.handleClickEnlargeStart)
+    * [.handleClickShrinkStart()](#MyMap.handleClickShrinkStart)
+    * [.handleClickEnlargeFinish()](#MyMap.handleClickEnlargeFinish)
+    * [.handleClickShrinkFinish()](#MyMap.handleClickShrinkFinish)
     * [.handleClickSubmitMapNames()](#MyMap.handleClickSubmitMapNames)
     * [.handleClickBackMapNames()](#MyMap.handleClickBackMapNames)
     * [.handleClickDonePlacing()](#MyMap.handleClickDonePlacing)
@@ -949,6 +983,34 @@ Select place track center.
 
 **Kind**: static method of [<code>MyMap</code>](#MyMap)  
 **Access**: public  
+<a name="MyMap.handleClickEnlargeStart"></a>
+
+### MyMap.handleClickEnlargeStart()
+Increase radius of start line.
+
+**Kind**: static method of [<code>MyMap</code>](#MyMap)  
+**Access**: public  
+<a name="MyMap.handleClickShrinkStart"></a>
+
+### MyMap.handleClickShrinkStart()
+Decrease radius of start line.
+
+**Kind**: static method of [<code>MyMap</code>](#MyMap)  
+**Access**: public  
+<a name="MyMap.handleClickEnlargeFinish"></a>
+
+### MyMap.handleClickEnlargeFinish()
+Increase radius of finish line.
+
+**Kind**: static method of [<code>MyMap</code>](#MyMap)  
+**Access**: public  
+<a name="MyMap.handleClickShrinkFinish"></a>
+
+### MyMap.handleClickShrinkFinish()
+Decrease radius of finish line.
+
+**Kind**: static method of [<code>MyMap</code>](#MyMap)  
+**Access**: public  
 <a name="MyMap.handleClickSubmitMapNames"></a>
 
 ### MyMap.handleClickSubmitMapNames()
@@ -980,8 +1042,8 @@ User aborted adding track or config.
 <a name="MyMap.showMessageWindowIndex"></a>
 
 ### MyMap.showMessageWindowIndex(index, [zoomToFit])
-Show info window with more information at coordinates with information from
-the index provided.
+Show info window with more information at coordinates with information
+from the index provided.
 
 **Kind**: static method of [<code>MyMap</code>](#MyMap)  
 **Access**: public  
@@ -994,8 +1056,8 @@ the index provided.
 <a name="MyMap.showMessageWindowTime"></a>
 
 ### MyMap.showMessageWindowTime(msecs, [zoomToFit])
-Show info window with more information at coordinates with information from
-the number of milliseconds after session start.
+Show info window with more information at coordinates with information
+from the number of milliseconds after session start.
 
 **Kind**: static method of [<code>MyMap</code>](#MyMap)  
 **Access**: public  
@@ -1054,8 +1116,8 @@ Change the setting for how the polyline gets colored. Can currently be
 <a name="MyMap.updateMyMap"></a>
 
 ### MyMap.updateMyMap([startIndex], [endIndex])
-Update all markers and data shown on map to show data between start and end
-index.
+Update all markers and data shown on map to show data between start
+and end index.
 
 **Kind**: static method of [<code>MyMap</code>](#MyMap)  
 **Access**: public  
@@ -1322,7 +1384,8 @@ Given raw sensor data, rectify to be correctly rotated relative to the
 vehicle. Also removes Agrav.
 
 **Kind**: static method of [<code>DataView</code>](#DataView)  
-**Returns**: <code>Object</code> - Acceleration relative to vehicle.  
+**Returns**: <code>Object</code> - Acceleration relative to
+vehicle.  
 **Access**: public  
 
 | Param | Type | Description |
@@ -1365,8 +1428,8 @@ Request the list of configs from the server.
 <a name="DataView.autoPickTrack"></a>
 
 ### DataView.autoPickTrack([forceUseCoord])
-Automatically determine the closest track to data, then change selected track
-to the closest track if it can be determined.
+Automatically determine the closest track to data, then change selected
+track to the closest track if it can be determined.
 
 **Kind**: static method of [<code>DataView</code>](#DataView)  
 **Access**: public  
@@ -1378,8 +1441,8 @@ to the closest track if it can be determined.
 <a name="DataView.determineTrack"></a>
 
 ### DataView.determineTrack(coord) ⇒ <code>Track</code>
-Determine the closest track to the given coordinates. A maximum distance of
-10km is checked.
+Determine the closest track to the given coordinates. A maximum distance
+of 10km is checked.
 
 **Kind**: static method of [<code>DataView</code>](#DataView)  
 **Returns**: <code>Track</code> - The track data of the track or null if no track found.  
@@ -1606,7 +1669,8 @@ session start.
 <a name="DataView.getDataWithCoords"></a>
 
 ### DataView.getDataWithCoords([startIndex], [endIndex], [maxIndexes], [data]) ⇒ <code>Array</code>
-Returns all data between start and end indexes that includes gps coordinates.
+Returns all data between start and end indexes that includes gps
+coordinates.
 MaxIndexes can limit the number of returned results.
 
 **Kind**: static method of [<code>DataView</code>](#DataView)  
@@ -1695,7 +1759,8 @@ User confirmed renaming session.
 <a name="DataView.getFilteredCoords"></a>
 
 ### DataView.getFilteredCoords(input, SWBound, NEBound) ⇒ <code>Object</code>
-Rename coordinate data to more common format and determine bounds of data.
+Rename coordinate data to more common format and determine bounds of
+data.
 
 **Kind**: static method of [<code>DataView</code>](#DataView)  
 **Returns**: <code>Object</code> - Filtered
@@ -1896,8 +1961,11 @@ Toggle the sidebar open and closed.
     * [.blockFriend(id)](#TraX.blockFriend)
     * [.unblockUser(id)](#TraX.unblockUser)
     * [.copyFriendLink()](#TraX.copyFriendLink)
+    * [.copySecretURL()](#TraX.copySecretURL)
+    * [.resetSecret()](#TraX.resetSecret)
     * [.handleClickBluetoothRefresh()](#TraX.handleClickBluetoothRefresh)
     * [.goBack()](#TraX.goBack)
+    * [.getURLOptions()](#TraX.getURLOptions) ⇒ <code>Object.&lt;string&gt;</code> ℗
     * [.setURLOption(option, setting)](#TraX.setURLOption)
     * [.toggleDebug([isDebug])](#TraX.toggleDebug)
     * [.requestFriendsList()](#TraX.requestFriendsList)
@@ -1960,8 +2028,8 @@ Rotation where -Z is down.
 <a name="TraX.unitDropdownDom"></a>
 
 ### TraX.unitDropdownDom : <code>Object</code> \| <code>Element</code>
-If this is implemented, others should override this with the DOM element that
-selects the units.
+If this is implemented, others should override this with the DOM element
+that selects the units.
 
 **Kind**: static property of [<code>TraX</code>](#TraX)  
 **Default**: <code>{&quot;value&quot;:&quot;imperial&quot;}</code>  
@@ -2084,8 +2152,8 @@ Print stored lap data to console.
 <a name="TraX.toggleRealtimeView"></a>
 
 ### TraX.toggleRealtimeView([force])
-Toggle the live data view. If force is set to true or false it will force the
-UI open or closed.
+Toggle the live data view. If force is set to true or false it will force
+the UI open or closed.
 
 **Kind**: static method of [<code>TraX</code>](#TraX)  
 **Access**: public  
@@ -2274,6 +2342,20 @@ Clicked copy link button on account for sharing.
 
 **Kind**: static method of [<code>TraX</code>](#TraX)  
 **Access**: public  
+<a name="TraX.copySecretURL"></a>
+
+### TraX.copySecretURL()
+Copy the current live view URL with this user's secret.
+
+**Kind**: static method of [<code>TraX</code>](#TraX)  
+**Access**: public  
+<a name="TraX.resetSecret"></a>
+
+### TraX.resetSecret()
+Handle user requesting new secret.
+
+**Kind**: static method of [<code>TraX</code>](#TraX)  
+**Access**: public  
 <a name="TraX.handleClickBluetoothRefresh"></a>
 
 ### TraX.handleClickBluetoothRefresh()
@@ -2288,6 +2370,14 @@ Go to previous page, or if it wasn't one of our pages, go to the home page.
 
 **Kind**: static method of [<code>TraX</code>](#TraX)  
 **Access**: public  
+<a name="TraX.getURLOptions"></a>
+
+### TraX.getURLOptions() ⇒ <code>Object.&lt;string&gt;</code> ℗
+Parse options embedded in URL.
+
+**Kind**: static method of [<code>TraX</code>](#TraX)  
+**Returns**: <code>Object.&lt;string&gt;</code> - Object of URL query key-value pairs.  
+**Access**: private  
 <a name="TraX.setURLOption"></a>
 
 ### TraX.setURLOption(option, setting)
@@ -2521,8 +2611,8 @@ Initialize TraX~Video
 <a name="Video.getPerms"></a>
 
 ### Video.getPerms([silent])
-Check if we have permission to edit user's data. Unised for now until video
-streaming is fully implemented.
+Check if we have permission to edit user's data. Unised for now until
+video streaming is fully implemented.
 
 **Kind**: static method of [<code>Video</code>](#Video)  
 **Access**: public  
@@ -2700,7 +2790,8 @@ Draw data on canvas showing acceleration data.
 <a name="Canvases.resetEstimatedVelocity"></a>
 
 ### Canvases.resetEstimatedVelocity(gpsSpeed, gpsHeading)
-Take the passed in values as the current correct speed and heading, and reset
+Take the passed in values as the current correct speed and heading, and
+reset
 our estimated velocity.
 
 **Kind**: static method of [<code>Canvases</code>](#Canvases)  
@@ -2836,8 +2927,8 @@ Initialize TraX~Video
 <a name="Video.getPerms"></a>
 
 ### Video.getPerms([silent])
-Check if we have permission to edit user's data. Unised for now until video
-streaming is fully implemented.
+Check if we have permission to edit user's data. Unised for now until
+video streaming is fully implemented.
 
 **Kind**: static method of [<code>Video</code>](#Video)  
 **Access**: public  
@@ -3000,8 +3091,8 @@ Get miles per hour, or kilometers per hour unit.
 <a name="Units.coordToMeters"></a>
 
 ### Units.coordToMeters(lat1, lng1, lat2, lng2) ⇒ <code>number</code>
-Convert given two points latitude and longitude, get the distance between the
-two. Treats Earth as a sphere with radius 6378.137km.
+Convert given two points latitude and longitude, get the distance between
+the two. Treats Earth as a sphere with radius 6378.137km.
 
 **Kind**: static method of [<code>Units</code>](#Units)  
 **Returns**: <code>number</code> - Distance in meters between the two coords.  
@@ -3104,7 +3195,8 @@ rotation. Enabling flip applies the inverse of this rotation.
 <a name="Common.rotateX"></a>
 
 ### Common.rotateX(point, rad)
-Rotates a vector around the X axis by a certain angle in radians. Rotation is
+Rotates a vector around the X axis by a certain angle in radians.
+Rotation is
 applied in-place.
 
 **Kind**: static method of [<code>Common</code>](#Common)  
@@ -3118,7 +3210,8 @@ applied in-place.
 <a name="Common.rotateY"></a>
 
 ### Common.rotateY(point, rad)
-Rotates a vector around the Y axis by a certain angle in radians. Rotation is
+Rotates a vector around the Y axis by a certain angle in radians.
+Rotation is
 applied in-place.
 
 **Kind**: static method of [<code>Common</code>](#Common)  
@@ -3132,7 +3225,8 @@ applied in-place.
 <a name="Common.rotateZ"></a>
 
 ### Common.rotateZ(point, rad)
-Rotates a vector around the Z axis by a certain angle in radians. Rotation is
+Rotates a vector around the Z axis by a certain angle in radians.
+Rotation is
 applied in-place.
 
 **Kind**: static method of [<code>Common</code>](#Common)  
@@ -3175,7 +3269,8 @@ Formats a duration in milliseconds as a human-readable string.
 <a name="Common.formatTime"></a>
 
 ### Common.formatTime(msecs, [showSeconds]) ⇒ <code>string</code>
-Formats a time givin in milliseconds since epoch as a human readable string.
+Formats a time givin in milliseconds since epoch as a human readable
+string.
 
 **Kind**: static method of [<code>Common</code>](#Common)  
 **Returns**: <code>string</code> - Formatted time as a string.  
@@ -3234,7 +3329,8 @@ Linearly interpolate between two numbers.
 <a name="Common.coordDistance"></a>
 
 ### Common.coordDistance(one, two) ⇒ <code>number</code>
-Uses the Pythagorean theorem to calculate distance between coordinates as if
+Uses the Pythagorean theorem to calculate distance between coordinates as
+if
 they were on a flat plane.
 
 **Kind**: static method of [<code>Common</code>](#Common)  
