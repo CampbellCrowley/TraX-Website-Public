@@ -890,8 +890,7 @@
         output.innerHTML += '<br>';
         output.appendChild(
             document.createTextNode(
-                'Speed: ' +
-                TraX.Units.speedToLargeUnit(data['estimatedSpeed']) +
+                'Speed: ' + TraX.Units.speedToUnit(data['estimatedSpeed']) +
                 TraX.Units.getLargeSpeedUnit()));
         output.innerHTML += '<br>';
         output.appendChild(

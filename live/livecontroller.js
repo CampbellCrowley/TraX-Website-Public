@@ -304,8 +304,9 @@ function socketInit() {
  * of we already have the summary.
  */
 function requestConfigSummary(ownerId, driverId, trackId, configId, force) {
-  if (Date.now() - lastSummaryRequestTime < 3000) return;
-  lastSummaryRequestTime = Date.now();
+  const now = Date.now();
+  if (now - lastSummaryRequestTime < 3000) return;
+  lastSummaryRequestTime = now;
   for (let i = 0; i < TraX.friendsList.length; i++) {
     if (!force) {
       const search =

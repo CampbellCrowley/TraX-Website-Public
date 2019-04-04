@@ -1736,7 +1736,7 @@ function TraXServer() {
         user = '';
       }
       if (!configId && typeof configId !== 'number') {
-        socket.emit('fail', 'badsumaryids');
+        socket.emit('fail', 'badsummaryids');
         return;
       }
       if (!trackId && typeof trackId !== 'number') {
