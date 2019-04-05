@@ -6,7 +6,7 @@ body {
   width: 100%;
   margin: auto;
   color: white;
-  background: #080808;
+  background: #101010;
   z-index: 0;
 }
 div.container {
@@ -112,7 +112,7 @@ div.container {
   margin: auto;
   padding-bottom: 45px;
   width: 100%;
-  background: #080808;
+  background: #101010;
   z-index: 90;
   overflow: auto;
 }
@@ -368,7 +368,7 @@ table, td, tr {
   border: 1px solid black;
   border-collapse: collapse;
   padding: 2px;
-  background-color: #080808;
+  background-color: #101010;
   transition: 0.2s ease-out;
 }
 // td:not(.nohover):hover {
@@ -426,7 +426,7 @@ nav#top {
   width: 300px;
 }
 .statusLight {
-  border: 1px solid #080808;
+  border: 1px solid #101010;
 }
 .links {
   font-size: 1em;
@@ -639,7 +639,7 @@ nav#top {
   display: block;
   width: 100%;
   max-height: 150px;
-  border-bottom: 1px solid #080808;
+  border-bottom: 1px solid #101010;
 }
 
 .timerTitle {
@@ -650,8 +650,8 @@ nav#top {
   font-size: 2em;
 }
 #littleTimer0 {
-  border-bottom: 1px solid #080808;
-  border-top: 1px solid #080808;
+  border-bottom: 1px solid #101010;
+  border-top: 1px solid #101010;
 }
 #littleTimer1, #littleTimer2, #littleTimer3, #littleTimer4  {
   display: inline-block;
@@ -660,17 +660,17 @@ nav#top {
   max-height: 75px;
 }
 #littleTimer1, #littleTimer3 {
-  border-right: 1px solid #080808;
+  border-right: 1px solid #101010;
   padding-right: 0.5%;
 }
 #littleTimer2, #littleTimer4 {
   float: right;
-  border-left: 1px solid #080808;
+  border-left: 1px solid #101010;
   padding-left: 0.5%;
 }
 #timerButtons {
   margin-top: 0;
-  border-top: 1px solid #080808;
+  border-top: 1px solid #101010;
 }
 
 #customMenu {
