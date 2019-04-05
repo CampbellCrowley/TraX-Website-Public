@@ -164,7 +164,7 @@
      */
     Canvases.Sphere3d = function(radius) {
       this.point = [];
-      this.color = '#000000';
+      this.color = '#FFFFFF';
       this.radius = (typeof radius === 'undefined') ? 20.0 : radius;
       this.radius = (typeof radius !== 'number') ? 20.0 : radius;
       this.numberOfVertexes = 0;

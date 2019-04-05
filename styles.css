@@ -5,7 +5,8 @@ body {
   font-size: 1em;
   width: 100%;
   margin: auto;
-  background: #fff;
+  color: white;
+  background: #080808;
   z-index: 0;
 }
 div.container {
@@ -111,7 +112,7 @@ div.container {
   margin: auto;
   padding-bottom: 45px;
   width: 100%;
-  background: #fff;
+  background: #080808;
   z-index: 90;
   overflow: auto;
 }
@@ -138,7 +139,7 @@ div.container {
 .contentsection {
   padding: 4px;
   margin-bottom: 25px;
-  background: #bdf;
+  background: black;
   box-shadow: 2px 7px 20px rgba(0, 0, 0, 0.2), -2px 7px 20px rgba(0, 0, 0, 0.2);
 }
 .transparentcontent {
@@ -367,7 +368,7 @@ table, td, tr {
   border: 1px solid black;
   border-collapse: collapse;
   padding: 2px;
-  background-color: #bdf;
+  background-color: #080808;
   transition: 0.2s ease-out;
 }
 // td:not(.nohover):hover {
@@ -425,9 +426,7 @@ nav#top {
   width: 300px;
 }
 .statusLight {
-  // display: inline-block;
-  overflow: ellipsis;
-  border: 1px solid black;
+  border: 1px solid #080808;
 }
 .links {
   font-size: 1em;
@@ -619,6 +618,7 @@ nav#top {
 
 #timersHUD {
   text-align: center;
+  position: relative;
 }
 .visibleHUD {
   display: block;
@@ -638,9 +638,8 @@ nav#top {
 #bigTimer {
   display: block;
   width: 100%;
-  // height: 49vw;
   max-height: 150px;
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid #080808;
 }
 
 .timerTitle {
@@ -651,28 +650,27 @@ nav#top {
   font-size: 2em;
 }
 #littleTimer0 {
-  border-bottom: 1px solid black;
-  border-top: 1px solid black;
+  border-bottom: 1px solid #080808;
+  border-top: 1px solid #080808;
 }
 #littleTimer1, #littleTimer2, #littleTimer3, #littleTimer4  {
   display: inline-block;
   margin: 0;
   width: 49%;
-  // height: 24vw;
   max-height: 75px;
 }
 #littleTimer1, #littleTimer3 {
-  border-right: 1px solid black;
+  border-right: 1px solid #080808;
   padding-right: 0.5%;
 }
 #littleTimer2, #littleTimer4 {
   float: right;
-  border-left: 1px solid black;
+  border-left: 1px solid #080808;
   padding-left: 0.5%;
 }
 #timerButtons {
   margin-top: 0;
-  border-top: 1px solid black;
+  border-top: 1px solid #080808;
 }
 
 #customMenu {
@@ -702,7 +700,8 @@ nav#top {
 
 .hudfstoggle {
   font-size: 2em;
-  float: right;
+  position: absolute;
+  right: 0.2em;
 }
 
 @media screen and (max-width: 720px) {

@@ -26,10 +26,10 @@
 }
 .contentsection {
   display: inline-block;
-  // max-width: 1000px;
   width: 100%;
   width: calc(100% - 4px);
   vertical-align: top;
+  position: relative;
 }
 #map {
   height: 400px;

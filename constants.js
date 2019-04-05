@@ -331,7 +331,7 @@ const twoCrewStatus = 11;
       this.x = 0;
       this.y = 0;
       this.z = 0;
-      this.color = 'black';
+      this.color = 'white';
 
       if (x instanceof Common.Point3d) {
         this.x = x.x;

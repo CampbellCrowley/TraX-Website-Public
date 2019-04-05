@@ -9,7 +9,7 @@
 #viewDataOverlay {
   padding-top: 40px;
   position: fixed;
-  background: rgba(255, 255, 255, 0.8);
+  background: #080808;
   height: 100%;
   width: 100%;
   top: 0;
@@ -62,7 +62,7 @@ button#closeDataView {
   border: 2px solid #0af;
   border-radius: 2px;
   background: #07f;
-  color: black;
+  color: white;
   font-size: 1.0em;
   height: 40px;
   margin-top: 2px;

@@ -873,6 +873,7 @@
        */
       function dataToString(data) {
         const output = document.createElement('div');
+        output.id = 'mapInfoWindow';
         const lapNum = document.createElement('a');
         lapNum.appendChild(document.createTextNode('Lap: #' + data['lap']));
         lapNum.style.color =

@@ -52,6 +52,9 @@
   display: inline-block;
   position: relative;
 }
+#mapInfoWindow {
+  color: black;
+}
 .leftAbove, .rightAbove {
   position: absolute;
   width: 33px;
