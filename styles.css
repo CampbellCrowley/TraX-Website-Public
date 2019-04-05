@@ -227,7 +227,8 @@ div.container {
   border: 2px solid #0af;
   border-radius: 2px;
   background: #07f;
-  color: black;
+  color: white;
+  font-weight: bold;
   display: inline-block;
   cursor: pointer;
   font-size: 1.2em;
