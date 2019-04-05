@@ -225,6 +225,13 @@
    */
   let friendmapEnabled = false;
   /**
+   * Current google.maps.Map object.
+   * @private
+   * @default
+   * @type {?google.maps.Map}
+   */
+  let friendmap = null;
+  /**
    * The currently visible HUD.
    * @private
    * @default
@@ -3006,10 +3013,12 @@
         }
       }
     }
-    friendmap.panTo({lat: latitude, lng: longitude});
-    friendmap.setZoom(15);
-    friendmap.panToBounds(new google.maps.LatLngBounds(bounds.sw, bounds.ne));
-    if (friendmap.getZoom() > 15) friendmap.setZoom(15);
+    if (friendmap) {
+      friendmap.panTo({lat: latitude, lng: longitude});
+      friendmap.setZoom(15);
+      friendmap.panToBounds(new google.maps.LatLngBounds(bounds.sw, bounds.ne));
+      if (friendmap.getZoom() > 15) friendmap.setZoom(15);
+    }
   }
   /**
    * Toggle the friendmap visibility.
@@ -3021,7 +3030,21 @@
     if (friendmapEnabled) {
       friendmapDom.parentElement.style.display = 'block';
       friendmapToggleDom.classList.add('selected');
-      google.maps.event.trigger(friendmap, 'resize');
+      if (!friendmap) {
+        friendmap = new google.maps.Map(document.getElementById('friendmap'), {
+          zoom: 1,
+          center: {lat: -28.024, lng: 140.887},
+          gestureHandling: 'auto',
+          clickableIcons: false,
+          fullscreenControlOption: false,
+          streetViewControl: false,
+        });
+        friendMarkerCluster = new MarkerClusterer(
+            friendmap, [],
+            {imagePath: 'https://dev.campbellcrowley.com/trax/images/m'});
+      } else {
+        google.maps.event.trigger(friendmap, 'resize');
+      }
       if (isPaused && !realtimeViewOpen) {
         if (!navigator.geolocation) {
           TraX.showMessageBox(

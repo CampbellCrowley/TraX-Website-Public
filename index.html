@@ -432,25 +432,8 @@
     <!-- End Message Box -->
   </div>
 </div>
-<script>
-var friendmap, friendMarkerCluster;
-function initMap() {
-  friendmap = new google.maps.Map(document.getElementById('friendmap'), {
-    zoom: 1,
-    center: {lat: -28.024, lng: 140.887},
-    gestureHandling: 'auto',
-    clickableIcons: false,
-    fullscreenControlOption: false,
-    streetViewControl: false
-  });
-  friendMarkerCluster = new MarkerClusterer(friendmap, [], {
-    imagePath:
-      'https://dev.campbellcrowley.com/trax/images/m'
-  });
-}
-</script>
 <script src="https://dev.campbellcrowley.com/trax/markerclusterer.min.js"></script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI4_A7hSN7upiKouUwuwSp4CjIbTjhVA4&callback=initMap"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI4_A7hSN7upiKouUwuwSp4CjIbTjhVA4"></script>
 <div id="mainfooter"></div>
 </body>
 <script>
