@@ -3141,6 +3141,7 @@ Given two coords, find distance in meters between the two.
     * [.interpolateCoord(one, two, val)](#Common.interpolateCoord) ⇒ <code>Object</code>
     * [.lerp(one, two, val)](#Common.lerp) ⇒ <code>number</code>
     * [.coordDistance(one, two)](#Common.coordDistance) ⇒ <code>number</code>
+    * [.segmentIntersectCircle(ax, ay, bx, by, cx, cy, r)](#Common.segmentIntersectCircle) ⇒ <code>boolean</code>
     * [.compareVersion(a, b)](#Common.compareVersion) ⇒ <code>number</code>
     * [.init()](#Common.init)
 
@@ -3196,8 +3197,7 @@ rotation. Enabling flip applies the inverse of this rotation.
 
 ### Common.rotateX(point, rad)
 Rotates a vector around the X axis by a certain angle in radians.
-Rotation is
-applied in-place.
+Rotation is applied in-place.
 
 **Kind**: static method of [<code>Common</code>](#Common)  
 **Access**: public  
@@ -3211,8 +3211,7 @@ applied in-place.
 
 ### Common.rotateY(point, rad)
 Rotates a vector around the Y axis by a certain angle in radians.
-Rotation is
-applied in-place.
+Rotation is applied in-place.
 
 **Kind**: static method of [<code>Common</code>](#Common)  
 **Access**: public  
@@ -3226,8 +3225,7 @@ applied in-place.
 
 ### Common.rotateZ(point, rad)
 Rotates a vector around the Z axis by a certain angle in radians.
-Rotation is
-applied in-place.
+Rotation is applied in-place.
 
 **Kind**: static method of [<code>Common</code>](#Common)  
 **Access**: public  
@@ -3330,8 +3328,7 @@ Linearly interpolate between two numbers.
 
 ### Common.coordDistance(one, two) ⇒ <code>number</code>
 Uses the Pythagorean theorem to calculate distance between coordinates as
-if
-they were on a flat plane.
+if they were on a flat plane.
 
 **Kind**: static method of [<code>Common</code>](#Common)  
 **Returns**: <code>number</code> - Distance in original latitude and longitude units.  
@@ -3341,6 +3338,25 @@ they were on a flat plane.
 | --- | --- | --- |
 | one | <code>Object</code> | Coordinate one. |
 | two | <code>Object</code> | Coordinate one. |
+
+<a name="Common.segmentIntersectCircle"></a>
+
+### Common.segmentIntersectCircle(ax, ay, bx, by, cx, cy, r) ⇒ <code>boolean</code>
+Check if a line segment intersects a circle.
+
+**Kind**: static method of [<code>Common</code>](#Common)  
+**Returns**: <code>boolean</code> - True if intersects, false otherwise.  
+**Access**: public  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| ax | <code>number</code> | First line end X coord. |
+| ay | <code>number</code> | First line end Y coord. |
+| bx | <code>number</code> | Second line end X coord. |
+| by | <code>number</code> | Second line end Y coord. |
+| cx | <code>number</code> | Circle end X coord. |
+| cy | <code>number</code> | Circle end Y coord. |
+| r | <code>number</code> | Circle radius. |
 
 <a name="Common.compareVersion"></a>
 

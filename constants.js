@@ -258,8 +258,7 @@ const twoCrewStatus = 11;
      *
      * @public
      * @param {string} [units] The units system to get the unit for, default
-     * uses
-     * TraX.unitDropdownDom.value
+     * uses TraX.unitDropdownDom.value
      * @return {string} The unit names. (kmh or mph)
      */
     Units.getLargeSpeedUnit = function(units) {
@@ -445,8 +444,7 @@ const twoCrewStatus = 11;
 
     /**
      * Rotates a vector around the X axis by a certain angle in radians.
-     * Rotation is
-     * applied in-place.
+     * Rotation is applied in-place.
      *
      * @public
      * @param {Common.Point3d} point The vector to rotate.
@@ -459,8 +457,7 @@ const twoCrewStatus = 11;
     };
     /**
      * Rotates a vector around the Y axis by a certain angle in radians.
-     * Rotation is
-     * applied in-place.
+     * Rotation is applied in-place.
      *
      * @public
      * @param {Common.Point3d} point The vector to rotate.
@@ -473,8 +470,7 @@ const twoCrewStatus = 11;
     };
     /**
      * Rotates a vector around the Z axis by a certain angle in radians.
-     * Rotation is
-     * applied in-place.
+     * Rotation is applied in-place.
      *
      * @public
      * @param {Common.Point3d} point The vector to rotate.
@@ -520,9 +516,8 @@ const twoCrewStatus = 11;
      * @param {boolean} [plusSign=false] Whether to unclude the plus sign on
      * positive numbers or not.
      * @param {number} [minSections=0] Minimum sections of digits to show. <=0
-     * shows
-     * seconds and milliseconds, >0 shows minutes, >1 shows hours, >2 shows
-     * days.
+     * shows seconds and milliseconds, >0 shows minutes, >1 shows hours, >2
+     * shows days.
      * @return {string} The formatted string.
      */
     Common.formatMsec = function(msecs, plusSign, minSections) {
@@ -574,8 +569,7 @@ const twoCrewStatus = 11;
      * @public
      * @param {number|string} num Number to pad with leading zeroes.
      * @param {number} digits Number of digits long to make the final string at
-     * a
-     * minimum.
+     * a minimum.
      * @return {string} Number with leading zeroes to match specified length.
      */
     Common.pad = function(num, digits) {
@@ -611,8 +605,7 @@ const twoCrewStatus = 11;
      * @param {number} one The first number.
      * @param {number} two The second number.
      * @param {number} val Value from 0 to 1 inclusive to interpolate between
-     * the
-     * given numbers.
+     * the given numbers.
      * @return {number} The interpolated value.
      */
     Common.lerp = function(one, two, val) {
@@ -621,8 +614,7 @@ const twoCrewStatus = 11;
 
     /**
      * Uses the Pythagorean theorem to calculate distance between coordinates as
-     * if
-     * they were on a flat plane.
+     * if they were on a flat plane.
      *
      * @public
      * @param {{lat: number, lng: number}} one Coordinate one.
@@ -632,6 +624,36 @@ const twoCrewStatus = 11;
     Common.coordDistance = function(one, two) {
       return Math.sqrt(
           Math.pow(two.lat - one.lat, 2) + Math.pow(two.lng - one.lng, 2));
+    };
+
+    /**
+     * Check if a line segment intersects a circle.
+     *
+     * @public
+     * @param {number} ax First line end X coord.
+     * @param {number} ay First line end Y coord.
+     * @param {number} bx Second line end X coord.
+     * @param {number} by Second line end Y coord.
+     * @param {number} cx Circle end X coord.
+     * @param {number} cy Circle end Y coord.
+     * @param {number} r Circle radius.
+     * @return {boolean} True if intersects, false otherwise.
+     */
+    Common.segmentIntersectCircle = function(ax, ay, bx, by, cx, cy, r) {
+      ax -= cx;
+      ay -= cy;
+      bx -= cx;
+      by -= cy;
+      const a = ax * ax + ay * ay - r * r;
+      const b = 2 * (ax * (bx - ax) + ay * (by - ay));
+      const c = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+      const disc = b * b - 4 * a * c;
+      if (disc <= 0) return false;
+      const sqrtdisc = Math.sqrt(disc);
+      t1 = (-b + sqrtdisc) / (2 * a);
+      t2 = (-b - sqrtdisc) / (2 * a);
+      if ((0 < t1 && t1 < 1) || (0 < t2 && t2 < 1)) return true;
+      return false;
     };
 
     /**

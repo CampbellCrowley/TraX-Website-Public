@@ -2402,9 +2402,12 @@
     const distFinish = TraX.Common.coordDistance(coord, finish.coord);
     const distStart = TraX.Common.coordDistance(coord, start.coord);
 
-    const halfCoord = TraX.Common.interpolateCoord(coord, previousCoord, 0.5);
-    const halfDistStart = TraX.Common.coordDistance(halfCoord, start.coord);
-    const halfDistFinish = TraX.Common.coordDistance(halfCoord, finish.coord);
+    const crossFinish = TraX.Common.segmentIntersectCircle(
+        previousCoord.lat, previousCoord.lng, coord.lat, coord.lng,
+        finish.coord.lat, finish.coord.lng, finish.radius);
+    const crossStart = TraX.Common.segmentIntersectCircle(
+        previousCoord.lat, previousCoord.lng, coord.lat, coord.lng,
+        start.coord.lat, start.coord.lng, start.radius);
 
     const deltaPos = TraX.Units.latLngToMeters(coord, previousCoord);
     currentDistanceDriven += deltaPos;
@@ -2424,8 +2427,7 @@
       justFinishedRacing = false;
 
       // This needs to get the same results as post-analysis since we can save
-      // the
-      // calculated data from the realtime session.
+      // the calculated data from the realtime session.
       // const increment = 0.05;
       const increment = 0.001;
 
@@ -2466,9 +2468,7 @@
     }
 
     // We are in a lap and just entered the finish line threshold.
-    if (currentlyRacing && !justStartedRacing &&
-        (distFinish < finish.radius || halfDistFinish < finish.radius) &&
-        !inTransition) {
+    if (currentlyRacing && !justStartedRacing && crossFinish && !inTransition) {
       previousLapStartTime = lapStartTime;
       lapStartTime = now;
       currentlyRacing = false;
@@ -2520,8 +2520,7 @@
 
     // Check if crossing start line after checking finish line in case they are
     // the same point.
-    if (!currentlyRacing &&
-        (distStart < start.radius || halfDistStart < start.radius)) {
+    if (!currentlyRacing && crossStart) {
       lapStartTime = now;
       currentlyRacing = true;
       justStartedRacing = true;
@@ -2569,7 +2568,9 @@
     };
 
     if (distFinish < finish.radius) messages.push('Within finish radius');
+    if (crossFinish) messages.push('Crossing finish line');
     if (distStart < start.radius) messages.push('Within start radius');
+    if (crossStart) messages.push('Crossing start line');
 
     // Predict lap time and split if we have a lap to base times off of.
     if (bestLapData.length > 0 && currentlyRacing && !justFinishedRacing) {
@@ -2595,7 +2596,8 @@
     }
     currentLapState = currentlyRacing;
   }
-  /** Get time at a given distance through a lap from given data. Interpolates
+  /**
+   * Get time at a given distance through a lap from given data. Interpolates
    * between datapoints for more accurate value.
    *
    * @private
