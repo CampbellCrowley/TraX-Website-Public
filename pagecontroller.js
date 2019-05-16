@@ -1366,7 +1366,8 @@
     const search =
         [TraX.getDriverId(), trackOwnerId, trackId, configId].join(',');
     let summary = TraX.summaryList[search];
-    if (!summary || summary.bestLapDuration > bestLapDuration) {
+    if (!summary || summary.bestLapDuration < 1000 ||
+        summary.bestLapDuration > bestLapDuration) {
       summary = {
         'bestLapDuration': bestLapDuration,
         'bestLapData': bestLapData,
@@ -2402,12 +2403,14 @@
     const distFinish = TraX.Common.coordDistance(coord, finish.coord);
     const distStart = TraX.Common.coordDistance(coord, start.coord);
 
-    const crossFinish = TraX.Common.segmentIntersectCircle(
-        previousCoord.lat, previousCoord.lng, coord.lat, coord.lng,
-        finish.coord.lat, finish.coord.lng, finish.radius);
-    const crossStart = TraX.Common.segmentIntersectCircle(
-        previousCoord.lat, previousCoord.lng, coord.lat, coord.lng,
-        start.coord.lat, start.coord.lng, start.radius);
+    const crossFinish = distFinish < finish.radius ||
+        TraX.Common.segmentIntersectCircle(
+            previousCoord.lat, previousCoord.lng, coord.lat, coord.lng,
+            finish.coord.lat, finish.coord.lng, finish.radius);
+    const crossStart = distStart < start.radius ||
+        TraX.Common.segmentIntersectCircle(
+            previousCoord.lat, previousCoord.lng, coord.lat, coord.lng,
+            start.coord.lat, start.coord.lng, start.radius);
 
     const deltaPos = TraX.Units.latLngToMeters(coord, previousCoord);
     currentDistanceDriven += deltaPos;
@@ -2483,8 +2486,7 @@
       justStartedRacing = false;
 
       // This needs to get the same results as post-analysis since we can save
-      // the
-      // calculated data from the realtime session.
+      // the calculated data from the realtime session.
       // const increment = 0.05;
       const increment = 0.001;
       let lookBack = true;
@@ -2542,7 +2544,7 @@
       });
     }
 
-    // Count non-laps and trigger video opdates if necessary.
+    // Count non-laps and trigger video updates if necessary.
     if (currentlyRacing !== currentLapState) {
       if (!currentlyRacing) {
         nonLapNum++;

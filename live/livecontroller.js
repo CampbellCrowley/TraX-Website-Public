@@ -711,14 +711,19 @@
         const search = [
           selectedId,
           friendsData[selectedId].selectedTrack.split(',')[1],
-          friendsData[selectedId].selectedTrack.split(',')[1],
+          friendsData[selectedId].selectedTrack.split(',')[0],
           friendsData[selectedId].selectedConfig,
         ].join(',');
         if (TraX.summaryList[search] && TraX.summaryList[search].bestLapData) {
           polyline.setPath(
-              TraX.summaryList[search].bestLapData.map(function(el) {
-                return el.coord;
-              }));
+              TraX.summaryList[search]
+                  .bestLapData
+                  .map(function(el) {
+                    return el.coord;
+                  })
+                  .filter(function(el) {
+                    return el.lat && el.lng;
+                  }));
           polyline.setVisible(true);
         } else {
           polyline.setVisible(false);
