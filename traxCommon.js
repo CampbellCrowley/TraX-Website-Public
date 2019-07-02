@@ -280,15 +280,18 @@
     TraX.socket.on('connected', function() {
       console.log('Socket Connected');
       TraX.requestFriendsList();
+      if (TraX.onSocketConnected) TraX.onSocketConnected();
     });
     TraX.socket.on('error', function(err) {
       console.error('Socket Error:', err);
     });
     TraX.socket.on('disconnect', function(reason) {
       console.log('Socket Disconnect:', reason);
+      if (TraX.onSocketDisconnect) TraX.onSocketDisconnect();
     });
     TraX.socket.on('reconnect', function(attempt) {
       console.log('Socket Reconnect:', attempt, 'tries');
+      if (TraX.onSocketReconnect) TraX.onSocketReconnect();
     });
     TraX.socket.on('friendslist', function(list) {
       console.log('New Friends List', list);
@@ -297,6 +300,7 @@
         if (!obj.lastName || obj.lastName == 'undefined') obj.lastName = '';
         return obj;
       });
+      if (TraX.onFriendsList) TraX.onFriendsList();
     });
     TraX.socket.on('friendlistchanged', function() {
       console.log('Friends list changed');

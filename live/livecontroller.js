@@ -275,7 +275,7 @@
      * @private
      */
     function socketInit() {
-      TraX.socket.on('connected', function() {
+      TraX.onSocketConnected = function() {
         TraX.socket.emit('setliveview');
         connected = true;
         updateViewerNum();
@@ -283,17 +283,14 @@
         const s = TraX.getURLOptions()['s'];
         console.log('Secret:', s);
         if (s) TraX.socket.emit('setSecret', s);
-      });
-      TraX.socket.on('disconnect', function(reason) {
+      };
+      TraX.onSocketDisconnect = function(reason) {
         connected = false;
-      });
-      TraX.socket.on('reconnect', function(attempt) {});
+      };
       TraX.socket.on('livefrienddata', newData);
-      TraX.socket.on('friendslist', function(list) {
-        setTimeout(function() {
-          updateFriendsList();
-        });
-      });
+      TraX.onFriendsList = function() {
+        updateFriendsList();
+      };
       TraX.socket.on('numliveview', handleNewViewerNum);
       TraX.socket.on('newsummary', handleNewSummary);
       TraX.socket.on('fail', console.warn);

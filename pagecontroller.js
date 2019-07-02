@@ -1152,7 +1152,8 @@
    * @private
    */
   function socketInit() {
-    TraX.socket.on('connected', function() {
+    TraX.onSocketConnected = function() {
+      if (TraX.debugMode) console.log('MAIN CONNECT');
       isConnected = true;
       connectionDead = false;
       updateMainStatus();
@@ -1168,18 +1169,19 @@
         TraX.socket.emit(...socketMessageQueue[i]);
       }
       socketMessageQueue = [];
-    });
-    TraX.socket.on('disconnect', function(reason) {
+    };
+    TraX.onSocketDisconnect = function(reason) {
+      if (TraX.debugMode) console.log('MAIN DISCONNECT');
       isConnected = false;
       tokenSent = false;
       connectionDead = true;
       updateServerLights();
       handleSecret();
-    });
-    TraX.socket.on('reconnect', function(attempts) {
+    };
+    TraX.onSocketReconnect = function(attempts) {
       // 'connected' also fires when this happens.
       TraX.socket.emit('setpublic', streamIsPublicDom.checked);
-    });
+    };
     TraX.socket.on('stats', function(filesize, sessionid) {
       connectionDead = false;
       datasize = filesize;
