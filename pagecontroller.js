@@ -1202,7 +1202,9 @@
     });
     TraX.socket.on('fail', function(reason, extraInfo) {
       connectionDead = false;
-      console.log('Server failed. Reason:', reason, extraInfo);
+      if (TraX.debugMode) {
+        console.log('Server failed. Reason:', reason, extraInfo);
+      }
       if (reason === 'noid' && TraX.isSignedIn) {
         if (token) {
           console.log('Re-sending token');
@@ -1870,7 +1872,7 @@
    * @private
    */
   function fetchTrackList() {
-    console.log('Fetching tracklist', !waitingForTrackList);
+    if (TraX.debugMode) console.log('Fetching tracklist', !waitingForTrackList);
     if (waitingForTrackList) return;
     waitingForTrackList = true;
     trackList = [];
