@@ -1202,13 +1202,15 @@
     });
     TraX.socket.on('fail', function(reason, extraInfo) {
       connectionDead = false;
-      // console.log("Server failed. Reason:", reason, extraInfo);
+      console.log('Server failed. Reason:', reason, extraInfo);
       if (reason === 'noid' && TraX.isSignedIn) {
         if (token) {
           console.log('Re-sending token');
           TraX.socket.emit('newtoken', token);
           tokenSent = true;
           TraX.requestFriendsList();
+          fetchTrackList();
+          TraX.socket.emit('fetchSecret');
         }
       } else if (TraX.isSignedIn && !isPaused && reason === 'writeerror') {
         console.log('Writing failed due to session not created yet.');
@@ -3151,7 +3153,7 @@
    * @private
    */
   function updateFilesize() {
-    if (TraX.debugMode) {
+    if (TraX.debugMode > 1) {
       console.log('User is using', datasize, 'bytes on server, of', datalimit);
     }
     let HRFilesize = datasize + 'B';
