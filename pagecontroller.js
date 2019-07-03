@@ -744,14 +744,6 @@
    * @type {Array.<Object>}
    */
   const configList = [];
-  /**
-   * Have we sent a request to the server are still waiting for a response from
-   * the server with the track list.
-   * @default
-   * @private
-   * @type {boolean}
-   */
-  let waitingForTrackList = false;
 
   /**
    * Current amount of data the user has stored on the server for TraX in bytes.
@@ -1872,9 +1864,9 @@
    * @private
    */
   function fetchTrackList() {
-    if (TraX.debugMode) console.log('Fetching tracklist', !waitingForTrackList);
-    if (waitingForTrackList) return;
-    waitingForTrackList = true;
+    if (TraX.debugMode) {
+      console.log('Fetching tracklist');
+    }
     trackList = [];
     TraX.socket.emit('requesttracklist', 'track');
     TraX.socket.emit('requesttracklist', 'track', 'myself');
@@ -1934,7 +1926,6 @@
         trackList = data;
       }
       if (TraX.debugMode) console.log('New track list:', trackList);
-      waitingForTrackList = false;
     } else {
       configList[request + ',' + (ownerId || '')] = data;
       if (TraX.debugMode) console.log('New config list:', configList);

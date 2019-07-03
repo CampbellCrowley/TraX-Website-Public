@@ -56,14 +56,6 @@
    * @type {Object}
    */
   TraX.summaryList = {};
-  /**
-   * Last time when we requested the friends list. Null if not waiting for a
-   * reply anymore, unix timestamp if request has not yet been fulfilled.
-   * @default
-   * @private
-   * @type {?number}
-   */
-  let friendsListRequestTimestamp = null;
 
   /**
    * Is the user currently signed in.
@@ -302,7 +294,6 @@
       if (TraX.onSocketReconnect) TraX.onSocketReconnect();
     });
     TraX.socket.on('friendslist', function(list) {
-      friendsListRequestTimestamp = null;
       console.log('New Friends List', list);
       TraX.friendsList = list.map(function(obj) {
         if (!obj.firstName || obj.firstName == 'undefined') obj.firstName = '';
@@ -347,11 +338,8 @@
    */
   TraX.requestFriendsList = function() {
     if (!TraX.isSignedIn) return;
-    const req = !friendsListRequestTimestamp ||
-        Date.now() - friendsListRequestTimestamp > 5000;
-    if (TraX.debugMode) console.log('Requesting new friends list', req);
+    if (TraX.debugMode) console.log('Requesting new friends list');
     if (!req) return;
-    friendsListRequestTimestamp = Date.now();
     TraX.socket.emit('getfriendslist');
     TraX.socket.emit('getallrelations');
   };
