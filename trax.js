@@ -547,7 +547,7 @@ function TraXServer() {
           client.verifyIdToken(
               {idToken: token, audience: CLIENT_ID}, function(e, login) {
                 if (e) {
-                  if (e.message !== 'Token used too late') {
+                  if (!e.message.startsWith('Token used too late')) {
                     common.log(e + token, socket.id);
                   }
                 } else if (typeof login !== 'undefined') {
@@ -716,11 +716,13 @@ function TraXServer() {
     socket.on('setpublic', function(value) {
       streamIsPublic = value;
       socket.public = value;
+      common.logDebug('setpublic: ' + value, socket.id);
     });
 
     socket.on('fetchSecret', function() {
       if (!userId) return;
       socket.emit('secret', secretKeys[userId]);
+      common.logDebug('fetchSecret', socket.id);
     });
     socket.on('resetSecret', function() {
       if (!userId) return;
@@ -734,10 +736,12 @@ function TraXServer() {
       secretKeys[secret] = userId;
       secretsUpdated = true;
       socket.emit('secret', secretKeys[userId]);
+      common.logDebug('resetSecret', socket.id);
     });
     socket.on('setSecret', function(secret) {
       socket.userMask = secretKeys[secret];
       socket.emit('secretUser', secretKeys[secret]);
+      common.logDebug('setSecret: ' + secret, socket.id);
     });
 
     socket.on('requestsessionsize', function(sessionId, otherId) {
@@ -826,6 +830,7 @@ function TraXServer() {
           data += chunk;
         });
         res1.on('end', function() {
+          if (!data || data.length == 0) data = '{}';
           try {
             patreonParsed = JSON.parse(data);
           } catch (err) {
