@@ -547,7 +547,9 @@ function TraXServer() {
           client.verifyIdToken(
               {idToken: token, audience: CLIENT_ID}, function(e, login) {
                 if (e) {
-                  common.log(e + token, socket.id);
+                  if (e.message !== 'Token used too late') {
+                    common.log(e + token, socket.id);
+                  }
                 } else if (typeof login !== 'undefined') {
                   const payload = login.getPayload();
                   const userid = payload['sub'];

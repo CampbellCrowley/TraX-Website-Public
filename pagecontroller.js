@@ -1870,6 +1870,7 @@
    * @private
    */
   function fetchTrackList() {
+    console.log('Fetching tracklist', !waitingForTrackList);
     if (waitingForTrackList) return;
     waitingForTrackList = true;
     trackList = [];
