@@ -339,7 +339,6 @@
   TraX.requestFriendsList = function() {
     if (!TraX.isSignedIn) return;
     if (TraX.debugMode) console.log('Requesting new friends list');
-    if (!req) return;
     TraX.socket.emit('getfriendslist');
     TraX.socket.emit('getallrelations');
   };
