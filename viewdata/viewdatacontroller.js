@@ -305,7 +305,7 @@
       TraX.socket.on('sessionlist', handleNewFiles);
       TraX.socket.on('streamresponse', newChunk);
       TraX.socket.on('tracklist', handleNewTrackData);
-      TraX.socket.on('friendslist', refreshFriendData);
+      TraX.onFriendsList = refreshFriendData;
 
       resetSessionData();
 

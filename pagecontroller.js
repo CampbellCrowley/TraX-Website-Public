@@ -1269,12 +1269,12 @@
     });
     TraX.socket.on('tracklist', handleNewTrackData);
     TraX.socket.on('version', handleNewVersion);
-    TraX.socket.on('friendslist', function() {
+    TraX.onFriendsList = function() {
       setTimeout(function() {
         updateFriendsList();
         fetchTrackList();
       });
-    });
+    };
     TraX.socket.on('relationshiplist', function(list) {
       if (TraX.debugMode) console.log('All relations', list);
       allRelations = list;
@@ -1413,6 +1413,8 @@
     if (options['debug'] > 0) {
       toggleDebugDom.style.display = 'block';
       TraX.toggleDebug(options['debug'] - 1);
+      trackNameEditButton.href += '&debug=' + options['debug'];
+      configNameEditButton.href += '&debug=' + options['debug'];
     }
     if (options['livedata'] > 0) {
       TraX.toggleRealtimeView(true);
