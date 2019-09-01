@@ -104,6 +104,15 @@
   TraX.preventSend = false;
 
   /**
+   * Controls console logging verbosity level.
+   * @default
+   * @public
+   * @type {number}
+   * @todo Change back to 0. Set to 2 to force debugging by default.
+   */
+  TraX.debugMode = 2;
+
+  /**
    * Defines the an init function for the common functions which get
    * added directly to TraX.
    * @see {Common}

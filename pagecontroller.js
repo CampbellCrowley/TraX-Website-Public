@@ -85,8 +85,9 @@
    * @default
    * @public
    * @type {number}
+   * @todo Change back to 0. Set to 2 to force debugging by default.
    */
-  TraX.debugMode = 0;
+  TraX.debugMode = 2;
   /**
    * Timeout until heartbeat hasn't happened for too long and we can assume
    * death of sensors.

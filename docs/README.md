@@ -1931,6 +1931,7 @@ Toggle the sidebar open and closed.
     * [.summaryList](#TraX.summaryList) : <code>Object</code>
     * [.isSignedIn](#TraX.isSignedIn) : <code>boolean</code>
     * [.preventSend](#TraX.preventSend) : <code>boolean</code>
+    * [.debugMode](#TraX.debugMode) : <code>number</code>
     * [.leaveDataView()](#TraX.leaveDataView)
     * [.togglePause([force])](#TraX.togglePause)
     * [.init()](#TraX.init)
@@ -1998,8 +1999,12 @@ Debug setting used across scripts for additional logging and additional UI
 sections that most users do not wish to see.
 
 **Kind**: static property of [<code>TraX</code>](#TraX)  
-**Default**: <code>0</code>  
+**Default**: <code>2</code>  
 **Access**: public  
+**Todo**
+
+- [ ] Change back to 0. Set to 2 to force debugging by default.
+
 <a name="TraX.downRotation"></a>
 
 ### TraX.downRotation : <code>Object</code>
@@ -2074,6 +2079,18 @@ Prevent sending information to servers.
 **Kind**: static property of [<code>TraX</code>](#TraX)  
 **Default**: <code>false</code>  
 **Access**: public  
+<a name="TraX.debugMode"></a>
+
+### TraX.debugMode : <code>number</code>
+Controls console logging verbosity level.
+
+**Kind**: static property of [<code>TraX</code>](#TraX)  
+**Default**: <code>2</code>  
+**Access**: public  
+**Todo**
+
+- [ ] Change back to 0. Set to 2 to force debugging by default.
+
 <a name="TraX.leaveDataView"></a>
 
 ### TraX.leaveDataView()
