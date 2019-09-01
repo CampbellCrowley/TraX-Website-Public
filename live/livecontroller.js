@@ -288,9 +288,7 @@
         connected = false;
       };
       TraX.socket.on('livefrienddata', newData);
-      TraX.onFriendsList = function() {
-        updateFriendsList();
-      };
+      TraX.onFriendsList = updateFriendsList;
       TraX.socket.on('numliveview', handleNewViewerNum);
       TraX.socket.on('newsummary', handleNewSummary);
       TraX.socket.on('fail', (...err) => {
