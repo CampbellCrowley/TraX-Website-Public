@@ -274,9 +274,7 @@
    */
   function socketInit() {
     // eslint-disable-next-line max-len
-    TraX.socket =
-        io('dev.campbellcrowley.com',
-            {path: '/socket.io/trax', reconnectiondelay: 5000});
+    TraX.socket = io('dev.campbellcrowley.com', {path: '/socket.io/trax', reconnectiondelay: 5000});
     TraX.socket.on('connected', function() {
       console.log('Socket Connected');
       TraX.requestFriendsList();

@@ -741,7 +741,8 @@ function TraXServer() {
     socket.on('setSecret', function(secret) {
       socket.userMask = secretKeys[secret];
       socket.emit('secretUser', secretKeys[secret]);
-      common.logDebug('setSecret: ' + secret, socket.id);
+      common.logDebug(
+          'setSecret: ' + secret + ':' + socket.userMask, socket.id);
     });
 
     socket.on('requestsessionsize', function(sessionId, otherId) {

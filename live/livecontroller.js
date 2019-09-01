@@ -293,7 +293,10 @@
       };
       TraX.socket.on('numliveview', handleNewViewerNum);
       TraX.socket.on('newsummary', handleNewSummary);
-      TraX.socket.on('fail', console.warn);
+      TraX.socket.on('fail', (...err) => {
+        if (err[0] === 'badsummaryids') return;
+        console.warn(...err);
+      });
       TraX.socket.on('secretUser', handleUserMask);
     }
     /**
