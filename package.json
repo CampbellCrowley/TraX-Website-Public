@@ -16,13 +16,13 @@
     "dateformat": "^3.0.3",
     "fs": "0.0.1-security",
     "get-folder-size": "^2.0.1",
-    "google-auth-library": "^5.1.1",
+    "google-auth-library": "^5.2.0",
     "http": "0.0.0",
     "lz-string": "^1.4.4",
     "mkdirp": "^0.5.1",
     "mysql": "^2.17.1",
     "path": "^0.12.7",
-    "rimraf": "^2.6.3",
+    "rimraf": "^3.0.0",
     "socket.io": "^2.2.0"
   },
   "contributors": [
@@ -32,9 +32,9 @@
     }
   ],
   "devDependencies": {
-    "eslint": "^6.1.0",
+    "eslint": "^6.3.0",
     "eslint-config-google": "^0.13.0",
-    "jsdoc-to-markdown": "^5.0.0"
+    "jsdoc-to-markdown": "^5.0.1"
   },
   "scripts": {
     "install": ".hooks/install-hooks.sh",
