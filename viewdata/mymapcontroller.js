@@ -71,6 +71,15 @@
 
       // Map markers and other items. //
       /**
+       * Map object reference. Created once map should become visible, not when
+       * page is loaded to reduce calls to the API and thus using less of our
+       * quota.
+       * @default
+       * @private
+       * @type {?google.maps.Map}
+       */
+      let mymap = null;
+      /**
        * Circles drawn on map.
        * @default
        * @private
@@ -257,92 +266,11 @@
         // Default color choosing overlay to visible.
         colorOverlayDom.style.display = 'block';
 
-        // Initialize markers for editing track data..
-        placedStartMarker =
-            new google.maps.Marker({label: 'S', map: mymap, draggable: true});
-        placedFinishMarker =
-            new google.maps.Marker({label: 'F', map: mymap, draggable: true});
-        trackMarker = new google.maps.Marker({label: 'T', map: mymap});
-        placedStartMarker.setVisible(false);
-        placedFinishMarker.setVisible(false);
-        placedStartMarker.addListener('drag', handleMarkerDragged);
-        placedFinishMarker.addListener('drag', handleMarkerDragged);
-        trackMarker.setVisible(false);
-        placedStartMarker.addListener('click', handleMapMarkerClicked);
-        placedFinishMarker.addListener('click', handleMapMarkerClicked);
-        trackMarker.addListener('click', handleMapMarkerClicked);
-
-        Panes.addEventListener('changePane', function(data) {
-          MyMap.togglePlayback(false);
-        });
-
-        playbackSliderDom.oninput = function() {
-          if (currentlyPlaying) MyMap.togglePlayback(false);
-          playbackTime = playbackSliderDom.value;
-          refreshPlaybackData(true);
-        };
-
-        // Initialize markers for start and finish line.
-        startImg = {
-          url: 'https://dev.campbellcrowley.com/trax/images/greenFlag.png',
-          size: new google.maps.Size(32, 32),
-          origin: new google.maps.Point(0, 0),
-          anchor: new google.maps.Point(2, 30),
-          scaledSize: new google.maps.Size(32, 32),
-        };
-        finishImg = {
-          url: 'https://dev.campbellcrowley.com/trax/images/checkeredFlag.png',
-          size: new google.maps.Size(32, 32),
-          origin: new google.maps.Point(0, 0),
-          anchor: new google.maps.Point(0, 30),
-          scaledSize: new google.maps.Size(32, 32),
-        };
-        startMarker = new google.maps.Marker({
-          map: mymap,
-          position: {lat: 0, lng: 0},
-          icon: startImg,
-          title: 'Start Line',
-        });
-        startMarker.addListener('click', handleMapMarkerClicked);
-        finishMarker = new google.maps.Marker({
-          map: mymap,
-          position: {lat: 0, lng: 0},
-          icon: finishImg,
-          title: 'Finish Line',
-        });
-        finishMarker.addListener('click', handleMapMarkerClicked);
-
-        // Initialize circles for start/finish thresholds.
-        myMapCircles.push(new google.maps.Circle({
-          map: mymap,
-          fillColor: '#00FF00',
-          strokeColor: '#00FF00',
-          center: {lat: 0, lng: 0},
-          radius: 100,
-        }));
-        myMapCircles.push(new google.maps.Circle({
-          map: mymap,
-          fillColor: '#FF0000',
-          strokeColor: '#FF0000',
-          center: {lat: 0, lng: 0},
-          radius: 100,
-        }));
-        // Initialize info window for clicking on the track data.
-        infoWindow = new google.maps.InfoWindow({
-          content: 'Something else should be here...',
-          position: {lat: 0, lng: 0},
-        });
-
         // Setup listeners for buttons to be able to update UI to show selected
         // button.
         for (let i = 0; i < overlayButtonsDom.length; i++) {
           overlayButtonsDom[i].addEventListener('click', overlayButtonClicked);
         }
-
-        // Add listener to know when where map is clicked.
-        mymap.addListener('click', handleMapClicked);
-        // Show polyline on map;
-        polyLineOpts.map = mymap;
       };
 
       /**
@@ -351,6 +279,116 @@
        * @public
        */
       MyMap.handleOpening = function() {
+        console.log('handleOpening');
+        if (!mymap) {
+          console.warn('INITIALIZING Google Maps');
+          // Initialize map only once visible to reduce API calls.
+          mymap = new google.maps.Map(document.getElementById('mymap'), {
+            zoom: 1,
+            center: {lat: 0.0, lng: 0.0},
+            gestureHandling: 'auto',
+            clickableIcons: false,
+            fullscreenControlOption: false,
+            streetViewControl: false,
+          });
+          const input = document.getElementById('mapSearchOverlay');
+          const searchBox = new google.maps.places.SearchBox(input);
+          mymap.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+          mymap.addListener('bounds_changed', function() {
+            searchBox.setBounds(mymap.getBounds());
+          });
+          searchBox.addListener('places_changed', function() {
+            const places = searchBox.getPlaces();
+            if (places.length === 0) return;
+            const bounds = new google.maps.LatLngBounds();
+            places.forEach(function(place) {
+              if (!place.geometry) return;
+              if (place.geometry.viewport) {
+                bounds.union(place.geometry.viewport);
+              } else {
+                bounds.extend(place.geometry.location);
+              }
+            });
+            mymap.fitBounds(bounds);
+          });
+          // Initialize markers for editing track data..
+          placedStartMarker =
+              new google.maps.Marker({label: 'S', map: mymap, draggable: true});
+          placedFinishMarker =
+              new google.maps.Marker({label: 'F', map: mymap, draggable: true});
+          trackMarker = new google.maps.Marker({label: 'T', map: mymap});
+          placedStartMarker.setVisible(false);
+          placedFinishMarker.setVisible(false);
+          placedStartMarker.addListener('drag', handleMarkerDragged);
+          placedFinishMarker.addListener('drag', handleMarkerDragged);
+          trackMarker.setVisible(false);
+          placedStartMarker.addListener('click', handleMapMarkerClicked);
+          placedFinishMarker.addListener('click', handleMapMarkerClicked);
+          trackMarker.addListener('click', handleMapMarkerClicked);
+
+          playbackSliderDom.oninput = function() {
+            if (currentlyPlaying) MyMap.togglePlayback(false);
+            playbackTime = playbackSliderDom.value;
+            refreshPlaybackData(true);
+          };
+
+          // Initialize markers for start and finish line.
+          startImg = {
+            url: 'https://dev.campbellcrowley.com/trax/images/greenFlag.png',
+            size: new google.maps.Size(32, 32),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(2, 30),
+            scaledSize: new google.maps.Size(32, 32),
+          };
+          finishImg = {
+            url:
+                'https://dev.campbellcrowley.com/trax/images/checkeredFlag.png',
+            size: new google.maps.Size(32, 32),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(0, 30),
+            scaledSize: new google.maps.Size(32, 32),
+          };
+          startMarker = new google.maps.Marker({
+            map: mymap,
+            position: {lat: 0, lng: 0},
+            icon: startImg,
+            title: 'Start Line',
+          });
+          startMarker.addListener('click', handleMapMarkerClicked);
+          finishMarker = new google.maps.Marker({
+            map: mymap,
+            position: {lat: 0, lng: 0},
+            icon: finishImg,
+            title: 'Finish Line',
+          });
+          finishMarker.addListener('click', handleMapMarkerClicked);
+
+          // Initialize circles for start/finish thresholds.
+          myMapCircles.push(new google.maps.Circle({
+            map: mymap,
+            fillColor: '#00FF00',
+            strokeColor: '#00FF00',
+            center: {lat: 0, lng: 0},
+            radius: 100,
+          }));
+          myMapCircles.push(new google.maps.Circle({
+            map: mymap,
+            fillColor: '#FF0000',
+            strokeColor: '#FF0000',
+            center: {lat: 0, lng: 0},
+            radius: 100,
+          }));
+          // Initialize info window for clicking on the track data.
+          infoWindow = new google.maps.InfoWindow({
+            content: 'Something else should be here...',
+            position: {lat: 0, lng: 0},
+          });
+
+          // Add listener to know when where map is clicked.
+          mymap.addListener('click', handleMapClicked);
+          // Show polyline on map;
+          polyLineOpts.map = mymap;
+        }
         resetSelectedButtons();
       };
       /**

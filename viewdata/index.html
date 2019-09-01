@@ -210,40 +210,7 @@
     <!-- End Message Box -->
   </div>
 </div>
-<script>
-var mymap;
-function initMap() {
-  mymap = new google.maps.Map(document.getElementById('mymap'), {
-    zoom: 1,
-    center: {lat: 0.0, lng: 0.0},
-    gestureHandling: 'auto',
-    clickableIcons: false,
-    fullscreenControlOption: false,
-    streetViewControl: false
-  });
-  var input = document.getElementById('mapSearchOverlay');
-  var searchBox = new google.maps.places.SearchBox(input);
-  mymap.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
-  mymap.addListener('bounds_changed', function() {
-    searchBox.setBounds(mymap.getBounds());
-  });
-  searchBox.addListener('places_changed', function() {
-    var places = searchBox.getPlaces();
-    if (places.length === 0) return;
-    var bounds = new google.maps.LatLngBounds();
-    places.forEach(function(place) {
-      if (!place.geometry) return;
-      if (place.geometry.viewport) {
-        bounds.union(place.geometry.viewport);
-      } else {
-        bounds.extend(place.geometry.location);
-      }
-    });
-    mymap.fitBounds(bounds);
-  });
-}
-</script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI4_A7hSN7upiKouUwuwSp4CjIbTjhVA4&libraries=places&callback=initMap"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBI4_A7hSN7upiKouUwuwSp4CjIbTjhVA4&libraries=places"></script>
 <div id="mainfooter"></div>
 </body>
 <script>

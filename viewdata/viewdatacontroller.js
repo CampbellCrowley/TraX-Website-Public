@@ -318,6 +318,7 @@
      */
     function postInit() {
       enterDataView();
+      Panes.addEventListener('changePane', onPaneChange);
     }
     /**
      * Cause Data View to open.
@@ -329,7 +330,6 @@
       const currPane = Panes.getPane();
       Panes.handleOpening();
       Panes.setCurrent(currPane);
-      DataView.MyMap.handleOpening();
     }
     /**
      * Go to previous page.
@@ -339,6 +339,20 @@
     TraX.leaveDataView = function() {
       TraX.goBack();
     };
+    /**
+     * Handle panes page being changed in order to load map once visible.
+     * @private
+     * @param {Object} obj Pane change information.
+     */
+    function onPaneChange(obj) {
+      console.log('Panes changed', obj);
+      const mapPage = 2;
+      if (obj.toIndex >= mapPage && obj.fromIndex < mapPage) {
+        DataView.MyMap.handleOpening();
+      } else if (obj.fromIndex == mapPage + 1 && obj.toIndex != mapPage + 1) {
+        DataView.MyMap.handleClosing();
+      }
+    }
     /**
      * Reset all data about current session in preparation for new session data.
      *
