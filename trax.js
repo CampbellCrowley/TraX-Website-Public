@@ -351,7 +351,7 @@ function TraXServer() {
     const list = {};
     const rc = headers.cookie;
 
-    rc && rc.split(';').forEach(function(cookie) {
+    rc && rc.split(';').forEach((cookie) => {
       const parts = cookie.split('=');
       list[parts.shift().trim()] = decodeURI(parts.join('='));
     });
@@ -373,7 +373,7 @@ function TraXServer() {
    */
   function updatePatreonTiers() {
     common.log('Reading patreon.json');
-    fs.readFile('./patreon.json', function(err, data) {
+    fs.readFile('./patreon.json', (err, data) => {
       if (err) {
         console.log(err);
         return;
@@ -389,7 +389,7 @@ function TraXServer() {
     });
   }
   updatePatreonTiers();
-  fs.watchFile('./patreon.json', function(curr, prev) {
+  fs.watchFile('./patreon.json', (curr, prev) => {
     if (curr.mtime == prev.mtime) return;
     updatePatreonTiers();
   });
@@ -409,7 +409,7 @@ function TraXServer() {
    */
   let secretsUpdated = false;
   try {
-    fs.readFile(secretFile, function(err, data) {
+    fs.readFile(secretFile, (err, data) => {
       if (err) {
         if (err.code !== 'ENOENT') {
           common.error('Failed to read secrets from file.');
@@ -430,10 +430,10 @@ function TraXServer() {
     console.error(err);
   }
 
-  setInterval(function() {
+  setInterval(() => {
     if (!secretsUpdated) return;
     secretsUpdated = false;
-    fs.writeFile(secretFile, JSON.stringify(secretKeys), function(err) {
+    fs.writeFile(secretFile, JSON.stringify(secretKeys), (err) => {
       if (err) {
         secretsUpdated = true;
         common.error('Failed to save secrets to file.');
@@ -444,7 +444,7 @@ function TraXServer() {
 
 
   // TODO: Move events to functions.
-  io.on('connection', function(socket) {
+  io.on('connection', (socket) => {
     let lastReceiveTime = 0;
     let lastReceiveName = '';
     let userId = '';
@@ -468,18 +468,15 @@ function TraXServer() {
     if (hastoken) {
       try {
         client.verifyIdToken(
-            {idToken: token, audience: CLIENT_ID}, function(e, login) {
-              if (e) {
-              } else if (typeof login !== 'undefined') {
-                const payload = login.getPayload();
-                const userid = payload['sub'];
-                common.log(
-                    'ID: ' + (userId ? userId + ' to ' : '') + userid,
-                    socket.id);
-                userId = userid;
-                socket.userId = userId;
-                updateDirname(userId);
-              }
+            {idToken: token, audience: CLIENT_ID}, (e, login) => {
+              if (e || !login) return;
+              const payload = login.getPayload();
+              const userid = payload['sub'];
+              common.log(
+                  'ID: ' + (userId ? userId + ' to ' : '') + userid, socket.id);
+              userId = userid;
+              socket.userId = userId;
+              updateDirname(userId);
             });
       } catch (e) {
         common.error(e);
@@ -498,7 +495,7 @@ function TraXServer() {
 
     // New connection procedure ends here.
 
-    socket.on('disconnect', function(reason) {
+    socket.on('disconnect', (reason) => {
       common.log(userId + ': Disconnect (' + reason + ')', socket.id);
       for (let i = 0; i < sockets.length; i++) {
         if (sockets[i].id == socket.id) {
@@ -514,19 +511,16 @@ function TraXServer() {
       }
     });
 
-    socket.on('ping', function(data) {
-      socket.emit('pong', data);
-    });
-    socket.on('ping_', function(...args) {
-      socket.emit(['pong_', 'PONG'].concat(args));
-    });
+    socket.on('ping', (data) => socket.emit('pong', data));
+    socket.on(
+        'ping_', (...args) => socket.emit(['pong_', 'PONG'].concat(args)));
 
-    socket.on('setliveview', function() {
+    socket.on('setliveview', () => {
       common.log('Set to live view', socket.id);
       socket.live = true;
       liveSockets.push(socket);
     });
-    socket.on('unsetliveview', function() {
+    socket.on('unsetliveview', () => {
       common.log('Unset live view', socket.id);
       for (let i = 0; i < liveSockets.length; i++) {
         if (liveSockets[i].id == liveSockets.id) {
@@ -536,33 +530,33 @@ function TraXServer() {
         }
       }
     });
-    socket.on('getnumliveview', function() {
-      socket.emit('numliveview', liveSockets.length);
-    });
+    socket.on(
+        'getnumliveview', () => socket.emit('numliveview', liveSockets.length));
 
-    socket.on('newtoken', function(token) {
+    socket.on('newtoken', (token) => {
       hastoken = token && token !== 'undefined' && token !== 'null';
       if (hastoken) {
         try {
           client.verifyIdToken(
-              {idToken: token, audience: CLIENT_ID}, function(e, login) {
+              {idToken: token, audience: CLIENT_ID}, (e, login) => {
                 if (e) {
                   if (!e.message.startsWith('Token used too late')) {
                     common.log(e + token, socket.id);
                   }
-                } else if (typeof login !== 'undefined') {
-                  const payload = login.getPayload();
-                  const userid = payload['sub'];
-                  if (userid != userId) {
-                    userId = userid;
-                    socket.userId = userId;
-                    updateDirname(userId);
-                    fetchDataLimit();
-                    fetchDataSize();
-                    common.log(
-                        userId + ': New token (token: ' + hastoken + ')',
-                        socket.id);
-                  }
+                  return;
+                }
+                if (!login) return;
+                const payload = login.getPayload();
+                const userid = payload['sub'];
+                if (userid != userId) {
+                  userId = userid;
+                  socket.userId = userId;
+                  updateDirname(userId);
+                  fetchDataLimit();
+                  fetchDataSize();
+                  common.log(
+                      userId + ': New token (token: ' + hastoken + ')',
+                      socket.id);
                 }
               });
         } catch (e) {
@@ -575,117 +569,112 @@ function TraXServer() {
       }
     });
 
-    socket.on(
-        'newsession', function(
-            sessionName, trackId, trackOwnerId, configId,
-            configOwnerId, sessionId) {
-          if (typeof sessionId !== 'string' || sessionId.length <= 0) {
-            sessionId = Date.now() + socket.id;
+    socket.on('newsession', (sessionName, trackId, trackOwnerId, configId,
+        configOwnerId, sessionId) => {
+      if (typeof sessionId !== 'string' || sessionId.length <= 0) {
+        sessionId = Date.now() + socket.id;
+      }
+      const mydir = path.normalize(dirname + sessionId);
+      const filename = path.normalize(mydir + '/data.json');
+      const file = JSON.stringify({
+        id: sessionId,
+        ownerId: userId + '',
+        name: sessionName,
+        date: Date.now(),
+        trackId: trackId,
+        trackOwnerId: trackOwnerId,
+        configId: configId,
+        configOwnerId: configOwnerId,
+      });
+      checkFilePerms(filename, userId, undefined, (err2, perms) => {
+        if (err2 || !perms) {
+          socket.emit('fail', err2);
+          return;
+        }
+        mkdirp(mydir, {mode: 700}, (err3) => {
+          if (err3) {
+            socket.emit('fail', 'writeerror');
+            common.error(
+                'Failed to create directory ' + filename + ' ' + err3,
+                socket.id);
+            return;
           }
-          const mydir = path.normalize(dirname + sessionId);
-          const filename = path.normalize(mydir + '/data.json');
+          fs.readFile(filename, (err3, readFileData) => {
+            if (!err3 && readFileData) {
+              socket.emit('fail', 'sessionexists', sessionId);
+              return;
+            }
+
+            // Write data file
+            fs.writeFile(filename, file, (err4) => {
+              if (err4) {
+                socket.emit('fail', 'writeerror');
+                common.error(
+                    'Failed to write to ' + filename + ' ' + err4, socket.id);
+                return;
+              }
+              common.log('Added new session to ' + filename, socket.id);
+              socket.emit('createdsession', sessionId);
+            });
+          });
+        });
+      });
+    });
+
+    socket.on('editsession', (sessionName, trackId, trackOwnerId, configId,
+        configOwnerId, sessionId) => {
+      const mydir = path.normalize(dirname + sessionId);
+      const filename = path.normalize(mydir + '/data.json');
+      checkFilePerms(filename, userId, undefined, (err, perms) => {
+        if (err || !perms) {
+          socket.emit('fail', 'noperm');
+          return;
+        }
+        fs.readFile(filename, (err, oldData) => {
+          if (err || oldData.length == 0) {
+            // Can't edit session that doesn't exist.
+            return;
+          }
+          try {
+            oldData = JSON.parse(oldData);
+          } catch (e) {
+            common.error(filename + e, socket.id);
+            return;
+          }
           const file = JSON.stringify({
             id: sessionId,
-            ownerId: userId + '',
+            ownerId: oldData.ownerId,
             name: sessionName,
-            date: Date.now(),
+            date: oldData.date,
+            lastEdit: Date.now(),
             trackId: trackId,
             trackOwnerId: trackOwnerId,
             configId: configId,
             configOwnerId: configOwnerId,
           });
-          checkFilePerms(filename, userId, undefined, function(err2, perms) {
-            if (err2 || !perms) {
-              socket.emit('fail', err2);
+          // Write data file
+          fs.writeFile(filename, file, (err4) => {
+            if (err4) {
+              socket.emit('fail', 'writeerror');
+              common.error(
+                  'Failed to write to ' + filename + ' ' + err4, socket.id);
               return;
             }
-            mkdirp(mydir, {mode: 700}, function(err3) {
-              if (err3) {
-                socket.emit('fail', 'writeerror');
-                common.error(
-                    'Failed to create directory ' + filename + ' ' + err3,
-                    socket.id);
-                return;
-              }
-              fs.readFile(filename, function(err3, readFileData) {
-                if (!err3 && readFileData) {
-                  socket.emit('fail', 'sessionexists', sessionId);
-                  return;
-                }
-
-                // Write data file
-                fs.writeFile(filename, file, function(err4) {
-                  if (err4) {
-                    socket.emit('fail', 'writeerror');
-                    common.error(
-                        'Failed to write to ' + filename + ' ' + err4,
-                        socket.id);
-                    return;
-                  }
-                  common.log('Added new session to ' + filename, socket.id);
-                  socket.emit('createdsession', sessionId);
-                });
-              });
-            });
+            common.log('Edited session ' + filename, socket.id);
+            socket.emit('editedsession', sessionId);
           });
         });
+      });
+    });
 
-    socket.on(
-        'editsession', function(
-            sessionName, trackId, trackOwnerId, configId,
-            configOwnerId, sessionId) {
-          const mydir = path.normalize(dirname + sessionId);
-          const filename = path.normalize(mydir + '/data.json');
-          checkFilePerms(filename, userId, undefined, function(err, perms) {
-            if (err || !perms) {
-              socket.emit('fail', 'noperm');
-              return;
-            }
-            fs.readFile(filename, function(err, oldData) {
-              if (err || oldData.length == 0) {
-                // Can't edit session that doesn't exist.
-                return;
-              }
-              try {
-                oldData = JSON.parse(oldData);
-              } catch (e) {
-                common.error(filename + e, socket.id);
-                return;
-              }
-              const file = JSON.stringify({
-                id: sessionId,
-                ownerId: oldData.ownerId,
-                name: sessionName,
-                date: oldData.date,
-                lastEdit: Date.now(),
-                trackId: trackId,
-                trackOwnerId: trackOwnerId,
-                configId: configId,
-                configOwnerId: configOwnerId,
-              });
-              // Write data file
-              fs.writeFile(filename, file, function(err4) {
-                if (err4) {
-                  socket.emit('fail', 'writeerror');
-                  common.error(
-                      'Failed to write to ' + filename + ' ' + err4, socket.id);
-                  return;
-                }
-                common.log('Edited session ' + filename, socket.id);
-                socket.emit('editedsession', sessionId);
-              });
-            });
-          });
-        });
-
-    socket.on('appendsession', function(sessionId, chunkId, buffer) {
+    socket.on('appendsession', (sessionId, chunkId, buffer) => {
       if (!sessionId) {
         socket.emit('fail', 'invalidsessionid', sessionId);
         return;
       }
       const mydir = dirname + sessionId;
       const filename = path.normalize(mydir + '/session.dat');
-      checkFilePerms(filename, userId, undefined, function(err, perms) {
+      checkFilePerms(filename, userId, undefined, (err, perms) => {
         if (err || !perms) {
           socket.emit('fail', err, sessionId);
           return;
@@ -695,11 +684,11 @@ function TraXServer() {
           common.log(
               'Started receiving session ' + userId + '/' + sessionId,
               socket.id);
-          /* if (userId !== "112755862396374027799")
+          if (userId !== '112755862396374027799') {
             sendEventToTopic(
-                'notification_message', "TraX: User started recording
-            session.");
-            */
+                'notification_message',
+                'TraX: User started recording session.');
+          }
           lastReceiveName = sessionId;
         }
         lastReceiveTime = Date.now();
@@ -713,18 +702,18 @@ function TraXServer() {
       });
     });
 
-    socket.on('setpublic', function(value) {
+    socket.on('setpublic', (value) => {
       streamIsPublic = value;
       socket.public = value;
       common.logDebug('setpublic: ' + value, socket.id);
     });
 
-    socket.on('fetchSecret', function() {
+    socket.on('fetchSecret', () => {
       if (!userId) return;
       socket.emit('secret', secretKeys[userId]);
       common.logDebug('fetchSecret', socket.id);
     });
-    socket.on('resetSecret', function() {
+    socket.on('resetSecret', () => {
       if (!userId) return;
       let secret;
       do {
@@ -738,14 +727,14 @@ function TraXServer() {
       socket.emit('secret', secretKeys[userId]);
       common.logDebug('resetSecret', socket.id);
     });
-    socket.on('setSecret', function(secret) {
+    socket.on('setSecret', (secret) => {
       socket.userMask = secretKeys[secret];
       socket.emit('secretUser', secretKeys[secret]);
       common.logDebug(
           'setSecret: ' + secret + ':' + socket.userMask, socket.id);
     });
 
-    socket.on('requestsessionsize', function(sessionId, otherId) {
+    socket.on('requestsessionsize', (sessionId, otherId) => {
       let mydir = path.normalize(dirname + sessionId);
       if (typeof otherId !== 'undefined' && otherId !== userId &&
           otherId !== '') {
@@ -753,12 +742,12 @@ function TraXServer() {
             userdata + otherId + traxsubdir + sessionsubdir + sessionId);
       }
       const filename = path.normalize(mydir /* + "/session.dat"*/);
-      checkFilePerms(filename, userId, otherId, function(err, perms) {
+      checkFilePerms(filename, userId, otherId, (err, perms) => {
         if (err || !perms) {
           socket.emit('fail', err);
           return;
         }
-        getSize(filename, function(err2, size) {
+        getSize(filename, (err2, size) => {
           if (err2) {
             common.error('Failed to get filesize of ' + filename + '. ' + err2);
             socket.emit('stats', -1, sessionId);
@@ -778,7 +767,7 @@ function TraXServer() {
      */
     function fetchDataSize() {
       if (!userId) return;
-      getSize(dirname, function(err, size) {
+      getSize(dirname, (err, size) => {
         if (err) {
           common.error('Failed to get filesize of ' + dirname + '. ' + err);
         } else {
@@ -825,12 +814,10 @@ function TraXServer() {
         path: '/fetchaccount/id/' + userId,
         headers: {'x-local-server-override-key': auth.localServerOverrideKey},
       };
-      const req1 = http.request(reqOpts1, function(res1) {
+      const req1 = http.request(reqOpts1, (res1) => {
         let data = '';
-        res1.on('data', function(chunk) {
-          data += chunk;
-        });
-        res1.on('end', function() {
+        res1.on('data', (chunk) => data += chunk);
+        res1.on('end', () => {
           if (!data || data.length == 0) data = '{}';
           try {
             patreonParsed = JSON.parse(data);
@@ -848,12 +835,10 @@ function TraXServer() {
         path: '/fetchuser/' + userId + '/patreonPledgeOverride',
         headers: {'x-local-server-override-key': auth.localServerOverrideKey},
       };
-      const req2 = http.request(reqOpts2, function(res2) {
+      const req2 = http.request(reqOpts2, (res2) => {
         let data = '';
-        res2.on('data', function(chunk) {
-          data += chunk;
-        });
-        res2.on('end', function() {
+        res2.on('data', (chunk) => data += chunk);
+        res2.on('end', () => {
           try {
             accountParsed = data === 'null' ? null : data;
           } catch (err) {
@@ -867,7 +852,7 @@ function TraXServer() {
       req2.end();
     }
 
-    socket.on('requestsessionlimit', function() {
+    socket.on('requestsessionlimit', () => {
       if (!dataLimit || dataLimit < 0) {
         fetchDataLimit();
       } else {
@@ -875,17 +860,17 @@ function TraXServer() {
       }
     });
 
-    socket.on('requestsessionlist', function(otherId) {
+    socket.on('requestsessionlist', (otherId) => {
       let mydir = dirname;
       if (otherId && otherId !== 'undefined') {
         mydir = path.normalize(userdata + otherId + traxsubdir + sessionsubdir);
       }
-      checkFilePerms(mydir, userId, otherId, function(err, perms) {
+      checkFilePerms(mydir, userId, otherId, (err, perms) => {
         if (err || !perms) {
           socket.emit('fail', err);
           return;
         }
-        fs.readdir(mydir, function(err2, files) {
+        fs.readdir(mydir, (err2, files) => {
           if (err2) {
             socket.emit('sessionlist', 'readerror', 'requestsessionlist');
             common.error('Failed to read ' + mydir + ' ' + err2, socket.id);
@@ -895,7 +880,7 @@ function TraXServer() {
           const callback = function() {
             responses++;
             if (responses == files.length) {
-              trackIdsToNames(finalfiles, function(nameList) {
+              trackIdsToNames(finalfiles, (nameList) => {
                 for (let i = 0; i < nameList.length; i++) {
                   if (!nameList[i]['ownerId']) {
                     nameList[i]['ownerId'] = otherId || userId;
@@ -908,7 +893,7 @@ function TraXServer() {
           const finalfiles = [];
           for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            fs.stat(path.join(mydir, file), function(err3, stats) {
+            fs.stat(path.join(mydir, file), (err3, stats) => {
               if (err3) {
                 common.error(
                     'Failed to stat ' + mydir + '/' + file + ' ' + err3,
@@ -924,81 +909,79 @@ function TraXServer() {
       });
     });
 
-    socket.on(
-        'streamsession', function(sessionId, otherId, startByte, endByte) {
-          if (streaming) return;
-          if (typeof sessionId === 'number' && sessionId >= 0) {
-            sessionId = sessionId + '';
+    socket.on('streamsession', (sessionId, otherId, startByte, endByte) => {
+      if (streaming) return;
+      if (typeof sessionId === 'number' && sessionId >= 0) {
+        sessionId = sessionId + '';
+      }
+      if (typeof sessionId !== 'string' || sessionId.length <= 0) return;
+      streaming = true;
+      let mydir = dirname + sessionId;
+      if (typeof otherId !== 'undefined' && otherId !== userId) {
+        mydir = userdata + otherId + traxsubdir + sessionsubdir + sessionId;
+      }
+      const sessionFile = mydir + '/session.dat';
+      checkFilePerms(sessionFile, userId, otherId, (err, perm) => {
+        if (err || !perm) {
+          streaming = false;
+          socket.emit('fail', err);
+          return;
+        }
+        fs.stat(sessionFile, (err, stats) => {
+          if (err) {
+            socket.emit('fail', 'readerr', sessionId);
+            common.log('Failed to stat ' + sessionFile + ': ' + err, socket.id);
+            streaming = false;
+            return;
           }
-          if (typeof sessionId !== 'string' || sessionId.length <= 0) return;
-          streaming = true;
-          let mydir = dirname + sessionId;
-          if (typeof otherId !== 'undefined' && otherId !== userId) {
-            mydir = userdata + otherId + traxsubdir + sessionsubdir + sessionId;
-          }
-          const sessionFile = mydir + '/session.dat';
-          checkFilePerms(sessionFile, userId, otherId, function(err, perm) {
-            if (err || !perm) {
-              streaming = false;
-              socket.emit('fail', err);
-              return;
+
+          let bytessent = 0;
+          const numbytes = stats['size'];
+
+          const options = {};
+          if (typeof startByte !== 'undefined') options.start = startByte;
+          if (typeof endByte !== 'undefined') options.end = endByte;
+          const stream = fs.createReadStream(sessionFile, options);
+
+          common.log('Stream of ' + sessionFile + ' started', socket.id);
+          stream.on('readable', () => {
+            let chunk;
+            while (null !== (chunk = stream.read())) {
+              const size = chunk.length;
+              bytessent += size;
+              socket.emit(
+                  'streamresponse', size, chunk.toString(), sessionId,
+                  bytessent, numbytes);
             }
-            fs.stat(sessionFile, function(err, stats) {
-              if (err) {
-                socket.emit('fail', 'readerr', sessionId);
-                common.log(
-                    'Failed to stat ' + sessionFile + ': ' + err, socket.id);
-                streaming = false;
-                return;
-              }
-
-              let bytessent = 0;
-              const numbytes = stats['size'];
-
-              const options = {};
-              if (typeof startByte !== 'undefined') options.start = startByte;
-              if (typeof endByte !== 'undefined') options.end = endByte;
-              const stream = fs.createReadStream(sessionFile, options);
-
-              common.log('Stream of ' + sessionFile + ' started', socket.id);
-              stream.on('readable', function() {
-                let chunk;
-                while (null !== (chunk = stream.read())) {
-                  const size = chunk.length;
-                  bytessent += size;
-                  socket.emit(
-                      'streamresponse', size, chunk.toString(), sessionId,
-                      bytessent, numbytes);
-                }
-              });
-              stream.on('close', function() {
-                socket.emit(
-                    'streamresponse', -1, null, sessionId, bytessent, numbytes);
-                streaming = false;
-              });
-              stream.on('error', function(err2) {
-                common.log(
-                    'Stream of ' + sessionFile + ' errored ' + bytessent + '/' +
-                        numbytes + ' (' + err + ')',
-                    socket.id);
-              });
-            });
+          });
+          stream.on('close', () => {
+            socket.emit(
+                'streamresponse', -1, null, sessionId, bytessent, numbytes);
+            streaming = false;
+          });
+          stream.on('error', (err2) => {
+            common.log(
+                'Stream of ' + sessionFile + ' errored ' + bytessent + '/' +
+                    numbytes + ' (' + err + ')',
+                socket.id);
           });
         });
+      });
+    });
 
-    socket.on('deletesession', function(sessionId) {
+    socket.on('deletesession', (sessionId) => {
       common.log('Deleting session ' + userId + '/' + sessionId, socket.id);
       if (typeof sessionId === 'number' && sessionId >= 0) {
         sessionId = sessionId + '';
       }
       if (typeof sessionId !== 'string' || sessionId.length <= 0) return;
       const mydir = dirname + sessionId;
-      checkFilePerms(mydir, userId, undefined, function(err, perms) {
+      checkFilePerms(mydir, userId, undefined, (err, perms) => {
         if (err || !perms) {
           socket.emit('fail', err);
           return;
         }
-        rimraf(mydir, function(err2) {
+        rimraf(mydir, (err2) => {
           if (err2) {
             common.error('Failed to delete ' + mydir + err2, socket.id);
             socket.emit('fail', 'rmerror');
@@ -1007,16 +990,16 @@ function TraXServer() {
       });
     });
 
-    socket.on('renamesession', function(sessionId, newName) {
+    socket.on('renamesession', (sessionId, newName) => {
       newName = String(newName);
       const filename = path.normalize(dirname + sessionId + '/data.json');
       console.log('Renaming session ' + userId + '/' + sessionId);
-      checkFilePerms(filename, userId, undefined, function(err, perms) {
+      checkFilePerms(filename, userId, undefined, (err, perms) => {
         if (err || !perms) {
           socket.emit('fail', err);
           return;
         }
-        fs.readFile(filename, function(err2, file) {
+        fs.readFile(filename, (err2, file) => {
           if (err2) {
             socket.emit('fail', 'readerror', 'renamesession');
             return;
@@ -1028,7 +1011,7 @@ function TraXServer() {
             return;
           }
           file.name = newName;
-          fs.writeFile(filename, JSON.stringify(file), function(err3) {
+          fs.writeFile(filename, JSON.stringify(file), (err3) => {
             if (err3) {
               socket.emit('fail', 'writeerror');
               common.error('Failed to rename session ' + sessionId, socket.id);
@@ -1040,7 +1023,7 @@ function TraXServer() {
     });
 
 
-    socket.on('deletefolder', function(trackId, otherId) {
+    socket.on('deletefolder', (trackId, otherId) => {
       if (otherId != userId || !userId) {
         // Must be crew to do this.
         socket.emit('fail', 'noperms');
@@ -1056,12 +1039,18 @@ function TraXServer() {
       let mydir = userdata + (otherId ? otherId : userId) + traxsubdir +
           usertracksubdir + '/' + trackId;
       mydir = path.normalize(mydir);
-      checkFilePerms(mydir, userId, otherId, function(err, perms) {
+      checkFilePerms(mydir, userId, otherId, (err, perms) => {
         if (err || !perms) {
+          if (userId && otherId) {
+            common.error(
+                userId + ' Requested non-friend\'s data: ' + otherId + ' ' +
+                    err,
+                socket.id);
+          }
           socket.emit('fail', err);
           return;
         }
-        rimraf(mydir, function(err2) {
+        rimraf(mydir, (err2) => {
           if (err2) {
             socket.emit('filelist', 'deleteerror');
             common.error('Failed to delete ' + mydir + ' ' + err2, socket.id);
@@ -1072,7 +1061,7 @@ function TraXServer() {
       });
     });
 
-    socket.on('editfolder', function(trackId, newName, otherId) {
+    socket.on('editfolder', (trackId, newName, otherId) => {
       if (otherId != userId || !userId) {
         // Must be crew to do this.
         socket.emit('fail', 'noperms');
@@ -1087,12 +1076,18 @@ function TraXServer() {
       let mydir = userdata + (otherId ? otherId : userId) + traxsubdir +
           usertracksubdir + '/' + trackId + '/data.json';
       mydir = path.normalize(mydir);
-      checkFilePerms(mydir, userId, otherId, function(err, perms) {
+      checkFilePerms(mydir, userId, otherId, (err, perms) => {
         if (err || !perms) {
+          if (userId && otherId) {
+            common.error(
+                userId + ' Requested non-friend\'s data: ' + otherId + ' ' +
+                    err,
+                socket.id);
+          }
           socket.emit('fail', err);
           return;
         }
-        fs.readFile(mydir, function(err2, file) {
+        fs.readFile(mydir, (err2, file) => {
           if (err2) {
             socket.emit('filelist', 'editerror');
             common.error('Failed to edit ' + mydir + ' ' + err2, socket.id);
@@ -1105,7 +1100,7 @@ function TraXServer() {
               return;
             }
             newFile.name = newName;
-            fs.writeFile(mydir, JSON.stringify(newFile), function(err3) {
+            fs.writeFile(mydir, JSON.stringify(newFile), (err3) => {
               if (err3) {
                 socket.emit('filelist', 'editerror');
                 common.error('Failed to edit ' + mydir + ' ' + err3, socket.id);
@@ -1116,7 +1111,7 @@ function TraXServer() {
       });
     });
 
-    socket.on('requesttracklist', function(pathname, otherId) {
+    socket.on('requesttracklist', (pathname, otherId) => {
       const origPath = pathname;
       if (typeof pathname == 'undefined' || pathname == 'track') pathname = '';
       const useUserDir = ((otherId && true) || false);
@@ -1129,14 +1124,19 @@ function TraXServer() {
           userdata + otherId + traxsubdir + usertracksubdir + pathname);
       const finalDir = useUserDir ? userdir : mydir;
 
-      checkFilePerms(
-          finalDir, userId, isFriendDir ? otherId : undefined,
-          function(err, perms) {
+      checkFilePerms(finalDir, userId, isFriendDir ? otherId : undefined,
+          (err, perms) => {
             if (err || !perms) {
+              if (userId && otherId) {
+                common.error(
+                    userId + ' Requested non-friend\'s data: ' + otherId + ' ' +
+                        err,
+                    socket.id);
+              }
               socket.emit('fail', err);
               return;
             }
-            fs.readdir(finalDir, function(err2, files) {
+            fs.readdir(finalDir, (err2, files) => {
               if (err2) {
                 socket.emit('tracklist', 'readerror', 'requesttracklist');
                 common.error(
@@ -1147,7 +1147,7 @@ function TraXServer() {
               const callback = function() {
                 responses++;
                 if (responses == files.length) {
-                  trackIdsToNames(finalfiles, function(nameList) {
+                  trackIdsToNames(finalfiles, (nameList) => {
                     for (let i = 0; i < nameList.length; i++) {
                       if (!nameList[i]['ownerId']) {
                         nameList[i]['ownerId'] =
@@ -1161,7 +1161,7 @@ function TraXServer() {
               const finalfiles = [];
               for (let i = 0; i < files.length; i++) {
                 const file = files[i];
-                fs.stat(path.join(finalDir, file), function(err5, stats) {
+                fs.stat(path.join(finalDir, file), (err5, stats) => {
                   if (err5) {
                     common.error(
                         'Failed to stat ' + finalDir + '/' + file + ' ' + err5,
@@ -1181,10 +1181,10 @@ function TraXServer() {
           });
     });
 
-    socket.on('newtrack', function(trackName, trackCoords) {
+    socket.on('newtrack', (trackName, trackCoords) => {
       const idFile = path.normalize(
           userdata + userId + traxsubdir + usertracksubdir + '/data.json');
-      fs.readFile(idFile, function(err, idData) {
+      fs.readFile(idFile, (err, idData) => {
         let trackId;
         if (err) {
           common.log('Creating new track data for user ' + err, socket.id);
@@ -1208,7 +1208,7 @@ function TraXServer() {
           nextId: 0,
           ownerId: userId + '',
         });
-        mkdirp(mydir, {mode: 700}, function(err2) {
+        mkdirp(mydir, {mode: 700}, (err2) => {
           if (err2) {
             socket.emit('fail', 'writeerror');
             common.error(
@@ -1216,7 +1216,7 @@ function TraXServer() {
                 socket.id);
             return;
           }
-          fs.writeFile(filename, file, function(err3) {
+          fs.writeFile(filename, file, (err3) => {
             if (err3) {
               socket.emit('fail', 'writeerror');
               common.error(
@@ -1224,7 +1224,7 @@ function TraXServer() {
             }
             common.log('Added new track to ' + filename, socket.id);
             fs.writeFile(
-                idFile, JSON.stringify({nextId: trackId + 1}), function(err3) {
+                idFile, JSON.stringify({nextId: trackId + 1}), (err3) => {
                   if (err3) {
                     common.error(
                         'Failed to increment track ID!' + idFile, socket.id);
@@ -1235,16 +1235,16 @@ function TraXServer() {
       });
     });
 
-    socket.on('edittrack', function(trackName, trackCoords, trackId) {
+    socket.on('edittrack', (trackName, trackCoords, trackId) => {
       const mydir = path.normalize(
           userdata + userId + traxsubdir + usertracksubdir + trackId);
       const filename = path.normalize(mydir + '/data.json');
-      checkFilePerms(filename, userId, undefined, function(err, perms) {
+      checkFilePerms(filename, userId, undefined, (err, perms) => {
         if (err || !perms) {
           socket.emit('fail', 'badtrackid');
           return;
         }
-        fs.readFile(filename, function(err2, oldData) {
+        fs.readFile(filename, (err2, oldData) => {
           if (err2) {
             common.error('Failed to read old trackData' + err2, socket.id);
             socket.emit('fail', 'editreaderr', 'edittrack');
@@ -1265,7 +1265,7 @@ function TraXServer() {
             nextId: oldData.nextId,
             ownerId: oldData.ownerId,
           });
-          fs.writeFile(filename, file, function(err3) {
+          fs.writeFile(filename, file, (err3) => {
             if (err3) {
               socket.emit('fail', 'writeerror');
               common.error(
@@ -1280,16 +1280,16 @@ function TraXServer() {
 
     socket.on(
         'newconfig',
-        function(trackId, trackName, configName, start, finish, sectors) {
+        (trackId, trackName, configName, start, finish, sectors) => {
           const idFile = path.normalize(
               userdata + userId + traxsubdir + usertracksubdir + trackId +
               '/data.json');
-          checkFilePerms(idFile, userId, undefined, function(err, perms) {
+          checkFilePerms(idFile, userId, undefined, (err, perms) => {
             if (err || !perms) {
               socket.emit('fail', 'badtrackid');
               return;
             }
-            fs.readFile(idFile, function(err2, idData) {
+            fs.readFile(idFile, (err2, idData) => {
               if (err2) {
                 socket.emit('fail', 'readerr', 'newconfig');
                 return;
@@ -1315,7 +1315,7 @@ function TraXServer() {
                 finish: finish,
                 sectors: sectors,
               });
-              mkdirp(mydir, {mode: 700}, function(err3) {
+              mkdirp(mydir, {mode: 700}, (err3) => {
                 if (err3) {
                   socket.emit('fail', 'writeerror');
                   common.error(
@@ -1323,7 +1323,7 @@ function TraXServer() {
                       socket.id);
                   return;
                 }
-                fs.writeFile(filename, file, function(err4) {
+                fs.writeFile(filename, file, (err4) => {
                   if (err4) {
                     socket.emit('fail', 'writeerror');
                     common.error(
@@ -1332,7 +1332,7 @@ function TraXServer() {
                   }
                   common.log('Added new config to ' + filename, socket.id);
                   idData.nextId++;
-                  fs.writeFile(idFile, JSON.stringify(idData), function(err5) {
+                  fs.writeFile(idFile, JSON.stringify(idData), (err5) => {
                     if (err5) {
                       common.error(
                           'Failed to increment config id! ' + err4, socket.id);
@@ -1346,18 +1346,17 @@ function TraXServer() {
 
     socket.on(
         'editconfig',
-        function(
-            trackId, trackName, configName, start, finish, sectors, configId) {
+        (trackId, trackName, configName, start, finish, sectors, configId) => {
           const mydir = path.normalize(
               userdata + userId + traxsubdir + usertracksubdir + trackId + '/' +
               configId);
           const filename = path.normalize(mydir + '/data.json');
-          checkFilePerms(filename, userId, undefined, function(err, perms) {
+          checkFilePerms(filename, userId, undefined, (err, perms) => {
             if (err || !perms) {
               socket.emit('fail', 'badtrackids');
               return;
             }
-            fs.readFile(filename, function(err2, oldData) {
+            fs.readFile(filename, (err2, oldData) => {
               if (err2) {
                 socket.emit('fail', 'editreaderr', 'editconfig');
                 return;
@@ -1379,7 +1378,7 @@ function TraXServer() {
                 finish: finish,
                 sectors: sectors,
               });
-              fs.writeFile(filename, file, function(err3) {
+              fs.writeFile(filename, file, (err3) => {
                 if (err3) {
                   socket.emit('fail', 'writeerror');
                   common.error(
@@ -1392,8 +1391,8 @@ function TraXServer() {
           });
         });
 
-    socket.on('getfriendslist', function() {
-      getFriendsList(userId, friendStatus, function(err, data) {
+    socket.on('getfriendslist', () => {
+      getFriendsList(userId, friendStatus, (err, data) => {
         if (err) {
           common.error('Failed to get relation list' + err, socket.id);
           return;
@@ -1402,8 +1401,8 @@ function TraXServer() {
       });
     });
 
-    socket.on('getallrelations', function() {
-      getFriendsList(userId, undefined, function(err, data) {
+    socket.on('getallrelations', () => {
+      getFriendsList(userId, undefined, (err, data) => {
         if (err) {
           common.error('Failed to get relation list' + err, socket.id);
           return;
@@ -1412,8 +1411,8 @@ function TraXServer() {
       });
     });
 
-    socket.on('acceptrequest', function(friendId) {
-      getFriendRelation(userId, friendId, function(err, row) {
+    socket.on('acceptrequest', (friendId) => {
+      getFriendRelation(userId, friendId, (err, row) => {
         if (err) {
           common.error(err, socket.id);
           return;
@@ -1432,15 +1431,15 @@ function TraXServer() {
         }
 
         common.log('Accepting request' + friendId, socket.id);
-        setFriendRelation(userId, friendId, newRel, true, function(err) {
+        setFriendRelation(userId, friendId, newRel, true, (err) => {
           if (err) {
             common.error('Failed to accept request. ' + err, socket.id);
           }
         });
       });
     });
-    socket.on('denyrequest', function(friendId) {
-      getFriendRelation(userId, friendId, function(err, row) {
+    socket.on('denyrequest', (friendId) => {
+      getFriendRelation(userId, friendId, (err, row) => {
         if (err) {
           common.error(err, socket.id);
           return;
@@ -1458,15 +1457,15 @@ function TraXServer() {
         }
 
         common.log('Denying request' + friendId, socket.id);
-        setFriendRelation(userId, friendId, newRel, true, function(err) {
+        setFriendRelation(userId, friendId, newRel, true, (err) => {
           if (err) {
             common.error('Failed to deny request. ' + err, socket.id);
           }
         });
       });
     });
-    socket.on('removefriend', function(friendId) {
-      getFriendRelation(userId, friendId, function(err, row) {
+    socket.on('removefriend', (friendId) => {
+      getFriendRelation(userId, friendId, (err, row) => {
         if (err) {
           common.error(err, socket.id);
           return;
@@ -1488,15 +1487,15 @@ function TraXServer() {
         }
 
         common.log('Removing friends ' + friendId, socket.id);
-        setFriendRelation(userId, friendId, newRel, true, function(err) {
+        setFriendRelation(userId, friendId, newRel, true, (err) => {
           if (err) {
             common.error('Failed to deny request. ' + err, socket.id);
           }
         });
       });
     });
-    socket.on('blockrequest', function(friendId) {
-      getFriendRelation(userId, friendId, function(err, row) {
+    socket.on('blockrequest', (friendId) => {
+      getFriendRelation(userId, friendId, (err, row) => {
         let newRel = oneBlockedStatus;
         if (row) {
           if (row[statusColumn] == bothBlockedStatus) return;
@@ -1516,16 +1515,14 @@ function TraXServer() {
         }
 
         common.log('Blocking friends ' + friendId, socket.id);
-        setFriendRelation(userId, friendId, newRel, true, function(err) {
-          if (err) {
-            common.error('Failed to block user. ' + err, socket.id);
-          }
+        setFriendRelation(userId, friendId, newRel, true, (err) => {
+          if (err) common.error('Failed to block user. ' + err, socket.id);
         });
       });
     });
 
-    socket.on('unblockuser', function(friendId) {
-      getFriendRelation(userId, friendId, function(err, row) {
+    socket.on('unblockuser', (friendId) => {
+      getFriendRelation(userId, friendId, (err, row) => {
         let newRel = noStatus;
         if (row) {
           if (row['user1'] == userId) {
@@ -1554,15 +1551,13 @@ function TraXServer() {
         }
 
         common.log('Unblocking user' + friendId, socket.id);
-        setFriendRelation(userId, friendId, newRel, true, function(err) {
-          if (err) {
-            common.error('Failed to unblock user. ' + err, socket.id);
-          }
+        setFriendRelation(userId, friendId, newRel, true, (err) => {
+          if (err) common.error('Failed to unblock user. ' + err, socket.id);
         });
       });
     });
 
-    socket.on('addfriend', function(friendId) {
+    socket.on('addfriend', (friendId) => {
       if (friendId == userId) {
         socket.emit('friendfail', 'addingself');
         return;
@@ -1579,7 +1574,7 @@ function TraXServer() {
             'user2',
             userId,
           ]);
-      sqlCon.query(toSend, function(err, res) {
+      sqlCon.query(toSend, (err, res) => {
         if (err) {
           socket.emit('fail', err);
           return;
@@ -1596,18 +1591,17 @@ function TraXServer() {
               socket.emit('friendfail', 'alreadyrequested');
               return;
             } else if (rel == twoRequestStatus) {
-              setFriendRelation(
-                  userId, friendId, friendStatus, true, function(err) {
-                    if (err) {
-                      socket.emit('friendfail', 'servererr');
-                    } else {
-                      socket.emit('friendfail', 'nowfriends');
-                      common.log(
-                          'Updated relationship: ' + friendId + ' -> ' +
-                              friendStatus,
-                          socket.id);
-                    }
-                  });
+              setFriendRelation(userId, friendId, friendStatus, true, (err) => {
+                if (err) {
+                  socket.emit('friendfail', 'servererr');
+                } else {
+                  socket.emit('friendfail', 'nowfriends');
+                  common.log(
+                      'Updated relationship: ' + friendId + ' -> ' +
+                          friendStatus,
+                      socket.id);
+                }
+              });
               return;
             } else if (rel == oneBlockedStatus) {
               socket.emit('friendfail', 'blockedother');
@@ -1624,18 +1618,17 @@ function TraXServer() {
             }
           } else if (data['user2'] == userId) {
             if (rel == oneRequestStatus) {
-              setFriendRelation(
-                  userId, friendId, friendStatus, true, function(err) {
-                    if (err) {
-                      socket.emit('friendfail', 'servererr');
-                    } else {
-                      socket.emit('friendfail', 'nowfriends');
-                      common.log(
-                          'Updated relationship: ' + friendId + ' -> ' +
-                              friendStatus,
-                          socket.id);
-                    }
-                  });
+              setFriendRelation(userId, friendId, friendStatus, true, (err) => {
+                if (err) {
+                  socket.emit('friendfail', 'servererr');
+                } else {
+                  socket.emit('friendfail', 'nowfriends');
+                  common.log(
+                      'Updated relationship: ' + friendId + ' -> ' +
+                          friendStatus,
+                      socket.id);
+                }
+              });
               return;
             } else if (rel == twoRequestStatus) {
               socket.emit('friendfail', 'alreadyrequested');
@@ -1657,14 +1650,14 @@ function TraXServer() {
         }
         const toSend = sqlCon.format(
             'SELECT * FROM ?? WHERE ??=?', [accountsTable, 'id', friendId]);
-        sqlCon.query(toSend, function(err, acc) {
+        sqlCon.query(toSend, (err, acc) => {
           if (err) common.error(err);
           if (!acc || acc.length == 0) {
             socket.emit('friendfail', 'unknownuser');
             return;
           }
           setFriendRelation(
-              userId, friendId, newRel, res && res.length > 0, function(err) {
+              userId, friendId, newRel, res && res.length > 0, (err) => {
                 if (err) {
                   socket.emit('friendfail', 'servererr');
                 } else {
@@ -1685,8 +1678,8 @@ function TraXServer() {
       });
     });
 
-    socket.on('updateposition', function(pos) {
-      getFriendsList(userId, friendStatus, function(err, data) {
+    socket.on('updateposition', (pos) => {
+      getFriendsList(userId, friendStatus, (err, data) => {
         for (let j = 0; j < sockets.length; j++) {
           for (let i = 0; i < data.length; i++) {
             if (sockets[j].userId == data[i].id) {
@@ -1700,44 +1693,41 @@ function TraXServer() {
       });
     });
 
-    socket.on(
-        'updatesummary', function(trackId, configId, user, friendId, data) {
-          if (user == 'myself') {
-            user = userId;
-          } else if (!user) {
-            user = '0';
+    socket.on('updatesummary', (trackId, configId, user, friendId, data) => {
+      if (user == 'myself') {
+        user = userId;
+      } else if (!user) {
+        user = '0';
+      }
+      const trackFileName = friendId + ',' + trackId + ',' + configId + '.json';
+      const mydir =
+          path.normalize(userdata + user + traxsubdir + usersummariessubdir);
+      const filename = path.normalize(mydir + trackFileName);
+      checkFilePerms(filename, userId, undefined, (err, perms) => {
+        if (err || !perms) {
+          socket.emit('fail', 'badsummaryids');
+          return;
+        }
+        mkdirp(mydir, {mode: 700}, (err3) => {
+          if (err3) {
+            socket.emit('fail', 'writeerror');
+            common.error(
+                'Failed to create directory ' + mydir + ' ' + err3, socket.id);
+            return;
           }
-          const trackFileName =
-              friendId + ',' + trackId + ',' + configId + '.json';
-          const mydir = path.normalize(
-              userdata + user + traxsubdir + usersummariessubdir);
-          const filename = path.normalize(mydir + trackFileName);
-          checkFilePerms(filename, userId, undefined, function(err, perms) {
-            if (err || !perms) {
-              socket.emit('fail', 'badsummaryids');
-              return;
+          fs.writeFile(filename, data, (err4) => {
+            if (err4) {
+              socket.emit('fail', 'writeerror');
+              common.error(
+                  'Failed to write to ' + filename + ' ' + err4, socket.id);
             }
-            mkdirp(mydir, {mode: 700}, function(err3) {
-              if (err3) {
-                socket.emit('fail', 'writeerror');
-                common.error(
-                    'Failed to create directory ' + mydir + ' ' + err3,
-                    socket.id);
-                return;
-              }
-              fs.writeFile(filename, data, function(err4) {
-                if (err4) {
-                  socket.emit('fail', 'writeerror');
-                  common.error(
-                      'Failed to write to ' + filename + ' ' + err4, socket.id);
-                }
-                common.log('Updated summary: ' + filename, socket.id);
-              });
-            });
+            common.log('Updated summary: ' + filename, socket.id);
           });
         });
+      });
+    });
 
-    socket.on('getsummary', function(trackId, configId, user, friendId) {
+    socket.on('getsummary', (trackId, configId, user, friendId) => {
       if (user == 'myself') {
         user = userId;
       } else if (!user) {
@@ -1756,12 +1746,18 @@ function TraXServer() {
       const mydir =
           path.normalize(userdata + user + traxsubdir + usersummariessubdir);
       const filename = path.normalize(mydir + trackFileName);
-      checkFilePerms(filename, userId, user, function(err, perms) {
+      checkFilePerms(filename, userId, user, (err, perms) => {
         if (err || !perms) {
+          if (userId && otherId) {
+            common.error(
+                userId + ' Requested non-friend\'s data: ' + otherId + ' ' +
+                    err,
+                socket.id);
+          }
           socket.emit('fail', 'badsummaryids');
           return;
         }
-        fs.readFile(filename, function(err2, data) {
+        fs.readFile(filename, (err2, data) => {
           if (err2) {
             socket.emit('fail', 'readerr', 'getsummary');
             return;
@@ -1771,9 +1767,7 @@ function TraXServer() {
       });
     });
 
-    socket.on('getversion', function() {
-      socket.emit('version', versionNum);
-    });
+    socket.on('getversion', () => socket.emit('version', versionNum));
   });
 
   /**
@@ -1840,7 +1834,7 @@ function TraXServer() {
         dat,
       ]);
     }
-    sqlCon.query(toSend, function(err) {
+    sqlCon.query(toSend, (err) => {
       if (err) {
         common.error('Failed to update relationship' + err);
         callback('sqlerr');
@@ -1886,7 +1880,7 @@ function TraXServer() {
           statusColumn,
           friendStatus,
         ]);
-    sqlCon.query(toSend, function(err, res) {
+    sqlCon.query(toSend, (err, res) => {
       if (err) common.error(err);
       const friends = (res && res.length && true) || false;
       callback(friends ? null : 'notfriends', friends);
@@ -1932,12 +1926,9 @@ function TraXServer() {
    * @param {permCallback} callback
    */
   function checkFriendFilePerms(filename, userId, otherId, callback) {
-    checkIfFriends(userId, otherId, function(err, res) {
+    checkIfFriends(userId, otherId, (err, res) => {
       if (err || !res) {
         callback(err, false);
-        common.log(
-            (userId || 'No Id') + ' Requested non-friend\'s data: ' +
-            (otherId || 'No Id') + ' ' + err);
       } else {
         checkFilePerms(filename, otherId, undefined, callback);
       }
@@ -2029,17 +2020,17 @@ function TraXServer() {
    */
   function appendChunk(
       filename, sessionId, chunkId, buffer, socket, retry = true) {
-    fs.appendFile(filename, buffer, {mode: 0o600}, function(err) {
+    fs.appendFile(filename, buffer, {mode: 0o600}, (err) => {
       if (err) {
         if (retry) {
-          mkdirp(path.dirname(filename), {mode: 700}, function(err2) {
+          mkdirp(path.dirname(filename), {mode: 700}, (err2) => {
             if (err2) {
               common.error(
                   'Failed to create directory: "' + filename + '" ' + err2,
                   socket.id);
               socket.emit('fail', 'writeerror', chunkId);
             } else {
-              fs.writeFile(filename, buffer, {mode: 0o600}, function(err3) {
+              fs.writeFile(filename, buffer, {mode: 0o600}, (err3) => {
                 if (err3) {
                   common.error(
                       'Failed to write file in directory: "' + filename + '" ' +
@@ -2083,7 +2074,7 @@ function TraXServer() {
           liveSockets[i].emit('livefrienddata', userId, chunkId, buffer);
         }
       }
-      getFriendsList(userId, friendStatus, function(err, rows) {
+      getFriendsList(userId, friendStatus, (err, rows) => {
         if (err) {
           common.log('Failed to get friends list for ' + userId + ': ' + err);
           return;
@@ -2119,7 +2110,7 @@ function TraXServer() {
     let numFail = 0;
     for (let i = 0; i < idArray.length; i++) {
       const filename = path.normalize(idArray[i] + '/data.json');
-      fs.readFile(filename, function(err, data) {
+      fs.readFile(filename, (err, data) => {
         if (err) {
           numFail++;
           common.error('Failed to read /data.json ' + err);
@@ -2163,7 +2154,7 @@ function TraXServer() {
     if (typeof relation !== 'undefined') {
       toSend += sqlCon.format(' AND ??=?', [statusColumn, relation]);
     }
-    sqlCon.query(toSend, function(err, res) {
+    sqlCon.query(toSend, (err, res) => {
       if (err) {
         common.error(err);
         callback('Data format error', false);
@@ -2184,7 +2175,7 @@ function TraXServer() {
             const Id = res['user1'] == userId ? res['user2'] : res['user1'];
             const toSend = sqlCon.format(
                 'SELECT * FROM ?? WHERE ??=?', [accountsTable, 'id', Id]);
-            sqlCon.query(toSend, function(err, res2) {
+            sqlCon.query(toSend, (err, res2) => {
               if (err) common.error(err);
               if (err || !res2 || res2.length == 0) {
                 res2 = [];
@@ -2238,7 +2229,7 @@ function TraXServer() {
           'user2',
           user,
         ]);
-    sqlCon.query(toSend, function(err, res) {
+    sqlCon.query(toSend, (err, res) => {
       if (err) common.error(err);
       callback(err ? 'sqlerr' : null, res ? res[0] : undefined);
     });
@@ -2250,7 +2241,7 @@ function TraXServer() {
    * @private
    */
   function updateVersionNum() {
-    fs.stat(versionNumFile, function(err, stats) {
+    fs.stat(versionNumFile, (err, stats) => {
       if (err) {
         common.error(err);
         return;
@@ -2262,7 +2253,7 @@ function TraXServer() {
       }
 
       versionNumLastUpdate = mtime;
-      fs.readFile(versionNumFile, function(err, data) {
+      fs.readFile(versionNumFile, (err, data) => {
         if (err !== null) {
           common.error(err);
           return;
