@@ -684,11 +684,11 @@ function TraXServer() {
           common.log(
               'Started receiving session ' + userId + '/' + sessionId,
               socket.id);
-          if (userId !== '112755862396374027799') {
+          /* if (userId !== '112755862396374027799') {
             sendEventToTopic(
                 'notification_message',
                 'TraX: User started recording session.');
-          }
+          } */
           lastReceiveName = sessionId;
         }
         lastReceiveTime = Date.now();
