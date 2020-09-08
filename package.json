@@ -1,6 +1,6 @@
 {
   "name": "traxwebsite",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "TraX: Racing Data Collector",
   "homepage": "https://trax.campbellcrowley.com",
   "bugs": {
@@ -14,12 +14,10 @@
   },
   "dependencies": {
     "dateformat": "^3.0.3",
-    "fs": "0.0.1-security",
     "get-folder-size": "^2.0.1",
-    "google-auth-library": "^5.2.0",
-    "http": "0.0.0",
+    "google-auth-library": "^6.0.6",
     "lz-string": "^1.4.4",
-    "mkdirp": "^0.5.3",
+    "mkdirp": "^1.0.4",
     "mysql": "^2.18.1",
     "path": "^0.12.7",
     "rimraf": "^3.0.0",
@@ -32,9 +30,9 @@
     }
   ],
   "devDependencies": {
-    "eslint": "^6.8.0",
+    "eslint": "^7.8.1",
     "eslint-config-google": "^0.14.0",
-    "jsdoc-to-markdown": "^5.0.3"
+    "jsdoc-to-markdown": "^6.0.1"
   },
   "scripts": {
     "install": ".hooks/install-hooks.sh",

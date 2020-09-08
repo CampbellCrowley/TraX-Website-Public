@@ -1,4 +1,4 @@
-// Copyright 2018-2019 Campbell Crowley. All rights reserved.
+// Copyright 2018-2020 Campbell Crowley. All rights reserved.
 // Author: Campbell Crowley (web@campbellcrowley.com)
 (function(TraX, undefined) {
   (function(DataView, undefined) {
@@ -1248,6 +1248,7 @@
        * the map.
        */
       MyMap.updateMyMap = function(startIndex, endIndex) {
+        if (!mymap) MyMap.handleOpening();
         currentStartIndex = startIndex;
         currentEndIndex = endIndex;
         MyMap.resetPolyLine();
@@ -1261,7 +1262,7 @@
             TraX.showMessageBox(
                 'This session doesn\'t appear to have any gps data.');
           }
-          if (mymap.getZoom() < 2) mymap.setZoom(2);
+          if (mymap && mymap.getZoom() < 2) mymap.setZoom(2);
           return;
         }
 
