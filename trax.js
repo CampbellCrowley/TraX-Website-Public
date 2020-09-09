@@ -591,14 +591,7 @@ function TraXServer() {
           socket.emit('fail', err2);
           return;
         }
-        mkdirp(mydir, {mode: 700}, (err3) => {
-          if (err3) {
-            socket.emit('fail', 'writeerror');
-            common.error(
-                'Failed to create directory ' + filename + ' ' + err3,
-                socket.id);
-            return;
-          }
+        mkdirp(mydir, {mode: 700}).then(() => {
           fs.readFile(filename, (err3, readFileData) => {
             if (!err3 && readFileData) {
               socket.emit('fail', 'sessionexists', sessionId);
@@ -617,6 +610,11 @@ function TraXServer() {
               socket.emit('createdsession', sessionId);
             });
           });
+        }).catch((err3) => {
+          socket.emit('fail', 'writeerror');
+          common.error(
+              'Failed to create directory ' + filename + ' ' + err3,
+              socket.id);
         });
       });
     });
@@ -1208,14 +1206,7 @@ function TraXServer() {
           nextId: 0,
           ownerId: userId + '',
         });
-        mkdirp(mydir, {mode: 700}, (err2) => {
-          if (err2) {
-            socket.emit('fail', 'writeerror');
-            common.error(
-                'Failed to create directory ' + filename + ' ' + err2,
-                socket.id);
-            return;
-          }
+        mkdirp(mydir, {mode: 700}).then(() => {
           fs.writeFile(filename, file, (err3) => {
             if (err3) {
               socket.emit('fail', 'writeerror');
@@ -1231,6 +1222,11 @@ function TraXServer() {
                   }
                 });
           });
+        }).catch((err2) => {
+          socket.emit('fail', 'writeerror');
+          common.error(
+              'Failed to create directory ' + filename + ' ' + err2,
+              socket.id);
         });
       });
     });
@@ -1315,14 +1311,7 @@ function TraXServer() {
                 finish: finish,
                 sectors: sectors,
               });
-              mkdirp(mydir, {mode: 700}, (err3) => {
-                if (err3) {
-                  socket.emit('fail', 'writeerror');
-                  common.error(
-                      'Failed to create directory ' + mydir + ' ' + err3,
-                      socket.id);
-                  return;
-                }
+              mkdirp(mydir, {mode: 700}).then(() => {
                 fs.writeFile(filename, file, (err4) => {
                   if (err4) {
                     socket.emit('fail', 'writeerror');
@@ -1339,6 +1328,11 @@ function TraXServer() {
                     }
                   });
                 });
+              }).catch((err3) => {
+                socket.emit('fail', 'writeerror');
+                common.error(
+                    'Failed to create directory ' + mydir + ' ' + err3,
+                    socket.id);
               });
             });
           });
@@ -1708,13 +1702,7 @@ function TraXServer() {
           socket.emit('fail', 'badsummaryids');
           return;
         }
-        mkdirp(mydir, {mode: 700}, (err3) => {
-          if (err3) {
-            socket.emit('fail', 'writeerror');
-            common.error(
-                'Failed to create directory ' + mydir + ' ' + err3, socket.id);
-            return;
-          }
+        mkdirp(mydir, {mode: 700}).then(() => {
           fs.writeFile(filename, data, (err4) => {
             if (err4) {
               socket.emit('fail', 'writeerror');
@@ -1723,6 +1711,10 @@ function TraXServer() {
             }
             common.log('Updated summary: ' + filename, socket.id);
           });
+        }).catch((err3) => {
+          socket.emit('fail', 'writeerror');
+          common.error(
+              'Failed to create directory ' + mydir + ' ' + err3, socket.id);
         });
       });
     });
@@ -1985,15 +1977,13 @@ function TraXServer() {
           console.log(err);
           socket.emit('fail', 'writeerror', chunkId);
         } else if (attempts == 1) {
-          mkdirp(dirname, {mode: 700}, function(err2) {
-            if (err2) {
-              attempts = 0;
-              common.error('Failed to create dir: ' + dirname, socket.id);
-              console.log(err);
-              socket.emit('fail', 'writeerror', chunkId);
-            } else {
-              appendFile(attempts, filename, dirname, chunkId, buffer, socket);
-            }
+          mkdirp(dirname, {mode: 700}).then(() => {
+            appendFile(attempts, filename, dirname, chunkId, buffer, socket);
+          }).then((err2) => {
+            attempts = 0;
+            common.error('Failed to create dir: ' + dirname, socket.id);
+            console.log(err);
+            socket.emit('fail', 'writeerror', chunkId);
           });
         }
       } else {
@@ -2023,27 +2013,25 @@ function TraXServer() {
     fs.appendFile(filename, buffer, {mode: 0o600}, (err) => {
       if (err) {
         if (retry) {
-          mkdirp(path.dirname(filename), {mode: 700}, (err2) => {
-            if (err2) {
-              common.error(
-                  'Failed to create directory: "' + filename + '" ' + err2,
-                  socket.id);
-              socket.emit('fail', 'writeerror', chunkId);
-            } else {
-              fs.writeFile(filename, buffer, {mode: 0o600}, (err3) => {
-                if (err3) {
-                  common.error(
-                      'Failed to write file in directory: "' + filename + '" ' +
-                          err3,
-                      socket.id);
-                } else {
-                  common.log(
-                      'Created directory and file for session: ' + filename,
-                      socket.id);
-                  socket.emit('fail', 'createsession', sessionId);
-                }
-              });
-            }
+          mkdirp(path.dirname(filename), {mode: 700}).then(() => {
+            fs.writeFile(filename, buffer, {mode: 0o600}, (err3) => {
+              if (err3) {
+                common.error(
+                    'Failed to write file in directory: "' + filename + '" ' +
+                        err3,
+                    socket.id);
+              } else {
+                common.log(
+                    'Created directory and file for session: ' + filename,
+                    socket.id);
+                socket.emit('fail', 'createsession', sessionId);
+              }
+            });
+          }).catch((err2) => {
+            common.error(
+                'Failed to create directory: "' + filename + '" ' + err2,
+                socket.id);
+            socket.emit('fail', 'writeerror', chunkId);
           });
         } else {
           common.error(

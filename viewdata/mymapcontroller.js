@@ -470,9 +470,9 @@
         overlayConfigNameInput.disabled = false;
         overlayConfigNameInput.value = '';
         configDoneButton.disabled = false;
-        fitTrackInMap();
         trackMode = 'config';
         editMode = 'create';
+        fitTrackInMap();
       };
       /**
        * Handle click edit config button.
@@ -1045,8 +1045,9 @@
        */
       function fitTrackInMap() {
         showTrackMarker();
-        if (trackMarker.getVisible() &&
-            !mymap.getBounds().contains(trackMarker.getPosition())) {
+        const bounds = mymap.getBounds();
+        if (trackMarker.getVisible() && bounds &&
+            !bounds.contains(trackMarker.getPosition())) {
           mymap.setCenter(trackMarker.getPosition());
         }
       }
